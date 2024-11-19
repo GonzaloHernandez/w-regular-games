@@ -22,12 +22,14 @@ To compile the sourcecode of mzn-python and sat-solvers it is required to setup 
 
 Install:
 >pip install minizinc
+
 >pip install python-sat
+
 >pip install ortools
 
 ## Graphical view of automatons
 
-To open automatons it is required to use Graphing app, it
+To open automatons it is required to use Graphing app.
 
 [Graphing](https://github.com/GonzaloHernandez/graphing)
 
