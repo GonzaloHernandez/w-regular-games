@@ -1,0 +1,20 @@
+{
+    "openFiles": [
+        "data/game-others.dzn",
+        "data/game-jurdzinski.dzn",
+        "model/reductionsat-novel.mzn"
+    ],
+    "openTab": 2,
+    "projectFiles": [
+        "data/game-jurdzinski.dzn",
+        "data/game-others.dzn",
+        "data/game-sat.dzn",
+        "data/game-wikipedia.dzn",
+        "model/cyclefilter.mzn",
+        "model/reductionsat-novel.mzn",
+        "model/reductionsat.mzn"
+    ],
+    "selectedBuiltinConfigId": "org.chuffed.chuffed",
+    "selectedBuiltinConfigVersion": "0.13.2",
+    "version": 106
+}
