@@ -77,16 +77,16 @@ def compute(d,levels,blocks) :
 
         if response.solution is None :
             sat = False
-            # print("Unsatisfiable (After seraching)")
+            print("Unsatisfiable (After seraching)")
         else :
             sat = True
-            print(response.statistics)
-            # print("V =",response["Va"])
-            # print("E =",response["Ea"])
-            # print("M =",response["pmeasures"])
+            # print(response.statistics)
+            print("V =",response["Va"])
+            print("E =",response["Ea"])
+            print("M =",response["pmeasures"])
     except Warning as e :
         sat = False
-        # print("Unsatisfiable (Inconsistency detected)")
+        print("Unsatisfiable (Inconsistency detected)")
 
     # print(f"nvertices = {nvertices}")
     # print(f"owners = {owners}")
@@ -100,9 +100,9 @@ def compute(d,levels,blocks) :
 
 # ----------------------------------------------------
 
-d       = 1 #int(arg[1])
-levels  = 10 #int(arg[2])
-blocks  = 5 #int(arg[3])
+d       = 0 #int(arg[1])
+levels  = 2 #int(arg[2])
+blocks  = 1 #int(arg[3])
 
 tim,sat = compute(d,levels,blocks)
 

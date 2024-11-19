@@ -29,7 +29,7 @@ Install:
 
 ## Graphical view of automatons
 
-To open automatons it is required to use Graphing app.
+To open automatons it is required to use Graphing application.
 
 [Graphing](https://github.com/GonzaloHernandez/graphing)
 

@@ -3,33 +3,6 @@ import warnings,sys,re,json
 warnings.filterwarnings("error", message="model inconsistency detected")
 arg = sys.argv
 
-# ----------------------------------------------------
-
-
-def getGame(filename) -> list :
-    nvertices = 0
-    owners = []
-    colors = []
-
-    nedges = 0
-    edgesv = []
-    edgesw = []
-
-    with open(filename, 'r') as file:
-        for line in file:
-            if line.strip() == "" : continue
-
-            key, value = [item.strip() for item in re.sub(r"[;]","",line).split('=')]
-            
-            if      key=="nvertices"    : nvertices = json.loads(value)
-            elif    key=="owners"       : owners    = json.loads(value)
-            elif    key=="colors"       : colors    = json.loads(value)
-            elif    key=="nedges"       : nedges    = json.loads(value)
-            elif    key=="edgesv"       : edgesv    = json.loads(value)
-            elif    key=="edgesw"       : edgesw    = json.loads(value)
-    
-    return [nvertices,owners,colors,nedges,edgesv,edgesw]
-
 # ------------------------------------------------------------------------------------
 
 class Game :
@@ -55,13 +28,7 @@ class Game :
 
 # ------------------------------------------------------------------------------------
 
-def dfs(game) :
-    pass
 
-
-# ------------------------------------------------------------------------------------
-
-g = Game('./data/game-sat.dzn')
 
 # ------------------------------------------------------------------------------------
 
@@ -84,11 +51,9 @@ def explorePlays(path, current) :
                 targets = [g.edgesw[i] for i in range(g.nedges) if g.edgesv[i]==v]
                 differ = list(set(targets).difference(set(targets).intersection(set(path))))
                 if len(differ)>0 : 
-                    print(" ",path,[current], end=" ")
-                    print(mincolor)
+                    print(" ",path,[current],mincolor)
                     return
-        print("*",path,[current], end=" ")
-        print(mincolor)
+        print("*",path,[current],mincolor)
             
     except ValueError :
         for e in [ {'source':g.edgesv[i],'target':g.edgesw[i]} for i in range(g.nedges) ] :
@@ -97,6 +62,6 @@ def explorePlays(path, current) :
     
 # ------------------------------------------------------------------------------------
 
-start = 0
-explorePlays([],start)
-pass
+g = Game('./data/game-sat.dzn')
+explorePlays([],0)
+
