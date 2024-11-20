@@ -63,5 +63,6 @@ predicate cycle_filter(		array [int] of int		: owners,
 							array [int] of int		: colors,
 							array [int] of int		: edgesv,
 							array [int] of int		: edgesw,
-							array [int]	of var bool	: V,
-							array [int]	of var bool	: E );
+							array [int] of var bool	: V,
+							array [int] of var bool	: E,
+							array [int] of int 		: start  );

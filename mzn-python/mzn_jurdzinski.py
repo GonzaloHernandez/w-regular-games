@@ -55,7 +55,15 @@ driver          = ["gecode","chuffed","cpsatlp"]
 def compute(d,levels,blocks) :
 
     solver      = Solver.lookup(driver[d])
-    model       = Model("./model/reductionsat.mzn")
+    # solver = Solver(
+    #     name="MyChuffed",
+    #     version="0.0",
+    #     id="org.sonar.mychuffed",
+    #     mznlib="/home/chalo/.local/share/minizinc/chuffed",
+    #     executable="/home/chalo/.local/bin/fzn-chuffed",
+    # )
+
+    model       = Model("./model/reductionsat-novel.mzn")
     instance    = Instance(solver, model)
 
     [nvertices,owners,colors,nedges,edgesv,edgesw] = createGame(levels,blocks)
@@ -72,7 +80,7 @@ def compute(d,levels,blocks) :
 
     try :
         t1 = time.time()
-        response = instance.solve(free_search=True)
+        response = instance.solve()
         t2 = time.time()
 
         if response.solution is None :
@@ -83,7 +91,7 @@ def compute(d,levels,blocks) :
             # print(response.statistics)
             print("V =",response["Va"])
             print("E =",response["Ea"])
-            print("M =",response["pmeasures"])
+            # print("M =",response["pmeasures"])
     except Warning as e :
         sat = False
         print("Unsatisfiable (Inconsistency detected)")

@@ -9,7 +9,7 @@ array [vertices] of int	: colors;
 array [edges] of int	: edgesv;
 array [edges] of int	: edgesw;
 
-vertices : start = 1;
+vertices : start;
 
 % -------------------------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ constraint
 	globalmeasureprogress(owners,colors,edgesv,edgesw,V,E);
 
 % constraint
-% 	cycle_filter(owners,colors,edgesv,edgesw,V,E);
+% 	cycle_filter(owners,colors,edgesv,edgesw,V,E,[1]);
 
 % -------------------------------------------------------------------------------------
 
