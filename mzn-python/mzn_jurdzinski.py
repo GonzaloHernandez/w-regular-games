@@ -55,6 +55,7 @@ driver          = ["gecode","chuffed","cpsatlp"]
 def compute(d,levels,blocks) :
 
     solver      = Solver.lookup(driver[d])
+
     # solver = Solver(
     #     name="MyChuffed",
     #     version="0.0",
@@ -63,6 +64,16 @@ def compute(d,levels,blocks) :
     #     executable="/home/chalo/.local/bin/fzn-chuffed",
     # )
 
+    # solver = Solver(
+    #     name="Gecode",
+    #     version="6.3.0",
+    #     id="org.gecode.gecode",
+    #     executable="/opt/minizinc-ide/bin/fzn-gecode",
+    #     # mznlib="/opt/minizinc-ide/share/minizinc/gecode",
+    # )
+
+    # solver.stdFlags=["-a", "-n", "-s", "-v", "-r", "-f", "-t"]
+    
     model       = Model("./model/reductionsat-novel.mzn")
     instance    = Instance(solver, model)
 
@@ -80,7 +91,7 @@ def compute(d,levels,blocks) :
 
     try :
         t1 = time.time()
-        response = instance.solve()
+        response = instance.solve(intermediate_solutions=False)
         t2 = time.time()
 
         if response.solution is None :
