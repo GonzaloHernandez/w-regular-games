@@ -1,5 +1,8 @@
 import re,json
 
+EVEN    = 0
+ODD     = 1
+
 # ------------------------------------------------------------------------------------
 
 class Game :
@@ -16,6 +19,8 @@ class Game :
                 elif    key=="nedges"       : self.nedges    = json.loads(value)
                 elif    key=="edgesv"       : self.edgesv    = json.loads(value)
                 elif    key=="edgesw"       : self.edgesw    = json.loads(value)
+        self.vertices   = {v for v in range(self.nvertices)}
+        self.edges      = {e for e in range(self.nedges)}
         self.fixZeroPosition()
     
     def fixZeroPosition(self) :
