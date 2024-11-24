@@ -7,7 +7,7 @@ def explore(path, current) :
     if current in path :
         print(path+[current])
     else :
-        for e in [ {'source':g.edgesv[i],'target':g.edgesw[i]} for i in range(g.nedges) ] :
+        for e in [ {'source':g.sources[i],'target':g.targets[i]} for i in range(g.nedges) ] :
             if e['source'] == current :
                 explore(path + [current], e['target'])
     
@@ -19,7 +19,7 @@ def explorePlays(path, current) :
         mincolor = min([ g.colors[v] for v in path[index:]])
         for v in path : 
             if mincolor%2 != g.owners[v] :
-                targets = [g.edgesw[i] for i in range(g.nedges) if g.edgesv[i]==v]
+                targets = [g.targets[i] for i in range(g.nedges) if g.sources[i]==v]
                 differ = list(set(targets).difference(set(targets).intersection(set(path))))
                 if len(differ)>0 : 
                     print(" ",path,[current],mincolor)
@@ -27,7 +27,7 @@ def explorePlays(path, current) :
         print("*",path,[current],mincolor)
             
     except ValueError :
-        for e in [ {'source':g.edgesv[i],'target':g.edgesw[i]} for i in range(g.nedges) ] :
+        for e in [ {'source':g.sources[i],'target':g.targets[i]} for i in range(g.nedges) ] :
             if e['source'] == current :
                 explorePlays(path + [current], e['target'])
     

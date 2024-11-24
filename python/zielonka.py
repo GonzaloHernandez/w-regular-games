@@ -4,23 +4,24 @@ from game import Game
 # ------------------------------------------------------------------------------------
 
 def attractor(V, p, g) :
+    A = V
     for v in V :
-        ownvertices     = {vi for vi in g.vertices if g.owners[vi]==p and vi in {g.edgesv[e] for e in g.edges if g.edgesw[e]==vi} }
-        othervertices   = {vi for vi in g.vertices if g.owners[vi]!=p and vi in {g.edgesv[e] for e in g.edges if g.edgesw[e]==vi} }
-        # othervertices   = {i for i in g.vertices if g.edgesw[i]==v and g.owners[i]!=p}
-        # novertices      = {i for i in othervertices if g.edgesw[i]!=v}
-        # A  = ownvertices.union(othervertices.difference(novertices))
-        more = attractor(A,p,g)
-    return V.union(A).union(more)
+        ownvertices     = {g.sources[e] for e in g.getEdges() if g.targets[e]==v and g.owners[g.sources[e]]==p}
+        othervertices   = {g.sources[e] for e in g.getEdges() if g.targets[e]==v and g.owners[g.sources[e]]!=p}
+        novertices      = {g.sources[e] for e in g.getEdges() if g.owners[g.sources[e]]!=p and g.sources[e] in othervertices and g.targets[e] != v}
+        localattractor  = ownvertices.union(othervertices.difference(novertices))
+        A = A.union(attractor(localattractor,p,g))
+    return A
 
 def zielonka(g) :
-    p = min([g.colors[v] for v in g.vertices]) % 2
-    U = {v for v in g.vertices if g.colors[v]==p}
+    p = min([g.colors[v] for v in g.getVertices()]) % 2
+    U = {v for v in g.getVertices() if g.colors[v]==p}
     A = attractor(U,p,g)
+    # zielonka()
     pass
 
 # ------------------------------------------------------------------------------------
 
 g = Game('./data/game-sat.dzn')
-zielonka(g)
+zielonka(g/[2,3])
 
