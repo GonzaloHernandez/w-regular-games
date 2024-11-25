@@ -13,7 +13,10 @@ def attractor(V, q, g:Game) :
         A = A.union(attractor(localattractor, q, g/V))
     return A
 
+# ------------------------------------------------------------------------------------
+
 def zielonka(g) :
+    Z = [[],[]]
     if g.getVertices() == [] :
         return [], []
     else :
@@ -23,14 +26,15 @@ def zielonka(g) :
         A = attractor(U, q, g)
         W = zielonka( g/A )
         if W[1-q] == [] :
-            return A.union(W[q]), []
+            Z[q],Z[1-q] = A.union(W[q]), []
         else :
             B = attractor(W[1-q], 1-q, g)
             W = zielonka( g/B )
-            return W[q], B.union(W[1-q])
+            Z[q],Z[1-q] = W[q], B.union(W[1-q])
+    return Z
 
 # ------------------------------------------------------------------------------------
 
-g = Game('./data/game-sat.dzn')
+g = Game('./data/game-jurdzinski-4-3.dzn')
 W = zielonka(g)
 print(W)

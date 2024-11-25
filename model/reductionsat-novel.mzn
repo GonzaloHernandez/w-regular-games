@@ -9,7 +9,7 @@ array [vertices] of int	: colors;
 array [edges] of int	: sources;
 array [edges] of int	: targets;
 
-vertices : start = 1;
+vertices : start;
 
 % -------------------------------------------------------------------------------------
 

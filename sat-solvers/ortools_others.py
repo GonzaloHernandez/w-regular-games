@@ -2,7 +2,7 @@ import os; os.system("clear")
 import time,sys,re,json
 arg = sys.argv
 
-from python.game import Game
+from pythonsrc.game import Game
 from ortools.sat.python import cp_model
 model = cp_model.CpModel()
 
