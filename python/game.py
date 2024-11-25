@@ -65,7 +65,7 @@ class Game :
 
     def getEdges(self) -> list :
         vs = self.getVertices()
-        return [e for e in self.edges if self.sources[e] in vs and self.targets[e] in vs]
+        return [e for e in self.edges if e != None and self.sources[e] in vs and self.targets[e] in vs]
 
     def fixZeroPosition(self) :
         for e in range(self.nedges) :
@@ -76,14 +76,10 @@ class Game :
         g = self.copy()
         for v in novertices :
             g.vertices[v] = None
-            g.owners[v] = None
-            g.colors[v] = None
+            # g.owners[v] = None
+            # g.colors[v] = None
             for e in g.edges :
                 if e != None :
-                    if g.sources[e] == v :
-                        g.sources[e] = None
-                        g.targets[e] = None
-                    if g.targets[e] == v :                    
-                        g.sources[e] = None
-                        g.targets[e] = None
+                    if g.sources[e] == v or g.targets[e] == v :
+                        g.edges[e]  = None
         return g
