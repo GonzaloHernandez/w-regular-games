@@ -1,6 +1,5 @@
 import re,json
-
-
+import copy
 
 # ------------------------------------------------------------------------------------
 
@@ -40,14 +39,15 @@ class Game :
             self.fixZeroPosition()
 
         elif len(args) == 8 :
-            self.nvertices  = args[0]
-            self.vertices   = args[1]
-            self.owners     = args[2]
-            self.colors     = args[3]
-            self.nedges     = args[4]
-            self.edges      = args[5]
-            self.sources    = args[6]
-            self.targets    = args[7]
+            game = copy.deepcopy(args)
+            self.nvertices  = game[0]
+            self.vertices   = game[1]
+            self.owners     = game[2]
+            self.colors     = game[3]
+            self.nedges     = game[4]
+            self.edges      = game[5]
+            self.sources    = game[6]
+            self.targets    = game[7]
             self.start      = 0
 
     def copy(self) :
@@ -76,8 +76,6 @@ class Game :
         g = self.copy()
         for v in novertices :
             g.vertices[v] = None
-            # g.owners[v] = None
-            # g.colors[v] = None
             for e in g.edges :
                 if e != None :
                     if g.sources[e] == v or g.targets[e] == v :

@@ -6,8 +6,8 @@ set of int : vertices	= 1..nvertices;
 set of int : edges		= 1..nedges;
 array [vertices] of int	: owners;
 array [vertices] of int	: colors;
-array [edges] of int	: edgesv;
-array [edges] of int	: edgesw;
+array [edges] of int	: sources;
+array [edges] of int	: targets;
 
 vertices : start = 1;
 
@@ -23,17 +23,17 @@ constraint
 
 constraint   
 	forall(v in vertices where owners[v]==even)(
-		V[v] ->	exists(e in edges where edgesv[e]==v)(E[e])
+		V[v] ->	exists(e in edges where sources[e]==v)(E[e])
 	);
 
 constraint
 	forall(v in vertices where owners[v]==odd)(
-		V[v] ->	forall(e in edges where edgesv[e]==v)(E[e])
+		V[v] ->	forall(e in edges where sources[e]==v)(E[e])
 	);
 
 constraint
 	forall(w in vertices where w != start)(
-		exists(e in edges where edgesw[e]==w)(E[e])	-> V[w]
+		exists(e in edges where targets[e]==w)(E[e])	-> V[w]
 	);
 
 constraint
@@ -60,8 +60,8 @@ array [vertices,1..length(oddcolors)] of var vertices : pmeasures;
 
 predicate measureprogress(edges : e) =
 
-	let {	vertices	: v = edgesv[e],
-			vertices	: w = edgesw[e] } in
+	let {	vertices	: v = sources[e],
+			vertices	: w = targets[e] } in
 	
 	if colors[w] mod 2 == 0 then
 		forall(p in oddcolors where p < colors[w])(

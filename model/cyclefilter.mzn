@@ -42,27 +42,27 @@ predicate measureprogress(	array [$$V] of int			: colors,
 
 predicate globalmeasureprogress(	array [$$V] of int		: owners,
 									array [$$V] of int		: colors,
-									array [$$E] of int		: edgesv,
-									array [$$E] of int		: edgesw,
+									array [$$E] of int		: sources,
+									array [$$E] of int		: targets,
 									array [$$V]	of var bool	: V,
 									array [$$E]	of var bool	: E ) =
 	
 	let {	set of int 			: vertices	= index_set(owners),
-			set of int 			: edges		= index_set(edgesv),
+			set of int 			: edges		= index_set(sources),
 			array [int] of int	: oddcolors	= getoddcolors(colors),
 			array [vertices,1..length(oddcolors)] of var vertices : pmeasures
 	} in
 	
 	forall(e in edges)(
-		E[e] -> measureprogress(colors,pmeasures,e,edgesv[e],edgesw[e])
+		E[e] -> measureprogress(colors,pmeasures,e,sources[e],targets[e])
 	);
 
 % ------------------------------------------------------------------------------------------
 
 predicate cycle_filter(		array [int] of int		: owners,
 							array [int] of int		: colors,
-							array [int] of int		: edgesv,
-							array [int] of int		: edgesw,
+							array [int] of int		: sources,
+							array [int] of int		: targets,
 							array [int] of var bool	: V,
 							array [int] of var bool	: E,
 							array [int] of int 		: start  );

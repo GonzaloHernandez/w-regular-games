@@ -6,10 +6,10 @@ set of int : vertices	= 1..nvertices;
 set of int : edges		= 1..nedges;
 array [vertices] of int	: owners;
 array [vertices] of int	: colors;
-array [edges] of int	: edgesv;
-array [edges] of int	: edgesw;
+array [edges] of int	: sources;
+array [edges] of int	: targets;
 
-vertices : start;
+vertices : start = 1;
 
 % -------------------------------------------------------------------------------------
 
@@ -37,26 +37,26 @@ constraint
 
 constraint   
 	forall(v in vertices where owners[v]==even)(
-		V[v] ->	exists(e in edges where edgesv[e]==v)(E[e])
+		V[v] ->	exists(e in edges where sources[e]==v)(E[e])
 	);
 
 constraint
 	forall(v in vertices where owners[v]==odd)(
-		V[v] ->	forall(e in edges where edgesv[e]==v)(E[e])
+		V[v] ->	forall(e in edges where sources[e]==v)(E[e])
 	);
 
 constraint
 	forall(w in vertices where w != start)(
-		exists(e in edges where edgesw[e]==w)(E[e]) -> V[w]
+		exists(e in edges where targets[e]==w)(E[e]) -> V[w]
 	);
 
 include "cyclefilter.mzn";
 
 constraint
-	globalmeasureprogress(owners,colors,edgesv,edgesw,V,E);
+	globalmeasureprogress(owners,colors,sources,targets,V,E);
 
 % constraint
-% 	cycle_filter(owners,colors,edgesv,edgesw,V,E,[1]);
+% 	cycle_filter(owners,colors,sources,targets,V,E,[1]);
 
 % -------------------------------------------------------------------------------------
 
