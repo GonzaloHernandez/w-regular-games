@@ -2,35 +2,11 @@ import os; os.system("clear")
 import time,sys,re,json
 arg = sys.argv
 
-# ----------------------------------------------------
-
-nvertices = 0
-owners  = []
-colors  = []
-
-nedges  = 0
-edgesv  = []
-edgesw  = []
-
-with open('./data/game-sat.dzn', 'r') as file:
-    for line in file:
-        if line.strip() == "" : continue
-
-        key, value = [item.strip() for item in re.sub(r"[;]","",line).split('=')]
-        
-        if      key=="nvertices"    : nvertices = json.loads(value)
-        elif    key=="owners"       : owners    = json.loads(value)
-        elif    key=="colors"       : colors    = json.loads(value)
-        elif    key=="nedges"       : nedges    = json.loads(value)
-        elif    key=="edgesv"       : edgesv    = json.loads(value)
-        elif    key=="edgesw"       : edgesw    = json.loads(value)
-
-even    = 0
-odd     = 1
-start   = 1
+sys.path.insert(1,".")
+from pythonsrc import Game
+g = Game('./data/game-sat.dzn',Game.FIRST0)
 
 # ----------------------------------------------------
-
 from pysat.formula import CNF
 from pysat.solvers import Solver
 from pysat.formula import IDPool
@@ -59,31 +35,31 @@ def get(lits,p) :
 
 # -----------------------------------------------------------
 
-V = newLitsArray(nvertices)
-E = newLitsArray(nedges)
+V = newLitsArray(g.nvertices)
+E = newLitsArray(g.nedges)
 
 cnf.extend([[V[0]]])
 
 constraint = []
 
-for v in range(nvertices) :
-    if owners[v]==even :
+for v in g.vertices :
+    if g.owners[v]==Game.EVEN :
         clause = [ -V[v] ]
-        for e in range(nedges) :
-            if edgesv[e]==v : clause.append( E[e] )
+        for e in g.edges :
+            if g.sources[e]==v : clause.append( E[e] )
         constraint.append(clause)
 
-for v in range(nvertices) :
-    if owners[v]==odd :
-        for e in range(nedges) :
-            if edgesv[e]==v : 
+for v in g.vertices :
+    if g.owners[v]==Game.ODD :
+        for e in g.edges :
+            if g.sources[e]==v : 
                 clause = [ -V[v] , E[e] ]
         constraint.append(clause)
 
-for w in range(nvertices) :
-    if w!=start :
-        for e in range(nedges) :
-            if edgesv[e]==w :
+for w in g.vertices :
+    if w!=g.start :
+        for e in g.edges :
+            if g.sources[e]==w :
                 clause = [ -E[e] , V[v] ]
         constraint.append(clause)
 

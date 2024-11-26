@@ -5,48 +5,8 @@ arg = sys.argv
 
 # ----------------------------------------------------
 
-def createGame(levels, blocks) -> list :
-
-    nvertices   = ((blocks*3)+1)*(levels-1) + ((blocks*2)+1)
-    owners      = []
-    colors      = []
-
-    nedges      = (blocks*6)*(levels-1) + (blocks*4) + (blocks*2*(levels-1))
-    edgesv      = []
-    edgesw      = []
-
-    e = 1   # even blocks sequence
-    o = 0   # odd blocks sequence
-    for l in range(1,levels) :
-        o = ((blocks*3)+1)*(levels-1)+1
-
-        for b in range(1,blocks+1) : 
-            owners += [  1,     0,   0]
-            colors += [l*2, l*2-1, l*2]
-            
-            edgesv += [  e, e+1, e+2,   e, e+2, e+3, e+2, o+1]
-            edgesw += [e+1, e+2,   e, e+2, e+3, e+2, o+1, e+2]
-            e += 3
-            o += 2
-
-        owners += [  1]
-        colors += [l*2]
-        e += 1
-
-    l = levels
-    for b in range(blocks) :
-        owners += [  0,     1]
-        colors += [l*2, l*2-1]
-        
-        edgesv += [  e, e+1, e+1, e+2]
-        edgesw += [e+1,   e, e+2, e+1]
-        e += 2 
-
-    owners += [  0]
-    colors += [levels*2]
-    return [nvertices,owners,colors,nedges,edgesv,edgesw]
-
-# ----------------------------------------------------
+sys.path.insert(1,".")
+from pythonsrc import Game
 
 from minizinc import Instance, Model, Solver
 
@@ -77,15 +37,15 @@ def compute(d,levels,blocks) :
     model       = Model("./model/reductionsat-novel.mzn")
     instance    = Instance(solver, model)
 
-    [nvertices,owners,colors,nedges,edgesv,edgesw] = createGame(levels,blocks)
+    # [nvertices,owners,colors,nedges,sources,targets] = createGame(levels,blocks)
 
-    instance["nvertices"]   = nvertices
-    instance["nedges"]      = nedges
-    instance["owners"]      = owners
-    instance["colors"]      = colors
-    instance["edgesv"]      = edgesv
-    instance["edgesw"]      = edgesw
-    instance["start"]       = 1
+    instance["nvertices"]   = g.nvertices
+    instance["nedges"]      = g.nedges
+    instance["owners"]      = g.owners
+    instance["colors"]      = g.colors
+    instance["sources"]     = g.sources
+    instance["targets"]     = g.targets
+    instance["start"]       = g.start
 
     sat = False
 
@@ -112,13 +72,19 @@ def compute(d,levels,blocks) :
     # print(f"colors = {colors}")
 
     # print(f"nedges = {nedges}")
-    # print(f"edgesv = {edgesv}")
-    # print(f"edgesw = {edgesw}")
+    # print(f"sources = {sources}")
+    # print(f"targets = {targets}")
 
     return (t2-t1),(1 if sat else 0)
 
 # ----------------------------------------------------
 
+# g = Game(Game.RANDOM,10)
+# g = Game(Game.JURDZINSKI,3,2)
+g = Game('./data/game-others.dzn')
+
+print(g)
+g.start = 17
 d       = 0 #int(arg[1])
 levels  = 2 #int(arg[2])
 blocks  = 1 #int(arg[3])

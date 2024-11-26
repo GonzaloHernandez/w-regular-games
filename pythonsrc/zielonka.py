@@ -35,6 +35,8 @@ def zielonka(g) :
 
 # ------------------------------------------------------------------------------------
 
-g = Game('./data/game-jurdzinski-4-3.dzn')
+g = Game('./data/game-others.dzn',Game.FIRST0)
+# g = Game(Game.JURDZINSKI,3,2,Game.FIRST0)
+# print(g)
 W = zielonka(g)
 print(W)
