@@ -73,7 +73,6 @@ class Game :
                 self.vertices   = [v for v in range(self.nvertices)]
                 self.edges      = [e for e in range(self.nedges)]
                 self.start      = 0
-                self.fixZeroPosition()
             else :
                 self.vertices   = [v for v in range(1,self.nvertices+1)]
                 self.edges      = [e for e in range(1,self.nedges+1)]
@@ -84,7 +83,7 @@ class Game :
                 self.colors.append(random.randint(0,m))
                 for _ in range(2) :
                     self.sources.append(v)
-                    self.targets.append(random.randint(1,self.nvertices))
+                    self.targets.append(random.randint(min(self.vertices),max(self.vertices)))
 
 
         # ---------------------------------------------------------

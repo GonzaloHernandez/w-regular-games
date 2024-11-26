@@ -8,7 +8,7 @@ def attractor(V, q, g:Game) :
     for v in V :
         ownvertices     = {g.sources[e] for e in g.getEdges() if g.targets[e]==v and g.owners[g.sources[e]]==q}
         othervertices   = {g.sources[e] for e in g.getEdges() if g.targets[e]==v and g.owners[g.sources[e]]!=q}
-        novertices      = {g.sources[e] for e in g.getEdges() if g.owners[g.sources[e]]!=q and g.sources[e] in othervertices and g.targets[e] != v}
+        novertices      = {g.sources[e] for e in g.getEdges() if g.owners[g.sources[e]]!=q and g.sources[e] in othervertices and g.targets[e] not in V}
         localattractor  = ownvertices.union(othervertices.difference(novertices))
         A = A.union(attractor(localattractor, q, g/V))
     return A
@@ -35,8 +35,9 @@ def zielonka(g) :
 
 # ------------------------------------------------------------------------------------
 
-g = Game('./data/game-wikipedia-min.dzn',Game.FIRST0)
-# g = Game(Game.JURDZINSKI,3,2,Game.FIRST0)
-# print(g)
+g = Game('./data/game-others.dzn',Game.FIRST0)
+# g = Game(Game.JURDZINSKI,4,3,Game.FIRST0)
+# g = Game(Game.RANDOM,10,Game.FIRST0)
+print(g)
 W = zielonka(g)
 print(W)
