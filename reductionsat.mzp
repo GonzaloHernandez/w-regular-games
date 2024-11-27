@@ -1,14 +1,15 @@
 {
     "openFiles": [
-        "data/game-others.dzn",
-        "data/game-jurdzinski.dzn",
         "model/reductionsat-novel.mzn"
     ],
-    "openTab": 2,
+    "openTab": 0,
     "projectFiles": [
-        "data/game-jurdzinski.dzn",
+        "data/game-jurdzinski-2-1.dzn",
+        "data/game-jurdzinski-3-2.dzn",
+        "data/game-jurdzinski-3-3.dzn",
         "data/game-others.dzn",
         "data/game-sat.dzn",
+        "data/game-wikipedia-min.dzn",
         "data/game-wikipedia.dzn",
         "model/cyclefilter.mzn",
         "model/reductionsat-novel.mzn",
