@@ -10,19 +10,19 @@ from pythonsrc import Game
 
 from minizinc import Instance, Model, Solver
 
-driver          = ["gecode","chuffed","cpsatlp"]
+driver          = ["gecode","chuffed","cpsatlp","sonar"]
 
 def compute(d,levels,blocks) :
 
-    solver      = Solver.lookup(driver[d])
+    # solver      = Solver.lookup(driver[d])
 
-    # solver = Solver(
-    #     name="MyChuffed",
-    #     version="0.0",
-    #     id="org.sonar.mychuffed",
-    #     mznlib="/home/chalo/.local/share/minizinc/chuffed",
-    #     executable="/home/chalo/.local/bin/fzn-chuffed",
-    # )
+    solver = Solver(
+        name="MyChuffed",
+        version="0.0",
+        id="org.sonar.mychuffed",
+        mznlib="/home/chalo/.local/share/minizinc/chuffed",
+        executable="/home/chalo/.local/bin/fzn-chuffed",
+    )
 
     # solver = Solver(
     #     name="Gecode",
@@ -50,7 +50,7 @@ def compute(d,levels,blocks) :
     t1 = time.time()
     t2 = time.time()
     try :
-        response = instance.solve(intermediate_solutions=False)
+        response = instance.solve()
         t2 = time.time()
 
         if response.solution is None :
@@ -76,7 +76,7 @@ g = Game('./data/game-jurdzinski-2-1.dzn')
 
 print(g)
 g.start = 1
-d       = 0 #int(arg[1])
+d       = 3 #int(arg[1])
 levels  = 2 #int(arg[2])
 blocks  = 1 #int(arg[3])
 
