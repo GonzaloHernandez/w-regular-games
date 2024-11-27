@@ -9,7 +9,7 @@ array [vertices] of int	: colors;
 array [edges] of int	: sources;
 array [edges] of int	: targets;
 
-vertices : start;
+vertices : start=1;
 
 % -------------------------------------------------------------------------------------
 
@@ -52,11 +52,11 @@ constraint
 
 include "cyclefilter.mzn";
 
-constraint
-	globalmeasureprogress(owners,colors,sources,targets,V,E);
-
 % constraint
-% 	cycle_filter(owners,colors,sources,targets,V,E,[1]);
+% 	globalmeasureprogress(owners,colors,sources,targets,V,E);
+
+constraint
+	cycle_filter(owners,colors,sources,targets,V,E,[1]);
 
 % -------------------------------------------------------------------------------------
 

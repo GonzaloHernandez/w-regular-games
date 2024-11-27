@@ -37,8 +37,6 @@ def compute(d,levels,blocks) :
     model       = Model("./model/reductionsat-novel.mzn")
     instance    = Instance(solver, model)
 
-    # [nvertices,owners,colors,nedges,sources,targets] = createGame(levels,blocks)
-
     instance["nvertices"]   = g.nvertices
     instance["nedges"]      = g.nedges
     instance["owners"]      = g.owners
@@ -49,8 +47,9 @@ def compute(d,levels,blocks) :
 
     sat = False
 
+    t1 = time.time()
+    t2 = time.time()
     try :
-        t1 = time.time()
         response = instance.solve(intermediate_solutions=False)
         t2 = time.time()
 
@@ -67,24 +66,16 @@ def compute(d,levels,blocks) :
         sat = False
         print("Unsatisfiable (Inconsistency detected)")
 
-    # print(f"nvertices = {nvertices}")
-    # print(f"owners = {owners}")
-    # print(f"colors = {colors}")
-
-    # print(f"nedges = {nedges}")
-    # print(f"sources = {sources}")
-    # print(f"targets = {targets}")
-
     return (t2-t1),(1 if sat else 0)
 
 # ----------------------------------------------------
 
 # g = Game(Game.RANDOM,10)
 # g = Game(Game.JURDZINSKI,3,2)
-g = Game('./data/game-others.dzn')
+g = Game('./data/game-jurdzinski-2-1.dzn')
 
 print(g)
-g.start = 17
+g.start = 1
 d       = 0 #int(arg[1])
 levels  = 2 #int(arg[2])
 blocks  = 1 #int(arg[3])
