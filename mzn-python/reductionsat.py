@@ -7,32 +7,13 @@ arg = sys.argv
 
 sys.path.insert(1,".")
 from pythonsrc import Game
-
 from minizinc import Instance, Model, Solver
 
 driver          = ["gecode","chuffed","cpsatlp","sonar"]
 
 def compute(d,levels,blocks) :
 
-    # solver      = Solver.lookup(driver[d])
-
-    solver = Solver(
-        name="MyChuffed",
-        version="0.0",
-        id="org.sonar.mychuffed",
-        mznlib="/home/chalo/.local/share/minizinc/chuffed",
-        executable="/home/chalo/.local/bin/fzn-chuffed",
-    )
-
-    # solver = Solver(
-    #     name="Gecode",
-    #     version="6.3.0",
-    #     id="org.gecode.gecode",
-    #     executable="/opt/minizinc-ide/bin/fzn-gecode",
-    #     # mznlib="/opt/minizinc-ide/share/minizinc/gecode",
-    # )
-
-    # solver.stdFlags=["-a", "-n", "-s", "-v", "-r", "-f", "-t"]
+    solver      = Solver.lookup(driver[d])
     
     model       = Model("./model/reductionsat-novel.mzn")
     instance    = Instance(solver, model)
