@@ -9,8 +9,6 @@ array [vertices] of int	: colors;
 array [edges] of int	: sources;
 array [edges] of int	: targets;
 
-vertices : start;
-
 % -------------------------------------------------------------------------------------
 
 array [vertices]	of var bool	: V;
@@ -27,10 +25,10 @@ predicate fixEdges(array [int] of edges : es, array [int] of edges: nes) =
 % -------------------------------------------------------------------------------------
 
 % constraint
-% 	fixVertices([1,2,4],[3,5,6,7]);
+% 	fixVertices([1,2,3,4],[5,6,7]);
 
 % constraint
-% 	fixEdges([1,2,3,7],[4,5,6]);
+% 	fixEdges([1,3,5,7],[2,4,9,6,8,10,11,12]);
 
 constraint
 	V[start] = true;
@@ -56,7 +54,9 @@ include "cyclefilter.mzn";
 % 	globalmeasureprogress(owners,colors,sources,targets,V,E);
 
 constraint
-	cycle_filter(owners,colors,sources,targets,V,E,[1]);
+	cycle_filter(owners,colors,sources,targets,V,E,[start]);
+
+vertices : start = 1 ;
 
 % -------------------------------------------------------------------------------------
 
@@ -64,6 +64,7 @@ array [int]	of int : Va ::output_only ::output = [v | v in vertices	where fix(V[
 array [int]	of int : Ea ::output_only ::output = [e | e in edges		where fix(E[e])];
 
 % solve ::bool_search(V++E,input_order,indomain_max) satisfy ; 
+
 
 output
 % 	["V  = \(V) \n"] ++
