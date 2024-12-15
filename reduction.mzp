@@ -1,0 +1,22 @@
+{
+    "openFiles": [
+        "model/reduction-cp.mzn"
+    ],
+    "openTab": 0,
+    "projectFiles": [
+        "data/game-SAT.dzn",
+        "data/game-julian.dzn",
+        "data/game-jurdzinski-2-1.dzn",
+        "data/game-jurdzinski-3-2.dzn",
+        "data/game-jurdzinski-3-3.dzn",
+        "data/game-other.dzn",
+        "data/game-umbrella.dzn",
+        "data/game-wiki-min.dzn",
+        "model/cyclefilter.mzn",
+        "model/reduction-cp.mzn",
+        "model/reduction-sat.mzn"
+    ],
+    "selectedBuiltinConfigId": "sonar",
+    "selectedBuiltinConfigVersion": "0.0.0",
+    "version": 106
+}

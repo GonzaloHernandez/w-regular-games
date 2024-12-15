@@ -56,7 +56,7 @@ include "cyclefilter.mzn";
 constraint
 	cycle_filter(owners,colors,sources,targets,V,E,[start]);
 
-vertices : start = 1 ;
+vertices : start = 4 ;
 
 % -------------------------------------------------------------------------------------
 

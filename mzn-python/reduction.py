@@ -15,7 +15,7 @@ def compute(d,levels,blocks) :
 
     solver      = Solver.lookup(driver[d])
     
-    model       = Model("./model/reductionsat-novel.mzn")
+    model       = Model("./model/reduction-cp.mzn")
     instance    = Instance(solver, model)
 
     instance["nvertices"]   = g.nvertices
@@ -53,9 +53,9 @@ def compute(d,levels,blocks) :
 
 # g = Game(Game.RANDOM,10)
 # g = Game(Game.JURDZINSKI,3,2)
-g = Game('./data/game-jurdzinski-2-1.dzn')
+g = Game('./data/game-other.dzn')
 
-print(g)
+# print(g)
 g.start = 1
 d       = 3 #int(arg[1])
 levels  = 2 #int(arg[2])
