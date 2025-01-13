@@ -50,13 +50,13 @@ constraint
 
 include "cyclefilter.mzn";
 
-% constraint
-% 	globalmeasureprogress(owners,colors,sources,targets,V,E);
-
 constraint
-	cycle_filter(owners,colors,sources,targets,V,E,[start]);
+	globalmeasureprogress(owners,colors,sources,targets,V,E);
 
-vertices : start = 4 ;
+% constraint
+% 	cycle_filter(owners,colors,sources,targets,V,E,[start]);
+
+vertices : start = 1 ;
 
 % -------------------------------------------------------------------------------------
 
