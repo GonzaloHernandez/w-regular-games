@@ -33,32 +33,38 @@ def generate_cnf_for_game(g):
         for i in range(math.ceil(math.log2(sum(1 for w in range(g.nvertices) if g.colors[w] == p) + 1)))
     }
 
-    # Ensure the first player's vertex is activated
+    # First player vertices must be activated
     clauses.append([V[0]])
 
-    # Existential player constraints (EVEN)
+    # For every EVEN vertice, at least one outgoing edge must be activated
     for v in range(g.nvertices):
         if g.owners[v] == 0:
             clauses.append([-V[v]] + [E[v, w] for w in g.targets if (v, w) in E])
 
-    # Universal player constraints (ODD)
+    # For every ODD vertice, each outgoing edge must be activated
     for v in range(g.nvertices):
         if g.owners[v] == 1:
             for w in g.targets:
                 if (v, w) in E:
                     clauses.append([-V[v], E[v, w]])
 
-    # Edge activation constraints
+    # For every activated edge, the source vertex must be activated
     for v in range(g.nvertices):
         for w in g.targets:
             if (v, w) in E:
-                clauses.append([-E[v, w], V[v]])  # If edge is activated, source must be activated
-                clauses.append([-E[v, w], V[w]])  # If edge is activated, target must be activated
+                clauses.append([-E[v, w], V[v]])
+
+    # For every activated edge, the target vertex must be activated
+    for v in range(g.nvertices):
+        for w in g.targets:
+            if (v, w) in E:
+                clauses.append([-E[v, w], V[w]]) 
+
 
     # Progress measure constraints
     def greater_or_equals(v, w, p, bits):
         return [
-            [-X[v, p, i], X[w, p, i]] for i in range(bits)
+            [X[v, p, i], -X[w, p, i]] for i in range(bits)
         ]
 
     def strictly_greater(v, w, p, bits):
@@ -96,16 +102,16 @@ def write_dimacs(variable_map, clauses, filename="game.cnf"):
 def main():
     # Example parity game: 4 nodes, edges, priorities, owners
     g = ParityGame(
-        nvertices = 7,
-        owners    = [1,0,0,1,0,1,0],
-        colors    = [2,1,2,2,4,3,4],
-        nedges    = 12,
-        sources   = [0,0,1,2,2,2,3,4,5,5,5,6],
-        targets   = [1,2,2,0,3,5,2,5,2,4,6,5]
+        nvertices = 19,
+        owners    = [1,0,0,1,0,0,1,1,0,0,1,0,0,1,0,1,0,1,0],
+        colors    = [2,1,2,2,1,2,2,4,3,4,4,3,4,4,6,5,6,5,6],
+        nedges    = 40,
+        sources   = [0,0,1,2,2,2,3,3,3,4,5,5,5,6,7,7,8,9,9,9,10,10,10,11,12,12,12,13,14,15,15,15,15,16,16,17,17,17,17,18],
+        targets   = [1,2,2,0,3,15,2,4,5,5,3,6,17,5,8,9,9,7,10,15,9,11,12,12,10,13,17,12,15,14,16,2,9,15,17,16,18,5,12,17],
     )
 
     variable_map, clauses = generate_cnf_for_game(g)
-    write_dimacs(variable_map, clauses, "\home\chalo\game.cnf")
+    write_dimacs(variable_map, clauses, "/home/chalo/game.cnf")
     print(f"CNF written to game.cnf with {len(variable_map)} variables and {len(clauses)} clauses.")
 
 if __name__ == "__main__":

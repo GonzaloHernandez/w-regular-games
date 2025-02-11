@@ -57,12 +57,12 @@ def solveGame(g):
 
     print(solver.statistics().time)
 
-# g = Game('./data/game-jurdzinski-2-2.dzn',Game.FIRST0)
+g = Game('./data/game-jurdzinski-3-2.dzn',Game.FIRST0)
 
-levels  = int(arg[1])
-blocks  = int(arg[2])
+# levels  = int(arg[1])
+# blocks  = int(arg[2])
 
-g = Game(Game.JURDZINSKI,levels,blocks,Game.FIRST0)
+# g = Game(Game.JURDZINSKI,levels,blocks,Game.FIRST0)
 # g = Game(Game.RANDOM,10,Game.FIRST0)
 # print(g)
 
