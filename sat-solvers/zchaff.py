@@ -10,11 +10,17 @@ class ParityGame:
         self.sources = sources
         self.targets = targets
 
+
+
 def get_var_id(variable_map, key):
-    """ Assigns a unique integer ID to each Boolean variable """
     if key not in variable_map:
         variable_map[key] = len(variable_map) + 1
     return variable_map[key]
+
+def calculate_bits(n) :
+    return math.ceil(math.log2(n))*2 + (math.ceil(math.log2(n))-1)*2
+
+# ----------------------------------------------------------------------------------------
 
 def generate_cnf_for_game(g):
     variable_map = {}  # Maps (name, args) -> unique integer ID
@@ -30,7 +36,7 @@ def generate_cnf_for_game(g):
         (v, p, i): get_var_id(variable_map, ("X", v, p, i))
         for v in range(g.nvertices)
         for p in set(g.colors) if p % 2 == 1
-        for i in range(math.ceil(math.log2(sum(1 for w in range(g.nvertices) if g.colors[w] == p) + 1)))
+        for i in range(calculate_bits(sum(1 for w in range(g.nvertices) if g.colors[w] == p) + 1))
     }
 
     # First player vertices must be activated
@@ -60,34 +66,61 @@ def generate_cnf_for_game(g):
             if (v, w) in E:
                 clauses.append([-E[v, w], V[w]]) 
 
+    # ----------------------------------------------------------------------------------------
 
-    # Progress measure constraints
-    def greater_or_equals(v, w, p, bits):
-        return [
-            [X[v, p, i], -X[w, p, i]] for i in range(bits)
-        ]
-
-    def strictly_greater(v, w, p, bits):
-        constraints = [[X[v, p, 0], -X[w, p, 0]]]  # Lowest bit must be different
+    def lexeq(w, v, p, bits) :
+        cnf = []
+        n = bits-1
+        c = bits*2-1
+        e = bits*2+(bits-1)
+        s = bits*2+(bits-1)*2
+        
+        cnf.append([-X[v, p, c], -X[w, p, n], X[v, p, n]])
+        cnf.append([+X[v, p, c], +X[w, p, n]])
+        cnf.append([+X[v, p, c], -X[v, p, n]])
+        
         for i in range(1, bits):
-            constraints.append([-X[w, p, i], X[v, p, i]])
-            constraints.append([X[w, p, i], -X[v, p, i], *constraints[-1]])
-        return constraints
+            cnf.append([-X[v, p, e-i], -X[w, p, n-i], +X[v, p, n-i]])
+            cnf.append([-X[v, p, e-i], +X[w, p, n-i], -X[v, p, n-i]])
+            cnf.append([+X[v, p, e-i], +X[w, p, n-i], +X[v, p, n-i]])
+            cnf.append([+X[v, p, e-i], -X[w, p, n-i], -X[v, p, n-i]])
+
+            cnf.append([-X[v, p, s-i], -X[w, p, n-i]])
+            cnf.append([-X[v, p, s-i], +X[v, p, n-i]])
+            cnf.append([+X[v, p, s-i], +X[w, p, n-i], -X[v, p, n-i]])
+
+            cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, e-i]])
+            cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, c-i-1]])
+
+            cnf.append([+X[v, p, c-i], +X[v, p, s-i]])
+            cnf.append([+X[v, p, c-i], -X[v, p, e-i], -X[v, p, c-i]])
+        
+        cnf.append([X[v, p, bits]]) # final clause encoding the fact that a <= b
+
+        return cnf
+
+    # ----------------------------------------------------------------------------------------
+    
+    def lexle(w, v, p, bits) :
+        cnf = lexeq(w, v, p, bits)      # a <= b  
+        cnf.append([-X[v, p, bits*2]])  # not a == b
+        return cnf
+
+    # ----------------------------------------------------------------------------------------
 
     for v, w in E:
         q = g.colors[w]
-        bits = math.ceil(math.log2(sum(1 for x in range(g.nvertices) if g.colors[x] == q) + 1))
 
         constraints = []
         for p in set(g.colors):
             if p < q and p % 2 == 1:
-                constraints += greater_or_equals(v, w, p, bits)
+                constraints += lexeq(w, v, p, math.ceil(math.log2(sum(1 for x in range(g.nvertices) if g.colors[x] == p) + 1)))
 
         if q % 2 == 0:
             for c in constraints:
                 clauses.append([-E[v, w]] + c)
         else:
-            clauses += strictly_greater(v, w, q, bits)
+            clauses += lexle(w, v, q, math.ceil(math.log2(sum(1 for x in range(g.nvertices) if g.colors[x] == q) + 1)))
             for c in constraints:
                 clauses.append([-E[v, w]] + c)
 
