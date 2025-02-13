@@ -1,16 +1,7 @@
-import math
+import math,sys
 from itertools import product
-
-class ParityGame:
-    def __init__(self, nvertices, colors, owners, nedges, sources, targets):
-        self.nvertices = nvertices
-        self.colors = colors
-        self.owners = owners
-        self.nedges = nedges
-        self.sources = sources
-        self.targets = targets
-
-
+sys.path.insert(1,".")
+from pythonsrc import Game
 
 def get_var_id(variable_map, key):
     if key not in variable_map:
@@ -20,7 +11,7 @@ def get_var_id(variable_map, key):
 def calculate_bits(n) :
     return math.ceil(math.log2(n))*2 + (math.ceil(math.log2(n))-1)*2
 
-# ----------------------------------------------------------------------------------------
+# ========================================================================================
 
 def generate_cnf_for_game(g):
     variable_map = {}  # Maps (name, args) -> unique integer ID
@@ -90,10 +81,10 @@ def generate_cnf_for_game(g):
             cnf.append([+X[v, p, s-i], +X[w, p, n-i], -X[v, p, n-i]])
 
             cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, e-i]])
-            cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, c-i-1]])
+            cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, c-(i-1)]])
 
             cnf.append([+X[v, p, c-i], +X[v, p, s-i]])
-            cnf.append([+X[v, p, c-i], -X[v, p, e-i], -X[v, p, c-i]])
+            cnf.append([+X[v, p, c-i], -X[v, p, e-i], -X[v, p, c-(i-1)]])
         
         cnf.append([X[v, p, bits]]) # final clause encoding the fact that a <= b
 
@@ -102,29 +93,37 @@ def generate_cnf_for_game(g):
     # ----------------------------------------------------------------------------------------
     
     def lexle(w, v, p, bits) :
-        cnf = lexeq(w, v, p, bits)      # a <= b  
-        cnf.append([-X[v, p, bits*2]])  # not a == b
+        if bits > 1:
+            cnf = lexeq(w, v, p, bits)      # a <= b  
+            cnf.append([-X[v, p, bits*2]])  # not a == b
+        else :
+            cnf = [[-X[w, p, 0]], [X[v, p, 0]]]
         return cnf
 
     # ----------------------------------------------------------------------------------------
 
+    # Progress measure constraints
     for v, w in E:
         q = g.colors[w]
 
         constraints = []
         for p in set(g.colors):
             if p < q and p % 2 == 1:
-                constraints += lexeq(w, v, p, math.ceil(math.log2(sum(1 for x in range(g.nvertices) if g.colors[x] == p) + 1)))
+                bits = math.ceil(math.log2(sum(1 for x in range(g.nvertices) if g.colors[x] == p) + 1))
+                constraints += lexeq(w, v, p, bits)
+
+        for c in constraints:
+            clauses.append([-E[v, w]] + c)
 
         if q % 2 == 0:
-            for c in constraints:
-                clauses.append([-E[v, w]] + c)
+            None
         else:
-            clauses += lexle(w, v, q, math.ceil(math.log2(sum(1 for x in range(g.nvertices) if g.colors[x] == q) + 1)))
-            for c in constraints:
-                clauses.append([-E[v, w]] + c)
+            bits = math.ceil(math.log2(sum(1 for x in range(g.nvertices) if g.colors[x] == q) + 1))
+            clauses += lexle(w, v, q, bits)
 
     return variable_map, clauses
+
+# ========================================================================================
 
 def write_dimacs(variable_map, clauses, filename="game.cnf"):
     with open(filename, "w") as f:
@@ -132,17 +131,14 @@ def write_dimacs(variable_map, clauses, filename="game.cnf"):
         for clause in clauses:
             f.write(" ".join(map(str, clause)) + " 0\n")
 
-def main():
-    # Example parity game: 4 nodes, edges, priorities, owners
-    g = ParityGame(
-        nvertices = 19,
-        owners    = [1,0,0,1,0,0,1,1,0,0,1,0,0,1,0,1,0,1,0],
-        colors    = [2,1,2,2,1,2,2,4,3,4,4,3,4,4,6,5,6,5,6],
-        nedges    = 40,
-        sources   = [0,0,1,2,2,2,3,3,3,4,5,5,5,6,7,7,8,9,9,9,10,10,10,11,12,12,12,13,14,15,15,15,15,16,16,17,17,17,17,18],
-        targets   = [1,2,2,0,3,15,2,4,5,5,3,6,17,5,8,9,9,7,10,15,9,11,12,12,10,13,17,12,15,14,16,2,9,15,17,16,18,5,12,17],
-    )
+# ========================================================================================
 
+def main():
+
+    # g = Game('./data/game-jurdzinski-2-1.dzn',Game.FIRST0)
+    
+    g = Game(Game.JURDZINSKI,2,1,Game.FIRST0)
+    
     variable_map, clauses = generate_cnf_for_game(g)
     write_dimacs(variable_map, clauses, "/home/chalo/game.cnf")
     print(f"CNF written to game.cnf with {len(variable_map)} variables and {len(clauses)} clauses.")
