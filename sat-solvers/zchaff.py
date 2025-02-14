@@ -96,6 +96,7 @@ def generate_cnf_for_game(g):
         if bits > 1:
             cnf = lexeq(w, v, p, bits)      # a <= b  
             cnf.append([-X[v, p, bits*2]])  # not a == b
+            cnf.append([-X[v, p, (bits*2)+(bits-1)-i] for i in range(1,bits)] )  # not a == b
         else :
             cnf = [[-X[w, p, 0]], [X[v, p, 0]]]
         return cnf
@@ -137,7 +138,7 @@ def main():
 
     # g = Game('./data/game-jurdzinski-2-1.dzn',Game.FIRST0)
     
-    g = Game(Game.JURDZINSKI,2,1,Game.FIRST0)
+    g = Game(Game.JURDZINSKI,2,2,Game.FIRST0)
     
     variable_map, clauses = generate_cnf_for_game(g)
     write_dimacs(variable_map, clauses, "/home/chalo/game.cnf")
