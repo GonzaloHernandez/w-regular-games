@@ -69,12 +69,6 @@ def solveGame(g):
     print(solver.statistics().time)
 
 # g = Game('./data/game-jurdzinski-2-3.dzn',Game.FIRST0)
-
-# levels  = int(arg[1])
-# blocks  = int(arg[2])
-
-g = Game(Game.JURDZINSKI,2,1,Game.FIRST0)
-# g = Game(Game.RANDOM,10,Game.FIRST0)
-# print(g)
+g = Game(Game.JURDZINSKI,2,3,Game.FIRST0)
 
 solveGame(g)

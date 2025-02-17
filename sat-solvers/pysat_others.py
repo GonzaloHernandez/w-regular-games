@@ -11,6 +11,7 @@ from pysat.formula import CNF
 from pysat.solvers import Solver
 from pysat.formula import IDPool
 from pysat.card import CardEnc
+
 pool    = IDPool()
 cnf     = CNF()
 solver  = Solver()

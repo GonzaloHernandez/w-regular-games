@@ -2,18 +2,18 @@ import os; os.system("clear")
 
 # ----------------------------------------------------------------------------------------
 
-def lexcomp_le(w, v, p, bits) :
+def lexcomp_le(w, v, p, nbits) :
     cnf = []
-    n = bits-1
-    c = bits*2-1
-    e = bits*2+(bits-1)
-    s = bits*2+(bits-1)*2
+    n = nbits-1
+    c = nbits*2-1
+    e = nbits*2+(nbits-1)
+    s = nbits*2+(nbits-1)*2
     
     cnf.append([-X[v, p, c], -X[w, p, n], X[v, p, n]])
     cnf.append([+X[v, p, c], +X[w, p, n]])
     cnf.append([+X[v, p, c], -X[v, p, n]])
     
-    for i in range(1, bits):
+    for i in range(1, nbits):
         cnf.append([-X[v, p, e-i], -X[w, p, n-i], +X[v, p, n-i]])
         cnf.append([-X[v, p, e-i], +X[w, p, n-i], -X[v, p, n-i]])
         cnf.append([+X[v, p, e-i], +X[w, p, n-i], +X[v, p, n-i]])
@@ -29,24 +29,24 @@ def lexcomp_le(w, v, p, bits) :
         cnf.append([+X[v, p, c-i], -X[v, p, s-i]])
         cnf.append([+X[v, p, c-i], -X[v, p, e-i], -X[v, p, c-(i-1)]])
     
-    cnf.append([X[v, p, bits]]) # final clause encoding the fact that a <= b
+    cnf.append([X[v, p, nbits]]) # final clause encoding the fact that a <= b
 
     return cnf
 
 # ----------------------------------------------------------------------------------------
 
-def lexcomp_sl(w, v, p, bits) :
+def lexcomp_sl(w, v, p, nbits) :
     cnf = []
-    n = bits-1
-    c = bits*2-1
-    e = bits*2+(bits-1)
-    s = bits*2+(bits-1)*2
+    n = nbits-1
+    c = nbits*2-1
+    e = nbits*2+(nbits-1)
+    s = nbits*2+(nbits-1)*2
     
     cnf.append([+X[w, p, c], -X[v, p, n], +X[v, p, c]])
     cnf.append([-X[v, p, c], -X[w, p, n]])
     cnf.append([-X[v, p, c], +X[v, p, n]])
     
-    for i in range(1, bits):
+    for i in range(1, nbits):
         cnf.append([-X[v, p, e-i], -X[w, p, n-i], +X[v, p, n-i]])
         cnf.append([-X[v, p, e-i], +X[w, p, n-i], -X[v, p, n-i]])
         cnf.append([+X[v, p, e-i], +X[w, p, n-i], +X[v, p, n-i]])
@@ -62,19 +62,8 @@ def lexcomp_sl(w, v, p, bits) :
         cnf.append([+X[v, p, c-i], -X[v, p, s-i]])
         cnf.append([+X[v, p, c-i], -X[v, p, e-i], -X[v, p, c-(i-1)]])
     
-    cnf.append([X[v, p, bits]]) # final clause encoding the fact that a <= b
+    cnf.append([X[v, p, nbits]]) # final clause encoding the fact that a <= b
 
-    return cnf
-
-# ----------------------------------------------------------------------------------------
-    
-def lexle_(w, v, p, bits) :
-    if bits > 1:
-        cnf = lexcomp_le(w, v, p, bits)      # a <= b  
-        cnf.append([-X[v, p, bits*2]])  # not a == b
-        # cnf.append([-X[w, p, (bits*2)+(bits-1)-i] for i in range(1,bits)] )  # not a == b
-    else :
-        cnf = [[-X[w, p, 0]], [X[v, p, 0]]]
     return cnf
 
 # ----------------------------------------------------------------------------------------
@@ -88,7 +77,7 @@ def write_dimacs(vars, clauses, filename):
 # ----------------------------------------------------------------------------------------
 
 id = 0
-bits = 2
+nbits = 2
 
 def getid():
     global id
@@ -96,20 +85,20 @@ def getid():
     return id
 
 X = {
-    (v, 0, i): getid() for v in range(2) for i in range(bits*2+(bits-1)*2)
+    (v, 0, i): getid() for v in range(2) for i in range(nbits*2+(nbits-1)*2)
 }
 
-cnf = lexcomp_le(0, 1, 0, bits)
-# cnf.append([-X[0,0,0]])
-# cnf.append([+X[0,0,1]])
+cnf = lexcomp_sl(0, 1, 0, nbits)
+cnf.append([-X[0,0,0]])
+cnf.append([+X[0,0,1]])
 # cnf.append([-X[0,0,2]])
 
-# cnf.append([+X[1,0,0]])
-# cnf.append([+X[1,0,1]])
+cnf.append([-X[1,0,0]])
+cnf.append([+X[1,0,1]])
 # cnf.append([-X[1,0,2]])
 
 write_dimacs(id, cnf, "/home/chalo/g.cnf")
 
 import subprocess
 
-# subprocess.run("~/zchaff /home/chalo/game.cnf | grep RESULT", shell=True)
+subprocess.run("~/zchaff /home/chalo/g.cnf | grep RESULT", shell=True)
