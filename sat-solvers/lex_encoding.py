@@ -26,7 +26,7 @@ def lexeq(w, v, p, bits) :
         cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, e-i]])
         cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, c-(i-1)]])
 
-        cnf.append([+X[v, p, c-i], +X[v, p, s-i]])
+        cnf.append([+X[v, p, c-i], -X[v, p, s-i]])
         cnf.append([+X[v, p, c-i], -X[v, p, e-i], -X[v, p, c-(i-1)]])
     
     cnf.append([X[v, p, bits]]) # final clause encoding the fact that a <= b
@@ -59,7 +59,7 @@ def lexle(w, v, p, bits) :
         cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, e-i]])
         cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, c-(i-1)]])
 
-        cnf.append([+X[v, p, c-i], +X[v, p, s-i]])
+        cnf.append([+X[v, p, c-i], -X[v, p, s-i]])
         cnf.append([+X[v, p, c-i], -X[v, p, e-i], -X[v, p, c-(i-1)]])
     
     cnf.append([X[v, p, bits]]) # final clause encoding the fact that a <= b
@@ -88,7 +88,7 @@ def write_dimacs(vars, clauses, filename):
 # ----------------------------------------------------------------------------------------
 
 id = 0
-bits = 3
+bits = 1
 
 def getid():
     global id
@@ -100,13 +100,13 @@ X = {
 }
 
 cnf = lexle(0, 1, 0, bits)
-cnf.append([-X[0,0,0]])
-cnf.append([+X[0,0,1]])
-cnf.append([+X[0,0,2]])
+cnf.append([+X[0,0,0]])
+# cnf.append([+X[0,0,1]])
+# cnf.append([-X[0,0,2]])
 
-cnf.append([+X[1,0,0]])
-cnf.append([-X[1,0,1]])
-cnf.append([-X[1,0,2]])
+cnf.append([-X[1,0,0]])
+# cnf.append([+X[1,0,1]])
+# cnf.append([-X[1,0,2]])
 
 write_dimacs(id, cnf, "/home/chalo/game.cnf")
 

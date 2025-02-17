@@ -31,7 +31,7 @@ def generate_cnf_for_game(g):
     }
 
     # First player vertices must be activated
-    clauses.append([V[0]])
+    clauses.append([V[14]])
 
     # For every EVEN vertice, at least one outgoing edge must be activated
     for v in range(g.nvertices):
@@ -83,7 +83,7 @@ def generate_cnf_for_game(g):
             cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, e-i]])
             cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, c-(i-1)]])
 
-            cnf.append([+X[v, p, c-i], +X[v, p, s-i]])
+            cnf.append([+X[v, p, c-i], -X[v, p, s-i]])
             cnf.append([+X[v, p, c-i], -X[v, p, e-i], -X[v, p, c-(i-1)]])
         
         cnf.append([X[v, p, bits]]) # final clause encoding the fact that a <= b
@@ -91,14 +91,36 @@ def generate_cnf_for_game(g):
         return cnf
 
     # ----------------------------------------------------------------------------------------
-    
+
     def lexle(w, v, p, bits) :
-        if bits > 1:
-            cnf = lexeq(w, v, p, bits)      # a <= b  
-            cnf.append([-X[v, p, bits*2]])  # not a == b
-            cnf.append([-X[v, p, (bits*2)+(bits-1)-i] for i in range(1,bits)] )  # not a == b
-        else :
-            cnf = [[-X[w, p, 0]], [X[v, p, 0]]]
+        cnf = []
+        n = bits-1
+        c = bits*2-1
+        e = bits*2+(bits-1)
+        s = bits*2+(bits-1)*2
+        
+        cnf.append([+X[w, p, c], -X[v, p, n], +X[v, p, c]])
+        cnf.append([-X[v, p, c], -X[w, p, n]])
+        cnf.append([-X[v, p, c], +X[v, p, n]])
+        
+        for i in range(1, bits):
+            cnf.append([-X[v, p, e-i], -X[w, p, n-i], +X[v, p, n-i]])
+            cnf.append([-X[v, p, e-i], +X[w, p, n-i], -X[v, p, n-i]])
+            cnf.append([+X[v, p, e-i], +X[w, p, n-i], +X[v, p, n-i]])
+            cnf.append([+X[v, p, e-i], -X[w, p, n-i], -X[v, p, n-i]])
+
+            cnf.append([-X[v, p, s-i], -X[w, p, n-i]])
+            cnf.append([-X[v, p, s-i], +X[v, p, n-i]])
+            cnf.append([+X[v, p, s-i], +X[w, p, n-i], -X[v, p, n-i]])
+
+            cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, e-i]])
+            cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, c-(i-1)]])
+
+            cnf.append([+X[v, p, c-i], -X[v, p, s-i]])
+            cnf.append([+X[v, p, c-i], -X[v, p, e-i], -X[v, p, c-(i-1)]])
+        
+        cnf.append([X[v, p, bits]]) # final clause encoding the fact that a <= b
+
         return cnf
 
     # ----------------------------------------------------------------------------------------
@@ -138,7 +160,7 @@ def main():
 
     # g = Game('./data/game-jurdzinski-2-1.dzn',Game.FIRST0)
     
-    g = Game(Game.JURDZINSKI,2,2,Game.FIRST0)
+    g = Game(Game.JURDZINSKI,3,2,Game.FIRST0)
     
     variable_map, clauses = generate_cnf_for_game(g)
     write_dimacs(variable_map, clauses, "/home/chalo/game.cnf")
