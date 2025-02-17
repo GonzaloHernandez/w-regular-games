@@ -1,3 +1,4 @@
+import os; os.system("clear")
 import math,sys
 from itertools import product
 sys.path.insert(1,".")
@@ -31,7 +32,7 @@ def generate_cnf_for_game(g):
     }
 
     # First player vertices must be activated
-    clauses.append([V[14]])
+    clauses.append([V[0]])
 
     # For every EVEN vertice, at least one outgoing edge must be activated
     for v in range(g.nvertices):
@@ -45,11 +46,11 @@ def generate_cnf_for_game(g):
                 if (v, w) in E:
                     clauses.append([-V[v], E[v, w]])
 
-    # For every activated edge, the source vertex must be activated
-    for v in range(g.nvertices):
-        for w in g.targets:
-            if (v, w) in E:
-                clauses.append([-E[v, w], V[v]])
+    # # For every activated edge, the source vertex must be activated
+    # for v in range(g.nvertices):
+    #     for w in g.targets:
+    #         if (v, w) in E:
+    #             clauses.append([-E[v, w], V[v]])
 
     # For every activated edge, the target vertex must be activated
     for v in range(g.nvertices):
@@ -59,7 +60,7 @@ def generate_cnf_for_game(g):
 
     # ----------------------------------------------------------------------------------------
 
-    def lexeq(w, v, p, bits) :
+    def lexcomp_le(w, v, p, bits) :
         cnf = []
         n = bits-1
         c = bits*2-1
@@ -92,7 +93,7 @@ def generate_cnf_for_game(g):
 
     # ----------------------------------------------------------------------------------------
 
-    def lexle(w, v, p, bits) :
+    def lexcomp_sl(w, v, p, bits) :
         cnf = []
         n = bits-1
         c = bits*2-1
@@ -129,20 +130,19 @@ def generate_cnf_for_game(g):
     for v, w in E:
         q = g.colors[w]
 
-        constraints = []
+        pm_constraints = []
         for p in set(g.colors):
             if p < q and p % 2 == 1:
                 bits = math.ceil(math.log2(sum(1 for x in range(g.nvertices) if g.colors[x] == p) + 1))
-                constraints += lexeq(w, v, p, bits)
-
-        for c in constraints:
-            clauses.append([-E[v, w]] + c)
+                pm_constraints += lexcomp_le(w, v, p, bits)
 
         if q % 2 == 0:
-            None
+            for c in pm_constraints:
+                clauses.append([-E[v, w]] + c)
         else:
             bits = math.ceil(math.log2(sum(1 for x in range(g.nvertices) if g.colors[x] == q) + 1))
-            clauses += lexle(w, v, q, bits)
+            for c in lexcomp_sl(w, v, q, bits) + pm_constraints:
+                clauses.append([-E[v, w]] + c)
 
     return variable_map, clauses
 
@@ -156,15 +156,20 @@ def write_dimacs(variable_map, clauses, filename="game.cnf"):
 
 # ========================================================================================
 
+import subprocess
+
 def main():
 
-    # g = Game('./data/game-jurdzinski-2-1.dzn',Game.FIRST0)
+    g = Game('./data/game-jurdzinski-2-3.dzn',Game.FIRST0)
     
-    g = Game(Game.JURDZINSKI,3,2,Game.FIRST0)
+    # g = Game(Game.JURDZINSKI,2,3,Game.FIRST0)
     
     variable_map, clauses = generate_cnf_for_game(g)
     write_dimacs(variable_map, clauses, "/home/chalo/game.cnf")
     print(f"CNF written to game.cnf with {len(variable_map)} variables and {len(clauses)} clauses.")
+
+    subprocess.run("~/zchaff /home/chalo/game.cnf | grep RESULT", shell=True)
+    # subprocess.run("cadical /home/chalo/game.cnf -q", shell=True)
 
 if __name__ == "__main__":
     main()

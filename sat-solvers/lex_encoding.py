@@ -1,8 +1,8 @@
-
+import os; os.system("clear")
 
 # ----------------------------------------------------------------------------------------
 
-def lexeq(w, v, p, bits) :
+def lexcomp_le(w, v, p, bits) :
     cnf = []
     n = bits-1
     c = bits*2-1
@@ -35,7 +35,7 @@ def lexeq(w, v, p, bits) :
 
 # ----------------------------------------------------------------------------------------
 
-def lexle(w, v, p, bits) :
+def lexcomp_sl(w, v, p, bits) :
     cnf = []
     n = bits-1
     c = bits*2-1
@@ -70,7 +70,7 @@ def lexle(w, v, p, bits) :
     
 def lexle_(w, v, p, bits) :
     if bits > 1:
-        cnf = lexeq(w, v, p, bits)      # a <= b  
+        cnf = lexcomp_le(w, v, p, bits)      # a <= b  
         cnf.append([-X[v, p, bits*2]])  # not a == b
         # cnf.append([-X[w, p, (bits*2)+(bits-1)-i] for i in range(1,bits)] )  # not a == b
     else :
@@ -88,7 +88,7 @@ def write_dimacs(vars, clauses, filename):
 # ----------------------------------------------------------------------------------------
 
 id = 0
-bits = 1
+bits = 2
 
 def getid():
     global id
@@ -99,14 +99,17 @@ X = {
     (v, 0, i): getid() for v in range(2) for i in range(bits*2+(bits-1)*2)
 }
 
-cnf = lexle(0, 1, 0, bits)
-cnf.append([+X[0,0,0]])
+cnf = lexcomp_le(0, 1, 0, bits)
+# cnf.append([-X[0,0,0]])
 # cnf.append([+X[0,0,1]])
 # cnf.append([-X[0,0,2]])
 
-cnf.append([-X[1,0,0]])
+# cnf.append([+X[1,0,0]])
 # cnf.append([+X[1,0,1]])
 # cnf.append([-X[1,0,2]])
 
-write_dimacs(id, cnf, "/home/chalo/game.cnf")
+write_dimacs(id, cnf, "/home/chalo/g.cnf")
 
+import subprocess
+
+# subprocess.run("~/zchaff /home/chalo/game.cnf | grep RESULT", shell=True)

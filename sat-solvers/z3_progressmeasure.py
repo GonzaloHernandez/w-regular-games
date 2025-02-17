@@ -28,11 +28,11 @@ def solveGame(g):
                 if (v, w) in E:
                     solver.add(Or([V[v]==False] +  [E[v, w]]))
 
-    # For every activated edge, the source vertex must be activated
-    for v in range(g.nvertices):
-        for w in g.targets:
-            if (v, w) in E:
-                solver.add(Or([E[v, w]==False] + [V[v]]))
+    # # For every activated edge, the source vertex must be activated
+    # for v in range(g.nvertices):
+    #     for w in g.targets:
+    #         if (v, w) in E:
+    #             solver.add(Or([E[v, w]==False] + [V[v]]))
 
     # For every activated edge, the target vertex must be activated
     for v in range(g.nvertices):
@@ -43,11 +43,22 @@ def solveGame(g):
     # Progress measure constraints
     for v, w in E:
         q = g.colors[w]
-        constraints = [X[v, p] >= X[w, p] for p in set(g.colors) if p < q and p % 2 == 1 if (v, p) in X and (w, p) in X]
+
+        # pm_constraints = [X[v, p] >= X[w, p] for p in set(g.colors) if p < q and p % 2 == 1]
+        pm_constraints = []
+        for p in set(g.colors):
+            if p < q and p % 2 == 1:
+                pm_constraints += [X[v, p] >= X[w, p]]
+
         if q % 2 == 0:
-            solver.add(Implies(E[v, w], And(constraints)))
+            # solver.add(Implies(E[v, w], And(pm_constraints)))
+            for c in pm_constraints:
+                solver.add(Or([E[v, w]==False] + [c]))
         else:
-            solver.add(Implies(E[v, w], And(X[v, q] > X[w, q], And(constraints))))
+            # solver.add(Implies(E[v, w], And(X[v, q] > X[w, q], And(pm_constraints))))
+            for c in [X[v, q] > X[w, q]] + pm_constraints:
+                solver.add(Or([E[v, w]==False] + [c]))
+
 
     # Solve the formula
     if solver.check() == sat:
@@ -57,12 +68,12 @@ def solveGame(g):
 
     print(solver.statistics().time)
 
-g = Game('./data/game-jurdzinski-2-1.dzn',Game.FIRST0)
+# g = Game('./data/game-jurdzinski-2-3.dzn',Game.FIRST0)
 
 # levels  = int(arg[1])
 # blocks  = int(arg[2])
 
-# g = Game(Game.JURDZINSKI,levels,blocks,Game.FIRST0)
+g = Game(Game.JURDZINSKI,2,1,Game.FIRST0)
 # g = Game(Game.RANDOM,10,Game.FIRST0)
 # print(g)
 
