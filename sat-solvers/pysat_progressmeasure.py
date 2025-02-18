@@ -166,24 +166,27 @@ t2 = time.time()
 # ----------------------------------------------------------------------------------------
 # save dimacs file
 # ----------------------------------------------------------------------------------------
-write_dimacs(clauses, "/home/chalo/game.cnf")
+# write_dimacs(clauses, "/home/chalo/game.cnf")
 
 
-result = subprocess.run("~/zchaff /home/chalo/game.cnf | grep 'Total Run Time'", capture_output=True, text=True, shell=True)
+# result = subprocess.run("~/zchaff /home/chalo/game.cnf | grep 'Total Run Time'", capture_output=True, text=True, shell=True)
 
-print(f"{t2-t1},{result.stdout}")
+# print(f"{t2-t1},{result.stdout}")
 
 # ----------------------------------------------------------------------------------------
 # solve
 # ----------------------------------------------------------------------------------------
-# cnf = CNF()
-# cnf.extend(clauses)
-# solver = Solver(name="g3")
-# solver.append_formula(cnf)
+cnf = CNF()
+cnf.extend(clauses)
+solver = Solver(name="g3")
+solver.append_formula(cnf)
 
-# if solver.solve():
-#     print("SAT",solver.time())
-# else:
-#     print("UNSAT")
+t1 = time.time()
+if solver.solve():
+    print("SAT",end=",") 
+else:
+    print("UNSAT",end=",")
+t2 = time.time()
 
-# solver.delete()
+print(t2-t1)
+solver.delete()
