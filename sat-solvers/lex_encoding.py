@@ -1,103 +1,108 @@
 import os; os.system("clear")
+import math
+from  pysat.formula import IDPool
+
+pool = IDPool()
 
 # ----------------------------------------------------------------------------------------
 
-def lexcomp_le(w, v, p, nbits) :
+def lexcomp_greateorrequals(a, b, p, nbits) : # a >= b
     cnf = []
-    n = nbits-1
-    c = nbits*2-1
-    e = nbits*2+(nbits-1)
-    s = nbits*2+(nbits-1)*2
-    
-    cnf.append([-X[v, p, c], -X[w, p, n], X[v, p, n]])
-    cnf.append([+X[v, p, c], +X[w, p, n]])
-    cnf.append([+X[v, p, c], -X[v, p, n]])
-    
-    for i in range(1, nbits):
-        cnf.append([-X[v, p, e-i], -X[w, p, n-i], +X[v, p, n-i]])
-        cnf.append([-X[v, p, e-i], +X[w, p, n-i], -X[v, p, n-i]])
-        cnf.append([+X[v, p, e-i], +X[w, p, n-i], +X[v, p, n-i]])
-        cnf.append([+X[v, p, e-i], -X[w, p, n-i], -X[v, p, n-i]])
 
-        cnf.append([-X[v, p, s-i], -X[w, p, n-i]])
-        cnf.append([-X[v, p, s-i], +X[v, p, n-i]])
-        cnf.append([+X[v, p, s-i], +X[w, p, n-i], -X[v, p, n-i]])
+    A = [ X[a, p, i] for i in range(nbits) ]
+    B = [ X[b, p, i] for i in range(nbits) ]
+    C = [ pool.id()  for _ in range(nbits) ]
+    Q = [ pool.id()  for _ in range(nbits-1) ]
+    S = [ pool.id()  for _ in range(nbits-1) ]
 
-        cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, e-i]])
-        cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, c-(i-1)]])
-
-        cnf.append([+X[v, p, c-i], -X[v, p, s-i]])
-        cnf.append([+X[v, p, c-i], -X[v, p, e-i], -X[v, p, c-(i-1)]])
+    n = nbits - 1 # -1 to start counting on 0;
     
-    cnf.append([X[v, p, nbits]]) # final clause encoding the fact that a <= b
+    cnf.append([-C[n], +A[n], -B[n]])
+    cnf.append([+C[n], -A[n]])
+    cnf.append([+C[n], +B[n]])
+    
+    for i in range(n-1, -1, -1): # from n-1 to 0
+        cnf.append([-Q[i], -A[i], +B[i]])
+        cnf.append([-Q[i], +A[i], -B[i]])
+        cnf.append([+Q[i], +A[i], +B[i]])
+        cnf.append([+Q[i], -A[i], -B[i]])
+
+        cnf.append([-S[i], +A[i]])
+        cnf.append([-S[i], -B[i]])
+        cnf.append([+S[i], -A[i], +B[i]])
+
+        cnf.append([-C[i], +S[i], +Q[i  ]])
+        cnf.append([-C[i], +S[i], +C[i+1]])
+        cnf.append([+C[i], -S[i]         ])
+        cnf.append([+C[i], -Q[i], -C[i+1]])
+    
+    cnf.append([C[0]]) # final clause encoding the fact that a >= b
 
     return cnf
 
 # ----------------------------------------------------------------------------------------
 
-def lexcomp_sl(w, v, p, nbits) :
+def lexcomp_strictlygreater(a, b, p, nbits) : # a > b
     cnf = []
-    n = nbits-1
-    c = nbits*2-1
-    e = nbits*2+(nbits-1)
-    s = nbits*2+(nbits-1)*2
-    
-    cnf.append([+X[w, p, c], -X[v, p, n], +X[v, p, c]])
-    cnf.append([-X[v, p, c], -X[w, p, n]])
-    cnf.append([-X[v, p, c], +X[v, p, n]])
-    
-    for i in range(1, nbits):
-        cnf.append([-X[v, p, e-i], -X[w, p, n-i], +X[v, p, n-i]])
-        cnf.append([-X[v, p, e-i], +X[w, p, n-i], -X[v, p, n-i]])
-        cnf.append([+X[v, p, e-i], +X[w, p, n-i], +X[v, p, n-i]])
-        cnf.append([+X[v, p, e-i], -X[w, p, n-i], -X[v, p, n-i]])
 
-        cnf.append([-X[v, p, s-i], -X[w, p, n-i]])
-        cnf.append([-X[v, p, s-i], +X[v, p, n-i]])
-        cnf.append([+X[v, p, s-i], +X[w, p, n-i], -X[v, p, n-i]])
+    A = [ X[a, p, i] for i in range(nbits) ]
+    B = [ X[b, p, i] for i in range(nbits) ]
+    C = [ pool.id()  for _ in range(nbits) ]
+    Q = [ pool.id()  for _ in range(nbits-1) ]
+    S = [ pool.id()  for _ in range(nbits-1) ]
 
-        cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, e-i]])
-        cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, c-(i-1)]])
-
-        cnf.append([+X[v, p, c-i], -X[v, p, s-i]])
-        cnf.append([+X[v, p, c-i], -X[v, p, e-i], -X[v, p, c-(i-1)]])
+    n = nbits - 1 # -1 to start counting on 0;
     
-    cnf.append([X[v, p, nbits]]) # final clause encoding the fact that a <= b
+    cnf.append([-C[n], +A[n]])
+    cnf.append([-C[n], -B[n]])
+    cnf.append([+C[n], -A[n], +B[n]])
+    
+    for i in range(n-1, -1, -1): # from n-1 to 0
+        cnf.append([-Q[i], -A[i], +B[i]])
+        cnf.append([-Q[i], +A[i], -B[i]])
+        cnf.append([+Q[i], +A[i], +B[i]])
+        cnf.append([+Q[i], -A[i], -B[i]])
+
+        cnf.append([-S[i], +A[i]])
+        cnf.append([-S[i], -B[i]])
+        cnf.append([+S[i], -A[i], +B[i]])
+
+        cnf.append([-C[i], +S[i], +Q[i  ]])
+        cnf.append([-C[i], +S[i], +C[i+1]])
+        cnf.append([+C[i], -S[i]         ])
+        cnf.append([+C[i], -Q[i], -C[i+1]])
+    
+    cnf.append([C[0]]) # final clause encoding the fact that a > b
 
     return cnf
 
 # ----------------------------------------------------------------------------------------
 
-def write_dimacs(vars, clauses, filename):
+def write_dimacs(clauses, filename):
     with open(filename, "w") as f:
-        f.write(f"p cnf {vars} {len(clauses)}\n")
+        f.write(f"p cnf {pool.top} {len(clauses)}\n")
         for clause in clauses:
             f.write(" ".join(map(str, clause)) + " 0\n")
 
 # ----------------------------------------------------------------------------------------
 
-id = 0
-nbits = 2
-
-def getid():
-    global id
-    id = id+1
-    return id
+nbits = 3
 
 X = {
-    (v, 0, i): getid() for v in range(2) for i in range(nbits*2+(nbits-1)*2)
+    (v, 0, i): pool.id() for v in range(2) for i in range(nbits)
 }
 
-cnf = lexcomp_sl(0, 1, 0, nbits)
-cnf.append([-X[0,0,0]])
+cnf = []
+cnf = lexcomp_strictlygreater(0, 1, 0, nbits)
+cnf.append([+X[0,0,0]])
 cnf.append([+X[0,0,1]])
-# cnf.append([-X[0,0,2]])
+cnf.append([+X[0,0,2]])
 
-cnf.append([-X[1,0,0]])
+cnf.append([+X[1,0,0]])
 cnf.append([+X[1,0,1]])
-# cnf.append([-X[1,0,2]])
+cnf.append([-X[1,0,2]])
 
-write_dimacs(id, cnf, "/home/chalo/g.cnf")
+write_dimacs(cnf, "/home/chalo/g.cnf")
 
 import subprocess
 

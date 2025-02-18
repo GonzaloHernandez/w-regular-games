@@ -1,5 +1,5 @@
 import os; os.system("clear")
-import sys,math
+import sys,math,time,subprocess
 from pysat.solvers import Solver
 from pysat.formula import CNF
 from pysat.formula import IDPool
@@ -8,89 +8,88 @@ from pythonsrc import Game
 
 pool  = IDPool()
 
-
 # ========================================================================================
 
-def solveGame(g):
+def getSAT(g,start=0):
 
     def calculate_nbits(n) :
         return math.ceil(math.log2(sum(1 for x in range(g.nvertices) if g.colors[x] == n) + 1))
 
     # ----------------------------------------------------------------------------------------
 
-    def calculate_total_nbits(n) :
-        nbits = calculate_nbits(n)
-        return nbits + nbits + (nbits-1) + (nbits-1) # v + c + e + s
-
-    # ----------------------------------------------------------------------------------------
-
-    def lexcomp_le(w, v, p, nbits) :
+    def lexcomp_greateorrequals(a, b, p) : # a >= b
         cnf = []
-        n = nbits-1
-        c = nbits*2-1
-        e = nbits*2+(nbits-1)
-        s = nbits*2+(nbits-1)*2
-        
-        cnf.append([-X[v, p, c], -X[w, p, n], X[v, p, n]])
-        cnf.append([+X[v, p, c], +X[w, p, n]])
-        cnf.append([+X[v, p, c], -X[v, p, n]])
-        
-        for i in range(1, nbits):
-            cnf.append([-X[v, p, e-i], -X[w, p, n-i], +X[v, p, n-i]])
-            cnf.append([-X[v, p, e-i], +X[w, p, n-i], -X[v, p, n-i]])
-            cnf.append([+X[v, p, e-i], +X[w, p, n-i], +X[v, p, n-i]])
-            cnf.append([+X[v, p, e-i], -X[w, p, n-i], -X[v, p, n-i]])
 
-            cnf.append([-X[v, p, s-i], -X[w, p, n-i]])
-            cnf.append([-X[v, p, s-i], +X[v, p, n-i]])
-            cnf.append([+X[v, p, s-i], +X[w, p, n-i], -X[v, p, n-i]])
+        A = [ X[a, p, i] for i in range(calculate_nbits(p)) ]
+        B = [ X[b, p, i] for i in range(calculate_nbits(p)) ]
+        C = [ pool.id()  for _ in range(calculate_nbits(p)) ]
+        Q = [ pool.id()  for _ in range(calculate_nbits(p)-1) ]
+        S = [ pool.id()  for _ in range(calculate_nbits(p)-1) ]
 
-            cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, e-i]])
-            cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, c-(i-1)]])
-
-            cnf.append([+X[v, p, c-i], -X[v, p, s-i]])
-            cnf.append([+X[v, p, c-i], -X[v, p, e-i], -X[v, p, c-(i-1)]])
+        n = calculate_nbits(p) - 1 # -1 to start counting on 0;
         
-        cnf.append([X[v, p, nbits]]) # final clause encoding the fact that a <= b
+        cnf.append([-C[n], +A[n], -B[n]])
+        cnf.append([+C[n], -A[n]])
+        cnf.append([+C[n], +B[n]])
+        
+        for i in range(n-1, -1, -1): # from n-1 to 0
+            cnf.append([-Q[i], -A[i], +B[i]])
+            cnf.append([-Q[i], +A[i], -B[i]])
+            cnf.append([+Q[i], +A[i], +B[i]])
+            cnf.append([+Q[i], -A[i], -B[i]])
+
+            cnf.append([-S[i], +A[i]])
+            cnf.append([-S[i], -B[i]])
+            cnf.append([+S[i], -A[i], +B[i]])
+
+            cnf.append([-C[i], +S[i], +Q[i  ]])
+            cnf.append([-C[i], +S[i], +C[i+1]])
+            cnf.append([+C[i], -S[i]         ])
+            cnf.append([+C[i], -Q[i], -C[i+1]])
+        
+        cnf.append([C[0]]) # final clause encoding the fact that a >= b
 
         return cnf
 
     # ----------------------------------------------------------------------------------------
 
-    def lexcomp_sl(w, v, p, nbits) :
+    def lexcomp_strictlygreater(a, b, p) : # a > b
         cnf = []
-        n = nbits-1
-        c = nbits*2-1
-        e = nbits*2+(nbits-1)
-        s = nbits*2+(nbits-1)*2
-        
-        cnf.append([+X[w, p, c], -X[v, p, n], +X[v, p, c]])
-        cnf.append([-X[v, p, c], -X[w, p, n]])
-        cnf.append([-X[v, p, c], +X[v, p, n]])
-        
-        for i in range(1, nbits):
-            cnf.append([-X[v, p, e-i], -X[w, p, n-i], +X[v, p, n-i]])
-            cnf.append([-X[v, p, e-i], +X[w, p, n-i], -X[v, p, n-i]])
-            cnf.append([+X[v, p, e-i], +X[w, p, n-i], +X[v, p, n-i]])
-            cnf.append([+X[v, p, e-i], -X[w, p, n-i], -X[v, p, n-i]])
 
-            cnf.append([-X[v, p, s-i], -X[w, p, n-i]])
-            cnf.append([-X[v, p, s-i], +X[v, p, n-i]])
-            cnf.append([+X[v, p, s-i], +X[w, p, n-i], -X[v, p, n-i]])
+        A = [ X[a, p, i] for i in range(calculate_nbits(p)) ]
+        B = [ X[b, p, i] for i in range(calculate_nbits(p)) ]
+        C = [ pool.id()  for _ in range(calculate_nbits(p)) ]
+        Q = [ pool.id()  for _ in range(calculate_nbits(p)-1) ]
+        S = [ pool.id()  for _ in range(calculate_nbits(p)-1) ]
 
-            cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, e-i]])
-            cnf.append([-X[v, p, c-i], +X[v, p, s-i], +X[v, p, c-(i-1)]])
-
-            cnf.append([+X[v, p, c-i], -X[v, p, s-i]])
-            cnf.append([+X[v, p, c-i], -X[v, p, e-i], -X[v, p, c-(i-1)]])
+        n = calculate_nbits(p) - 1 # -1 to start counting on 0;
         
-        cnf.append([X[v, p, nbits]]) # final clause encoding the fact that a <= b
+        cnf.append([-C[n], +A[n]])
+        cnf.append([-C[n], -B[n]])
+        cnf.append([+C[n], -A[n], +B[n]])
+        
+        for i in range(n-1, -1, -1): # from n-1 to 0
+            cnf.append([-Q[i], -A[i], +B[i]])
+            cnf.append([-Q[i], +A[i], -B[i]])
+            cnf.append([+Q[i], +A[i], +B[i]])
+            cnf.append([+Q[i], -A[i], -B[i]])
+
+            cnf.append([-S[i], +A[i]])
+            cnf.append([-S[i], -B[i]])
+            cnf.append([+S[i], -A[i], +B[i]])
+
+            cnf.append([-C[i], +S[i], +Q[i  ]])
+            cnf.append([-C[i], +S[i], +C[i+1]])
+            cnf.append([+C[i], -S[i]         ])
+            cnf.append([+C[i], -Q[i], -C[i+1]])
+        
+        cnf.append([C[0]]) # final clause encoding the fact that a > b
 
         return cnf
 
     # ----------------------------------------------------------------------------------------
 
-    cnf = CNF()
+    cnf = []
 
     # Map variables to integer literals
     V = {v: pool.id() for v in range(g.nvertices)}
@@ -99,10 +98,11 @@ def solveGame(g):
         (v, p, i): pool.id()
         for v in range(g.nvertices)
         for p in set(g.colors) if p % 2 == 1
-        for i in range(calculate_total_nbits(p))
+        for i in range(calculate_nbits(p))
     }
+
     # First player vertex must be activated
-    cnf.append([V[0]])
+    cnf.append([V[start]])
 
     # For every EVEN vertex, at least one outgoing edge must be activated
     for v in range(g.nvertices):
@@ -129,31 +129,61 @@ def solveGame(g):
         pm_constraints = []
         for p in set(g.colors):
             if p < q and p % 2 == 1:
-                pm_constraints += lexcomp_le(w, v, p, calculate_nbits(p))
+                pm_constraints += lexcomp_greateorrequals(v, w, p)
 
         if q % 2 == 0:
             for c in pm_constraints:
                 cnf.append([-E[v, w]] + c)
         else:
-            for c in lexcomp_sl(w, v, q, calculate_nbits(q)) + pm_constraints:
+            for c in lexcomp_strictlygreater(v, w, q) + pm_constraints:
                 cnf.append([-E[v, w]] + c)
 
-    # Initialize SAT solver
-    solver = Solver(name="g3")
-    solver.append_formula(cnf)
+    return cnf
 
-    # Solve the problem
-    if solver.solve():
-        print("SAT")
-        # print("Solution:", solver.get_model())
-    else:
-        print("UNSAT")
+# ========================================================================================
 
-    solver.delete()
+def write_dimacs(clauses, filename="game.cnf"):
+    with open(filename, "w") as f:
+        f.write(f"p cnf {pool.top} {len(clauses)}\n")
+        for clause in clauses:
+            f.write(" ".join(map(str, clause)) + " 0\n")
 
 # ========================================================================================
 
 # g = Game('./data/game-jurdzinski-2-3.dzn',Game.FIRST0)
-g = Game(Game.JURDZINSKI, 2, 3, Game.FIRST0)
 
-solveGame(g)
+arg = sys.argv
+
+levels = int(arg[1])
+blocks = int(arg[2])
+
+g = Game(Game.JURDZINSKI, levels, blocks, Game.FIRST0)
+
+t1 = time.time()
+clauses = getSAT(g)
+t2 = time.time()
+
+# ----------------------------------------------------------------------------------------
+# save dimacs file
+# ----------------------------------------------------------------------------------------
+write_dimacs(clauses, "/home/chalo/game.cnf")
+
+
+result = subprocess.run("~/zchaff /home/chalo/game.cnf | grep 'Total Run Time'", capture_output=True, text=True, shell=True)
+
+print(f"{t2-t1},{result.stdout}")
+
+# ----------------------------------------------------------------------------------------
+# solve
+# ----------------------------------------------------------------------------------------
+# cnf = CNF()
+# cnf.extend(clauses)
+# solver = Solver(name="g3")
+# solver.append_formula(cnf)
+
+# if solver.solve():
+#     print("SAT",solver.time())
+# else:
+#     print("UNSAT")
+
+# solver.delete()
