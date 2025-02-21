@@ -5,7 +5,7 @@ def convert(filename) :
         lines = f.readlines()
 
     # Extract the number of vertices
-    # vertices = int(lines[0].split()[1].strip().rstrip(";"))+1
+    totalvertices = int(lines[0].split()[1].strip().rstrip(";"))+1
 
     # Initialize lists
     owners = []
@@ -13,8 +13,19 @@ def convert(filename) :
     sources = []
     targets = []
 
-    d = 0
+    vertices = list(range(totalvertices))
     c = 0
+
+    # Process the lines
+    for line in lines[1:]:
+        parts = line.strip().rstrip(";").split()
+        if len(parts) < 4:
+            print("Wire line: ", line)
+            continue  # Skip malformed lines
+        
+        v = int(parts[0])  # Vertex ID
+        vertices[v] = c
+        c += 1
 
     # Process the lines
     for line in lines[1:]:
@@ -27,16 +38,12 @@ def convert(filename) :
         o = int(parts[2])  # Owner
         successors = parts[3].split(",")  # Successor nodes
 
-        d = v-c
-
         # Store data
         owners.append(o)
         colors.append(p)
         for t in successors:
-            sources.append(v-d+1)
-            targets.append(int(t)-d+1)
-
-        c += 1
+            sources.append(vertices[v]+1)
+            targets.append(vertices[int(t)]+1)
 
     # Generate DZN format content
     dzn_content = f"""\
