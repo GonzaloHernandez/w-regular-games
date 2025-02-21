@@ -150,14 +150,16 @@ def write_dimacs(clauses, filename="game.cnf"):
 
 # ========================================================================================
 
-# g = Game('./data/game-jurdzinski-2-3.dzn',Game.FIRST0)
+filepath = "/home/chalo/Deleteme/bes-benchmarks/gm/"
+filename = "jurdzinskigame_50_50"
+g = Game(filepath+filename+".dzn",Game.FIRST0)
 
-arg = sys.argv
+# arg = sys.argv
 
-levels = int(arg[1])
-blocks = int(arg[2])
+# levels = int(arg[1])
+# blocks = int(arg[2])
 
-g = Game(Game.JURDZINSKI, levels, blocks, Game.FIRST0)
+# g = Game(Game.JURDZINSKI, levels, blocks, Game.FIRST0)
 
 t1 = time.time()
 clauses = getSAT(g)
@@ -166,7 +168,7 @@ t2 = time.time()
 # ----------------------------------------------------------------------------------------
 # save dimacs file
 # ----------------------------------------------------------------------------------------
-# write_dimacs(clauses, "/home/chalo/game.cnf")
+write_dimacs(clauses, filepath+filename+".cnf")
 
 
 # result = subprocess.run("~/zchaff /home/chalo/game.cnf | grep 'Total Run Time'", capture_output=True, text=True, shell=True)
@@ -176,17 +178,17 @@ t2 = time.time()
 # ----------------------------------------------------------------------------------------
 # solve
 # ----------------------------------------------------------------------------------------
-cnf = CNF()
-cnf.extend(clauses)
-solver = Solver(name="g3")
-solver.append_formula(cnf)
+# cnf = CNF()
+# cnf.extend(clauses)
+# solver = Solver(name="g3")
+# solver.append_formula(cnf)
 
-t1 = time.time()
-if solver.solve():
-    print("SAT",end=",") 
-else:
-    print("UNSAT",end=",")
-t2 = time.time()
+# t1 = time.time()
+# if solver.solve():
+#     print("SAT",end=",") 
+# else:
+#     print("UNSAT",end=",")
+# t2 = time.time()
 
-print(t2-t1)
-solver.delete()
+# print(t2-t1)
+# solver.delete()

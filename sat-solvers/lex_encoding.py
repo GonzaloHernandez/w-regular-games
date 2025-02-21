@@ -1,5 +1,4 @@
 import os; os.system("clear")
-import math
 from  pysat.formula import IDPool
 
 pool = IDPool()

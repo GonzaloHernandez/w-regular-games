@@ -1,18 +1,20 @@
 
 def convert(filename) :
     # Read the GM file
-    with open(filename, "r") as f:
+    with open(filename+".gm", "r") as f:
         lines = f.readlines()
 
     # Extract the number of vertices
-    vertices = int(lines[0].split()[1].strip().rstrip(";"))
+    # vertices = int(lines[0].split()[1].strip().rstrip(";"))+1
 
     # Initialize lists
     owners = []
     colors = []
-    edges   = 0
     sources = []
     targets = []
+
+    d = 0
+    c = 0
 
     # Process the lines
     for line in lines[1:]:
@@ -25,23 +27,25 @@ def convert(filename) :
         o = int(parts[2])  # Owner
         successors = parts[3].split(",")  # Successor nodes
 
+        d = v-c
+
         # Store data
         owners.append(o)
         colors.append(p)
         for t in successors:
-            sources.append(v)
-            targets.append(int(t))
-            edges += 1
+            sources.append(v-d+1)
+            targets.append(int(t)-d+1)
 
+        c += 1
 
     # Generate DZN format content
     dzn_content = f"""\
-    nvertices = {vertices};
+    nvertices = {len(owners)};
     owners    = {owners};
     colors    = {colors};
-    nedges    = {len(edges)};
-    sources   = {list(sources)};
-    targets   = {list(targets)};
+    nedges    = {len(sources)};
+    sources   = {sources};
+    targets   = {targets};
     """
 
     # Save as DZN file
@@ -50,4 +54,8 @@ def convert(filename) :
 
     print("DZN file saved as output.dzn")
 
-convert("/home/chalo/Deleteme/bes-benchmarks/randomgame_5000_10_1_20_id_24.gm")
+
+filepath = "/home/chalo/Deleteme/bes-benchmarks/gm/"
+filename = "jurdzinskigame_500_500"
+
+convert(filepath+filename)
