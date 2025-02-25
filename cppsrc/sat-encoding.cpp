@@ -3,6 +3,7 @@
 #include <fstream>
 #include <regex>
 #include <cmath>
+#include <chrono>
 
 #define EVEN 0
 #define ODD  1
@@ -20,7 +21,6 @@ public:
 
 class Game {
 public:
-
     static const int DZN    = 0;
     static const int GM     = 1;
 
@@ -262,41 +262,37 @@ public:
 
             case GM:
                 int lastvertex = 0;
-                std::vector<int> vnum;
+                std::vector<int> verts;
+                std::vector<std::vector<int>> edges;
                 int counter=0;
                 while (getline(file, line)) {
                     if (line.find("parity") != std::string::npos) {
                         lastvertex = stoi(line.substr(line.find(" ")));
-                        vnum.reserve(lastvertex);
+                        verts.reserve(lastvertex);
+                        edges.reserve(lastvertex);
                     } else {
                         std::vector<int>    vinfo,vedges;
                         std::string         comment;
                         parseArray_gm(line,vinfo,vedges,comment);
-                        vnum[vinfo[0]] = counter++;
-                    }
-                }
-                nvertices = counter;
-                owners.reserve(nvertices);
-                colors.reserve(nvertices);
-                file.clear();
-                file.seekg(0);
-
-                while (getline(file, line)) {
-                    if (line.find("parity") != std::string::npos) {
-                    } else {
-                        std::vector<int>    vinfo,vedges;
-                        std::string         comment;
-                        parseArray_gm(line,vinfo,vedges,comment);
-                        int s = vinfo[0];
-                        owners[vnum[s]] = vinfo[2];
-                        colors[vnum[s]] = vinfo[1];
-                        for (auto& t : vedges) {
-                            sources.push_back(vnum[s]);
-                            targets.push_back(vnum[t]);
-                        }
+                        verts[vinfo[0]] = counter;
+                        vedges.insert(vedges.begin(),vinfo[0]);
+                        edges[counter] = vedges;
+                        owners.push_back(vinfo[2]);
+                        colors.push_back(vinfo[1]);
+                        counter++;
                     }
                 }
                 file.close();
+
+                nvertices = counter;
+
+                for(int s=0; s<nvertices; s++) {
+                    for(int t=1; t<edges[s].size(); t++) {
+                        sources.push_back(verts[edges[s][0]]);
+                        targets.push_back(verts[edges[s][t]]);
+                    }
+                }
+
                 nedges = sources.size();
 
                 break;
@@ -473,11 +469,19 @@ void dimacs(std::vector<std::vector<int>>& cnf, std::string filename) {
 
 int main(int argc, char const *argv[])
 {
-
     Game g("/home/chalo/Deleteme/bes-benchmarks/gm/jurdzinskigame_50_50.gm", 0, Game::GM);
     // Game g(2,1, 0);
+    auto start = std::chrono::high_resolution_clock::now();
     auto cnf = g.encode();  // {{,},{,}}
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::micro> duration = end - start; 
+    std::cout << "Encode time: " << duration.count() << std::endl;
+
+    start = std::chrono::high_resolution_clock::now();
     dimacs(cnf, "/home/chalo/j_50_50.cnf");
-    
+    end = std::chrono::high_resolution_clock::now();
+    duration = end - start; 
+    std::cout << "Saving time: " << duration.count() << std::endl;
+
     return 0;
 }
