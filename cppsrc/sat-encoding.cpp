@@ -47,7 +47,7 @@ public:
 
     //----------------------------------------------------------------------------------
 
-    void parseArray(const std::string& line,std::vector<int>& myvec) {
+    void parseArray_dzn(const std::string& line,std::vector<int>& myvec) {
         std::regex pattern(R"(\[(.*?)\])");  // Regex to extract content inside [ ]
         std::smatch match;
 
@@ -64,8 +64,8 @@ public:
 
     //----------------------------------------------------------------------------------
 
-    void parseArray2(const std::string& line,std::vector<int>& vinfo, std::vector<int>& vedges, std::string& comment) {
-        std::regex pattern(R"((\d+)\s+(\d+)\s+(\d+)\s+([\d,]+)\s+\"([^"]+)\")");
+    void parseArray_gm(const std::string& line,std::vector<int>& vinfo, std::vector<int>& vedges, std::string& comment) {
+        std::regex pattern(R"((\d+)\s+(\d+)\s+(\d+)\s+([\d,]+)(?:\s+\"([^"]+)\")?;?)");
         std::smatch matches;
     
         std::sregex_iterator it(line.begin(), line.end(), pattern);
@@ -76,7 +76,6 @@ public:
             vinfo.push_back(std::stoi(matches[2]));
             vinfo.push_back(std::stoi(matches[3]));
     
-            // Convert list of integers
             std::stringstream ss(matches[4]);
             std::string num;
             while (std::getline(ss, num, ',')) {
@@ -248,39 +247,60 @@ public:
                     } else if (line.find("nedges") != std::string::npos) {
                         nedges = stoi(line.substr(line.find("=") + 1));
                     } else if (line.find("owners") != std::string::npos) {
-                        parseArray(line,owners);
+                        parseArray_dzn(line,owners);
                     } else if (line.find("colors") != std::string::npos) {
-                        parseArray(line,colors);
+                        parseArray_dzn(line,colors);
                     } else if (line.find("sources") != std::string::npos) {
-                        parseArray(line,sources);
+                        parseArray_dzn(line,sources);
                     } else if (line.find("targets") != std::string::npos) {
-                        parseArray(line,targets);
+                        parseArray_dzn(line,targets);
                     }
                 }
                 file.close();
+                fixStartingZero();
                 break;
 
             case GM:
                 int lastvertex = 0;
-                std::vector<int> pos;
+                std::vector<int> vnum;
                 int counter=0;
                 while (getline(file, line)) {
                     if (line.find("parity") != std::string::npos) {
                         lastvertex = stoi(line.substr(line.find(" ")));
-                        pos.reserve(lastvertex);
+                        vnum.reserve(lastvertex);
                     } else {
                         std::vector<int>    vinfo,vedges;
                         std::string         comment;
-                        parseArray2(line,vinfo,vedges,comment);
-                        pos[vinfo[0]] = counter++;
+                        parseArray_gm(line,vinfo,vedges,comment);
+                        vnum[vinfo[0]] = counter++;
+                    }
+                }
+                nvertices = counter;
+                owners.reserve(nvertices);
+                colors.reserve(nvertices);
+                file.clear();
+                file.seekg(0);
+
+                while (getline(file, line)) {
+                    if (line.find("parity") != std::string::npos) {
+                    } else {
+                        std::vector<int>    vinfo,vedges;
+                        std::string         comment;
+                        parseArray_gm(line,vinfo,vedges,comment);
+                        int s = vinfo[0];
+                        owners[vnum[s]] = vinfo[2];
+                        colors[vnum[s]] = vinfo[1];
+                        for (auto& t : vedges) {
+                            sources.push_back(vnum[s]);
+                            targets.push_back(vnum[t]);
+                        }
                     }
                 }
                 file.close();
-                
+                nedges = sources.size();
+
                 break;
         }
-
-        fixStartingZero();
 
         createLiterals();
     }
@@ -453,15 +473,11 @@ void dimacs(std::vector<std::vector<int>>& cnf, std::string filename) {
 
 int main(int argc, char const *argv[])
 {
-    // Game g("/home/chalo/Software/w-regular-games/data/game-SAT.dzn", 0);
+
+    Game g("/home/chalo/Deleteme/bes-benchmarks/gm/jurdzinskigame_50_50.gm", 0, Game::GM);
     // Game g(2,1, 0);
-    // auto cnf = g.encode();  // {{,},{,}}
-    // dimacs(cnf, "/home/chalo/new.cnf");
+    auto cnf = g.encode();  // {{,},{,}}
+    dimacs(cnf, "/home/chalo/j_50_50.cnf");
     
-    std::string line = "parity 563;";
-
-
-    std::string num = line.substr(line.find(" "));
-    int n = stoi(num);
     return 0;
 }
