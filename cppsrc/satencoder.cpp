@@ -262,7 +262,6 @@ public:
 
 //======================================================================================
 
-
 void dimacs(std::vector<std::vector<int>>& cnf, std::string filename) {
     std::ofstream file(filename);
     if (!file) {

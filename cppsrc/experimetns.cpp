@@ -1,10 +1,15 @@
 
 #include "cpsolver.cpp"
 #include "satencoder.cpp"
+#include <cstdlib>
+
+#define time1 auto start = std::chrono::high_resolution_clock::now()  
+#define time2 auto start = std::chrono::high_resolution_clock::now() 
+#define duration std::chrono::duration<double, std::micro> duration = end - start; 
 
 struct options {
     int print_game      = 0; 
-    int game_type       = 1; // 1=jurd 2=dzn 3=gm
+    int game_type       = 0; // 0=default 1=jurd 2=dzn 3=gm
     int jurd_levels     = 2;
     int jurd_blocks     = 1;
     int game_start      = 0;
@@ -137,99 +142,76 @@ int main(int argc, char *argv[])
     parseOptions(argc, argv);
     Game* game = nullptr;
 
-    // goto manual;
-
-    if (argc>1) {
-        if (argc>1 && strcmp(argv[1],"jurd")==0) { jurd:
-            // ------------------------------------------------------------
-            // Creating a Jurdzinsky example dynamically
-            // ------------------------------------------------------------
-
-            int levels = 2;
-            int blocks = 1;
-            int start  = 0;
-
-            if (argc==2) {
-                std::cout << "Usage: ./wregulargames jurd [levels] [blocks] [start] [filtertype]" << std::endl;
-                return 0;
-            }
-            if (argc>2) levels      = atoi(argv[2]);
-            if (argc>3) blocks      = atoi(argv[3]);
-            if (argc>4) start       = atoi(argv[4]);
-            if (argc>5) filtertype  = atoi(argv[5]);
-
-            game = new Game(levels,blocks,start);
-        }
-        else if (argc>1 &&strcmp(argv[1],"dzn")==0) { dzn:
-            //------------------------------------------------------------
-            // Loading a DZN file
-            //------------------------------------------------------------
-
-            std::string filepath = "/home/chalo/Software/w-regular-games/data/";
-            std::string filename = filepath + "game-jurdzinski-3-2.dzn";
-
-            int start   = 13;
-            filtertype  = 2;
-
-            if (argc==2) {
-                std::cout << "Usage: ./wregulargames dzn [filename] [start] [filtertype]" << std::endl;
-                return 0;
-            }
-            if (argc>2) filename    = argv[2];
-            if (argc>3) start       = atoi(argv[3]);
-            if (argc>4) filtertype  = atoi(argv[4]);
-
-            game = new Game(filename,start,Game::DZN);
-        }
-        else if (argc>1 &&strcmp(argv[1],"gm")==0) { gm:
-            //------------------------------------------------------------
-            // Loading a GM file
-            //------------------------------------------------------------
-
-            std::string filepath = "/home/chalo/Deleteme/bes-benchmarks/gm/";
-            std::string filename = filepath + "jurdzinskigame_50_50.gm";
-
-            int start   = 7400;
-            filtertype  = 1;
-
-            if (argc==2) {
-                std::cout << "Usage: ./wregulargames gm [filename] [start] [filtertype]" << std::endl;
-                return 0;
-            }
-            if (argc>2) filename    = argv[2];
-            if (argc>3) start       = atoi(argv[3]);
-            if (argc>4) filtertype  = atoi(argv[4]);
-
-            game = new Game(filename,start,Game::GM);
-        }
-        else {
-            exit(0);
-        }
-    }
-    else { manual:
-        // ------------------------------------------------------------
-        // Creating an example manually
-        // ------------------------------------------------------------
-        game = new Game(
-            {1,0,0,1,0,1,0},
-            {2,1,2,2,4,3,4},
-            {0,0,1,2,2,2,3,4,5,5,5,6},
-            {1,2,2,0,3,5,2,5,2,4,6,5},
-            0
-        );
-    }
+    // ------------------------------------------------------------
+    // Creating a Jurdzinsky example dynamically
+    // ------------------------------------------------------------
+    // game = new Game(2,1,0);
 
     //------------------------------------------------------------
+    // Loading a DZN file
+    //------------------------------------------------------------
+    // std::string filepath = "/home/chalo/Software/w-regular-games/data/";
+    // std::string filename = filepath + "game-jurdzinski-3-2.dzn";
+    // game = new Game(filename,0,Game::DZN);
+
+    //------------------------------------------------------------
+    // Loading a GM file
+    //------------------------------------------------------------
+    // std::string filepath = "/home/chalo/Deleteme/bes-benchmarks/gm/";
+    // std::string filename = filepath + "jurdzinskigame_50_50.gm";
+    // game = new Game(filename,7400,Game::GM);
+
+    // ------------------------------------------------------------
+    // Creating an example manually
+    // ------------------------------------------------------------
+    // game = new Game(
+    //     {1,0,0,1,0,1,0},
+    //     {2,1,2,2,4,3,4},
+    //     {0,0,1,2,2,2,3,4,5,5,5,6},
+    //     {1,2,2,0,3,5,2,5,2,4,6,5},
+    //     0
+    // );
+    //------------------------------------------------------------
+
+    switch (ex.game_type) {
+        case 1: // jurd
+            game = new Game(ex.jurd_levels,ex.jurd_blocks,ex.game_start);
+            break;
+        case 2: // dzn
+            game = new Game(ex.game_filename,ex.game_start,Game::DZN);
+            break;
+        case 3: // gm
+            game = new Game(ex.game_filename,ex.game_start,Game::GM);
+            break;
+        default:
+            game = new Game({0,1},{3,2},{0,1},{1,0},0);        
+            break;
+    }
+
+    switch (ex.solving_type) {
+        case 1: { // cp solver
+            CPModel* model;
+            model = new CPModel(*game,ex.filter_type);
+            so.nof_solutions = 1;
+            engine.solve(model);
+            delete model;
+            break;
+        }
+        case 2: { // sat encoding 
+            SATEncoder encoder(*game);
+            auto cnf = encoder.getCNF();
+            if (ex.dimacs_filename != "") {
+                dimacs(cnf,ex.dimacs_filename);
+            }
+        }
+        default:
+            break;
+    }
 
     game->printGame();
 
-    CPModel* model = new CPModel(*game);
-    filtertype = 2;
-    so.nof_solutions = 1;
-    engine.solve(model);
-
     delete game;
-    delete model;
+
     return 0; 
 }
 

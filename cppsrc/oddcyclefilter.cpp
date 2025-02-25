@@ -2,7 +2,6 @@
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
 
-int filtertype = 1;
 
 class OddCycleFilter : public Propagator {
 private:
@@ -13,6 +12,7 @@ private:
     vec<BoolView> V;
     vec<BoolView> E;
     int start;
+    int filtertype;
 
     const int   CF_DONE     = 1;
     const int   CF_ACTIVE   = 2;
@@ -21,19 +21,14 @@ private:
 
 public:
     //-----------------------------------------------------------------------
-    OddCycleFilter(std::vector<int>& owners,std::vector<int>& colors,
-                std::vector<int>& sources,std::vector<int>& targets,
-                vec<BoolView>& V,vec<BoolView>& E,int start)
-    :   owners(owners), colors(colors), 
-        sources(sources), targets(targets), 
-        V(V), E(E), start(start) 
+    OddCycleFilter( std::vector<int>& owners,std::vector<int>& colors,
+                    std::vector<int>& sources,std::vector<int>& targets,
+                    vec<BoolView>& V,vec<BoolView>& E,int start,int filtertype=1)
+    :   owners(owners), colors(colors), sources(sources), targets(targets), 
+        V(V), E(E), start(start), filtertype(filtertype) 
     {
-        for (int i=0; i<owners.size(); i++)    
-            V[i].attach(this, 1 , EVENT_F );
-        for (int i=0; i<sources.size(); i++)    
-            E[i].attach(this, 1 , EVENT_F );
-        currentV();
-        currentE();
+        for (int i=0; i<owners.size(); i++)  V[i].attach(this, 1 , EVENT_F );
+        for (int i=0; i<sources.size(); i++) E[i].attach(this, 1 , EVENT_F );
     }
     //-----------------------------------------------------------------------
     int findVertex(int vertex,vec<int>& path) {
@@ -66,7 +61,9 @@ public:
         }
     }
     //-----------------------------------------------------------------------
-    void clausify_except(vec<int>& path, vec<BoolView> &B, vec<Lit>& lits,int from,int lastEdge) {
+    void clausify_except(   vec<int>& path, vec<BoolView> &B, vec<Lit>& lits,
+                            int from,int lastEdge) 
+    {
         for (int i=from; i<path.size(); i++) {
             if (path[i] != lastEdge) {
                 lits.push(B[path[i]].getValLit());
@@ -239,33 +236,4 @@ public:
         in_queue = false;
     }
     //-----------------------------------------------------------------------
-    std::string currentV() {
-        std::stringstream out;
-        out << "V=[";
-        for (int i=0; i<V.size(); i++) {
-            // out << i << ":";
-            if (V[i].isFixed())
-                out << (int)V[i].isTrue() << (i<V.size()-1?",":"");
-            else
-                out << " " << (i<V.size()-1?",":"");
-        }
-        out << "]";
-        return out.str();
-    }
-    //-----------------------------------------------------------------------
-    std::string currentE() {
-        std::stringstream out;
-        out << "E=[";
-        for (int i=0; i<E.size(); i++) {
-            // out << i << ":";
-            if (E[i].isFixed())
-                out << (int)E[i].isTrue() << (i<E.size()-1?",":"");
-            else
-                out << " " << (i<E.size()-1?",":"");
-        }
-        out << "]";
-        return out.str();
-    }
-
-
 };

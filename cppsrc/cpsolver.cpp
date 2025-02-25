@@ -21,10 +21,12 @@ private:
     Game& g;
     vec<BoolView> V;  
     vec<BoolView> E;
+    int filtertype;
+    int printtype;
 
 public:
 
-    CPModel(Game& g) : g(g) {
+    CPModel(Game& g,int filtertype=1,int printtype=1) : g(g), filtertype(filtertype) {
         V.growTo(g.nvertices);
         E.growTo(g.nedges);
         setupConstraints();
@@ -81,7 +83,7 @@ public:
         }
 
         // Every infinite ODD play must be avoided.
-        new OddCycleFilter(g.owners,g.colors,g.sources,g.targets,V,E,g.start);
+        new OddCycleFilter(g.owners,g.colors,g.sources,g.targets,V,E,g.start,filtertype);
 
         // Every unreachable vertex must be avoided.
         vec<vec<int>> _in, _out, _en;
@@ -160,6 +162,15 @@ public:
     //----------------------------------------------------------------
 
     void print(std::ostream& out)   override {
+        switch (printtype) {
+            case 1:
+                break;
+
+            case 2:
+            
+            default:
+                break;
+        }
         out << "V=[";
         bool first = true;
         for (int i=0; i<V.size(); i++) {
