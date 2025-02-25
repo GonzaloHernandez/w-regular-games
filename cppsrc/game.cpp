@@ -1,10 +1,13 @@
+#ifndef CPP_GAME
+#define CPP_GAME
+
 #include <iostream>
 #include <vector>
 #include <fstream>
 #include <regex>
 
-#define EVEN 0
-#define ODD  1
+const int EVEN  = 0;
+const int ODD   = 1;
 
 //======================================================================================
 
@@ -14,6 +17,7 @@ public:
     static const int GM     = 1;
 
     friend class SATEncoder;
+    friend class CPModel;
 protected:
     std::vector<int>    owners;
     std::vector<int>    colors;
@@ -79,8 +83,8 @@ protected:
 
 public:
 
-    Game(   std::vector<int>& own,std::vector<int>& col,
-            std::vector<int>& sou,std::vector<int>& tar, int startv) 
+    Game(   std::vector<int> own,std::vector<int> col,
+            std::vector<int> sou,std::vector<int> tar, int startv) 
     :   owners(own), colors(col), sources(sou), targets(tar), start(startv) 
     {
         nvertices   = own.size();
@@ -248,5 +252,8 @@ public:
         for(int e=0; e<targets.size(); e++) 
             std::cout<<targets[e]<<(e<targets.size()-1?",":"");
         std::cout << "}" << std::endl;
+        std::cout << "start:     " << start << std::endl;
     }
 };
+
+#endif // CPP_GAME

@@ -1,4 +1,7 @@
+#ifndef CPP_GAME
 #include "game.cpp"
+#endif
+
 #include <cmath>
 #include <chrono>
 
@@ -275,26 +278,4 @@ void dimacs(std::vector<std::vector<int>>& cnf, std::string filename) {
         file << "0" << std::endl;
     }
     file.close();
-}
-
-//======================================================================================
-
-int main(int argc, char const *argv[])
-{
-    Game g("/home/chalo/Deleteme/bes-benchmarks/gm/jurdzinskigame_50_50.gm", 0, Game::GM);
-    // Game g(2,1, 0);
-    SATEncoder enc(g);
-    auto start = std::chrono::high_resolution_clock::now();
-    auto cnf = enc.getCNF();  // {{,},{,}}
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::micro> duration = end - start; 
-    std::cout << "Encode time: " << duration.count() << std::endl;
-
-    start = std::chrono::high_resolution_clock::now();
-    dimacs(cnf, "/home/chalo/j_50_50.cnf");
-    end = std::chrono::high_resolution_clock::now();
-    duration = end - start; 
-    std::cout << "Saving time: " << duration.count() << std::endl;
-
-    return 0;
 }

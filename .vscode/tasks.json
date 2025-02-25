@@ -2,7 +2,7 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "C/C++: g++ build active file",
+            "label": "C/C++: g++ build standard",
             "command": "/usr/bin/g++",
             "args": [
                 "-fdiagnostics-color=always",
@@ -34,15 +34,9 @@
                 "${file}",
                 "-o",
                 "${workspaceFolder}/build/${fileBasenameNoExtension}",
-                // For Chuffed in .local
                 "-I/home/chalo/.local/include",
                 "-L/home/chalo/.local/lib",
                 "-lchuffed",
-                // For Gecode in the same path
-                "-lgecodesupport",
-                "-lgecodekernel",
-                "-lgecodeint",
-                "-lgecodesearch"
             ],
             "options": {
                 "cwd": "${fileDirname}"

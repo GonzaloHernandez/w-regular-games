@@ -1,20 +1,18 @@
+#ifndef CPP_GAME
+#include "game.cpp"
+#endif
+
 #include "iostream"
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
-#include "oddcyclefilter.cpp"
 #include "initializer_list"
 #include "chuffed/globals/dconnected.h"
 
-#include "game.cpp"
-
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <regex>
+#include "oddcyclefilter.cpp"
 
 //----------------------------------------------------------------------
 
-class CPSolver : public Problem {
+class CPModel : public Problem {
 public:
     static const int DZN    = 0;
     static const int GM     = 1;
@@ -26,7 +24,7 @@ private:
 
 public:
 
-    CPSolver(Game& g) : g(g) {
+    CPModel(Game& g) : g(g) {
         V.growTo(g.nvertices);
         E.growTo(g.nedges);
         setupConstraints();
@@ -83,7 +81,7 @@ public:
         }
 
         // Every infinite ODD play must be avoided.
-        new CycleFilter(g.owners,g.colors,g.sources,g.targets,V,E,g.start);
+        new OddCycleFilter(g.owners,g.colors,g.sources,g.targets,V,E,g.start);
 
         // Every unreachable vertex must be avoided.
         vec<vec<int>> _in, _out, _en;
@@ -181,118 +179,5 @@ public:
         out << "]";
     }
 };
-
-//----------------------------------------------------------------------
-
-int main(int argc, char *argv[])
-{
-    parseOptions(argc, argv);
-    Game* m = nullptr;
-
-    goto gm;
-
-    if (argc>1) {
-        if (argc>1 && strcmp(argv[1],"jurd")==0) { jurd:
-            // ------------------------------------------------------------
-            // Creating a Jurdzinsky example dynamically
-            // ------------------------------------------------------------
-
-            int levels = 3;
-            int blocks = 2;
-            int start  = 0;
-
-            if (argc==2) {
-                std::cout << "Usage: ./wregulargames jurd [levels] [blocks] [start] [filtertype]" << std::endl;
-                return 0;
-            }
-            if (argc>2) levels      = atoi(argv[2]);
-            if (argc>3) blocks      = atoi(argv[3]);
-            if (argc>4) start       = atoi(argv[4]);
-            if (argc>5) filtertype  = atoi(argv[5]);
-
-            m = new Game(levels,blocks,start);
-        }
-        else if (argc>1 &&strcmp(argv[1],"dzn")==0) { dzn:
-            //------------------------------------------------------------
-            // Loading a DZN file
-            //------------------------------------------------------------
-
-            std::string filepath = "/home/chalo/Software/w-regular-games/data/";
-            std::string filename = filepath + "game-jurdzinski-3-2.dzn";
-
-            int start   = 13;
-            filtertype  = 2;
-
-            if (argc==2) {
-                std::cout << "Usage: ./wregulargames dzn [filename] [start] [filtertype]" << std::endl;
-                return 0;
-            }
-            if (argc>2) filename    = argv[2];
-            if (argc>3) start       = atoi(argv[3]);
-            if (argc>4) filtertype  = atoi(argv[4]);
-
-            m = new Game(filename,start,Game::DZN);
-        }
-        else if (argc>1 &&strcmp(argv[1],"gm")==0) { gm:
-            //------------------------------------------------------------
-            // Loading a GM file
-            //------------------------------------------------------------
-
-            std::string filepath = "/home/chalo/Deleteme/bes-benchmarks/gm/";
-            std::string filename = filepath + "jurdzinskigame_50_50.gm";
-
-            int start   = 7400;
-            filtertype  = 1;
-
-            if (argc==2) {
-                std::cout << "Usage: ./wregulargames gm [filename] [start] [filtertype]" << std::endl;
-                return 0;
-            }
-            if (argc>2) filename    = argv[2];
-            if (argc>3) start       = atoi(argv[3]);
-            if (argc>4) filtertype  = atoi(argv[4]);
-
-            m = new Game(filename,start,Game::GM);
-        }
-    }
-    else { none:
-        // ------------------------------------------------------------
-        // Creating an example manually
-        // ------------------------------------------------------------
-        int nvertices = 7;
-        int owners[]  = {1,0,0,1,0,1,0};
-        int colors[]  = {2,1,2,2,4,3,4};
-        int nedges    = 12;
-        int sources[] = {0,0,1,2,2,2,3,4,5,5,5,6};
-        int targets[] = {1,2,2,0,3,5,2,5,2,4,6,5};
-
-        int start     = 0;
-
-        vec<int> _owners;
-        vec<int> _colors;
-        vec<int> _sources;
-        vec<int> _targets;
-
-        for (int i=0;i<g.nvertices; i++) {
-            _owners.push(owners[i]);
-            _colors.push(colors[i]);
-        }
-
-        for (int i=0;i<nedges; i++) {
-            _sources.push(sources[i]);
-            _targets.push(targets[i]);
-        }
-        
-        m = new Game(_owners,_colors,_sources,_targets,start);
-    }
-
-    //------------------------------------------------------------
-
-    so.nof_solutions = 1;
-
-    engine.solve(m);
-    delete m;
-    return 0; 
-}
 
 //----------------------------------------------------------------------

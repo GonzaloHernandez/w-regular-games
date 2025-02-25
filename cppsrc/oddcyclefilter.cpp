@@ -3,17 +3,13 @@
 #include "chuffed/core/propagator.h"
 
 int filtertype = 1;
-bool flag = false;
-
-const int EVEN  = 0;
-const int ODD   = 1;
 
 class OddCycleFilter : public Propagator {
 private:
-    vec<int> owners;
-    vec<int> colors;
-    vec<int> sources;
-    vec<int> targets;
+    std::vector<int> owners;
+    std::vector<int> colors;
+    std::vector<int> sources;
+    std::vector<int> targets;
     vec<BoolView> V;
     vec<BoolView> E;
     int start;
@@ -25,8 +21,8 @@ private:
 
 public:
     //-----------------------------------------------------------------------
-    OddCycleFilter(vec<int>& owners,vec<int>& colors,
-                vec<int>& sources,vec<int>& targets,
+    OddCycleFilter(std::vector<int>& owners,std::vector<int>& colors,
+                std::vector<int>& sources,std::vector<int>& targets,
                 vec<BoolView>& V,vec<BoolView>& E,int start)
     :   owners(owners), colors(colors), 
         sources(sources), targets(targets), 
@@ -219,14 +215,12 @@ public:
         case 3:
             if (filter3(pathV,pathE,start,E,-1,true,touched) == CF_CONFLICT)
                 return false;
-            flag = true;
             for (int i=0; i<touched.size(); i++) {
                 if (!touched[i]) {
                     if (filter3(pathV,pathE,i,E,-1,true,touched) == CF_CONFLICT)
                         return false;
                 }
             }
-            flag = false;
             break;
 
             default:
