@@ -10,8 +10,6 @@
 
 #include "oddcyclefilter.cpp"
 
-//----------------------------------------------------------------------
-
 class CPModel : public Problem {
 public:
     static const int DZN    = 0;
@@ -26,7 +24,9 @@ private:
 
 public:
 
-    CPModel(Game& g,int filtertype=1,int printtype=1) : g(g), filtertype(filtertype) {
+    CPModel(Game& g,int filtertype=1,int printtype=1) 
+    : g(g), filtertype(filtertype), printtype(printtype) 
+    {
         V.growTo(g.nvertices);
         E.growTo(g.nedges);
         setupConstraints();
@@ -164,30 +164,28 @@ public:
     void print(std::ostream& out)   override {
         switch (printtype) {
             case 1:
+                out << "SAT ";
                 break;
-
             case 2:
-            
-            default:
+                out << "V=[";
+                bool first = true;
+                for (int i=0; i<V.size(); i++) {
+                    if (V[i].isTrue()) {
+                        if (first) first=false; else out << ",";
+                        out << i;
+                    }
+                }
+                out << "]\nE=[";
+                first = true;
+                for (int i=0; i<E.size(); i++) {
+                    if (E[i].isTrue()) {
+                        if (first) first=false; else out << ",";
+                        out << i;
+                    }
+                }
+                out << "]";
                 break;
         }
-        out << "V=[";
-        bool first = true;
-        for (int i=0; i<V.size(); i++) {
-            if (V[i].isTrue()) {
-                if (first) first=false; else out << ",";
-                out << i;
-            }
-        }
-        out << "]\nE=[";
-        first = true;
-        for (int i=0; i<E.size(); i++) {
-            if (E[i].isTrue()) {
-                if (first) first=false; else out << ",";
-                out << i;
-            }
-        }
-        out << "]";
     }
 };
 

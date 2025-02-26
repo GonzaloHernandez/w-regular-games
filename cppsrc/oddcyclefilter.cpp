@@ -2,7 +2,6 @@
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
 
-
 class OddCycleFilter : public Propagator {
 private:
     std::vector<int> owners;
@@ -191,6 +190,60 @@ public:
         return CF_DONE;
     }
     //-----------------------------------------------------------------------
+    int filter4(vec<int> pathV, vec<int> pathE, int vertex, 
+        vec<BoolView> &E, int lastEdge, bool foundBefore, vec<bool>& touched) 
+    {
+        touched[vertex] = true;
+        int indexV = findVertex(vertex,pathV);
+        int indexE = findEdge(lastEdge,pathE);
+        if (indexV >= 0) {
+            if (indexE>=indexV) {
+                if (mincolor(indexV,pathV)%2==ODD) {
+                    vec<Lit> lits;
+                    lits.push();
+                    clausify_except(pathE,E,lits,indexV,lastEdge);
+                    Clause* reason = Reason_new(lits);
+                    if (! E[lastEdge].setVal(false,reason)) {
+                        return CF_CONFLICT;
+                    }
+                }
+            }
+            else {
+                return CF_DONE;
+            }
+        }
+        else {
+            for (int e=0; e<sources.size(); e++) {
+                if (sources[e]==vertex && !E[e].isFalse()) {
+                    vec<int> newpathV(pathV);
+                    vec<int> newpathE(pathE);
+                    newpathV.push(vertex);
+                    newpathE.push(e);
+
+                    if (!foundBefore && !E[e].isTrue()) {
+                        int status = filter4(newpathV, newpathE, targets[e], E, e, true, touched);
+                        if (status == CF_CONFLICT) {
+                            return status;
+                        }
+                    }
+                    else if (!foundBefore && E[e].isTrue()) {
+                        int status = filter4(newpathV, newpathE, targets[e], E, e, false, touched);
+                        if (status == CF_CONFLICT) {
+                            return status;
+                        }
+                    }
+                    else if (foundBefore && E[e].isTrue()) {
+                        int status = filter4(newpathV, newpathE, targets[e], E, lastEdge, true, touched);
+                        if (status == CF_CONFLICT) {
+                            return status;
+                        }
+                    }
+                }
+            }
+        }
+        return CF_DONE;
+    }
+    //-----------------------------------------------------------------------
     bool propagate() override {
         vec<int> pathV;
         vec<int> pathE;
@@ -220,7 +273,18 @@ public:
             }
             break;
 
-            default:
+        case 4:
+            if (filter4(pathV,pathE,start,E,-1,false,touched) == CF_CONFLICT)
+                return false;
+            for (int i=0; i<touched.size(); i++) {
+                if (!touched[i]) {
+                    if (filter4(pathV,pathE,i,E,-1,false,touched) == CF_CONFLICT)
+                        return false;
+                }
+            }
+            break;
+
+        default:
             if (filter1(pathV,pathE,start,E,-1,true) == CF_CONFLICT)
                 return false;
         }

@@ -18,6 +18,7 @@ public:
 
     friend class SATEncoder;
     friend class CPModel;
+    friend int main(int, char*[]);
 protected:
     std::vector<int>    owners;
     std::vector<int>    colors;
@@ -108,7 +109,7 @@ public:
         std::ifstream file(filename);
         if (!file) {
             std::cerr << "Error: Could not open file!" << std::endl;
-            return;
+            exit(0);
         }
 
         std::string line;
@@ -134,7 +135,7 @@ public:
                 fixStartingZero();
                 break;
 
-            case GM:
+            case GM: {
                 int lastvertex = 0;
                 std::vector<int> verts;
                 std::vector<std::vector<int>> edges;
@@ -142,15 +143,14 @@ public:
                 while (getline(file, line)) {
                     if (line.find("parity") != std::string::npos) {
                         lastvertex = stoi(line.substr(line.find(" ")));
-                        verts.reserve(lastvertex);
-                        edges.reserve(lastvertex);
+                        verts.reserve(lastvertex+1);
                     } else {
                         std::vector<int>    vinfo,vedges;
                         std::string         comment;
                         parseline_gm(line,vinfo,vedges,comment);
                         verts[vinfo[0]] = counter;
                         vedges.insert(vedges.begin(),vinfo[0]);
-                        edges[counter] = vedges;
+                        edges.push_back(vedges);
                         owners.push_back(vinfo[2]);
                         colors.push_back(vinfo[1]);
                         counter++;
@@ -170,6 +170,7 @@ public:
                 nedges = sources.size();
 
                 break;
+            }
         }
     }
 
