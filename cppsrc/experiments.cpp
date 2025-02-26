@@ -227,19 +227,17 @@ int main(int argc, char *argv[])
             std::chrono::duration<double> encodetime = end - start;
             
             start = std::chrono::high_resolution_clock::now();
-            dimacs(cnf,"temp1.cnf");
+            dimacs(cnf,"temp.cnf");
             end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> dimacstime = end - start;
             
-            auto output = exec("zchaff temp1.cnf | grep -E \"RESULT|Total Run Time\"");
-
-            size_t pos = output.find_last_of("\t");
+            auto output = exec("./zchaff temp.cnf | grep -E \"RESULT|Total Run Time\"");
 
             std::cout << game->nvertices << " ";
             std::cout << game->nedges << " ";
             std::cout << encodetime.count() << " ";
             std::cout << dimacstime.count() << " ";
-            std::cout << output.substr(pos + 1) << std::endl;
+            std::cout << output << std::endl;
             // std::cout << "[ nvertices nedges milliseconds_encode milliseconds_dimacs milliseconds_searching ]" << std::endl;   
             break;
         }
@@ -251,11 +249,11 @@ int main(int argc, char *argv[])
             std::chrono::duration<double> encodetime = end - start;
             
             start = std::chrono::high_resolution_clock::now();
-            dimacs(cnf,"temp1.cnf");
+            dimacs(cnf,"temp.cnf");
             end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> dimacstime = end - start;
             
-            auto output = exec("cadical temp1.cnf | grep -E \"^s |total process time since initialization\"");
+            auto output = exec("./cadical temp.cnf | grep -E \"^s |total process time since initialization\"");
 
             std::cout << game->nvertices << " ";
             std::cout << game->nedges << " ";
@@ -273,24 +271,3 @@ int main(int argc, char *argv[])
 
     return 0; 
 }
-
-
-// int main(int argc, char const *argv[])
-// {
-//     Game g("/home/chalo/Deleteme/bes-benchmarks/gm/jurdzinskigame_50_50.gm", 0, Game::GM);
-//     // Game g(2,1, 0);
-//     SATEncoder enc(g);
-//     auto start = std::chrono::high_resolution_clock::now();
-//     auto cnf = enc.getCNF();  // {{,},{,}}
-//     auto end = std::chrono::high_resolution_clock::now();
-//     std::chrono::duration<double, std::micro> duration = end - start; 
-//     std::cout << "Encode time: " << duration.count() << std::endl;
-
-//     start = std::chrono::high_resolution_clock::now();
-//     dimacs(cnf, "/home/chalo/j_50_50.cnf");
-//     end = std::chrono::high_resolution_clock::now();
-//     duration = end - start; 
-//     std::cout << "Saving time: " << duration.count() << std::endl;
-
-//     return 0;
-// }
