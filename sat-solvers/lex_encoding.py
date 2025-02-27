@@ -85,7 +85,6 @@ def ge(a,b,p,nbits) :
     A = [ X[a, p, i] for i in range(nbits) ]
     B = [ X[b, p, i] for i in range(nbits) ]
     C = [ pool.id()  for _ in range(nbits) ]
-    Q = [ pool.id()  for _ in range(nbits-1) ]
 
     n = nbits - 1 # -1 to start counting on 0;
     
@@ -94,17 +93,14 @@ def ge(a,b,p,nbits) :
     cnf.append([+C[n], +B[n]])
     
     for i in range(n-1, -1, -1): # from n-1 to 0
-        cnf.append([-Q[i], -A[i], +B[i]])
-        cnf.append([-Q[i], +A[i], -B[i]])
-        cnf.append([+Q[i], +A[i], +B[i]])
-        cnf.append([+Q[i], -A[i], -B[i]])
+        cnf.append([-C[i], -B[i], +A[i]])
+        cnf.append([-C[i], +A[i], +C[i+1]])
+        cnf.append([-C[i], -B[i], +C[i+1]])
 
-        cnf.append([-C[i], +A[i], -B[i], +Q[i]])
-        cnf.append([-C[i], +A[i], -B[i], +C[i+1]])
-
-        cnf.append([-A[i], +C[i]])
-        cnf.append([+B[i], +C[i]])
-        cnf.append([-Q[i], +C[i], -C[i+1]])
+        cnf.append([+C[i], +B[i], -A[i]])
+        cnf.append([+C[i], +B[i], -A[i], -C[i+1]])
+        cnf.append([+C[i], +B[i], -C[i+1]])
+        cnf.append([+C[i], -A[i], -C[i+1]])
 
     cnf.append([C[0]]) # final clause encoding the fact that a >= b
 
@@ -164,4 +160,4 @@ for bits in product([-1, 1], repeat=nbits*2):
 
     r = solver.solve()
     o = n1>=n2
-    print(f"{" " if r==o else "*"} {int(r)} {int(o)} {n1}>={n2} {[1 if b[0]>0 else 0 for b in cnf_temp[-(nbits*2):]]}")
+    print(f"{' ' if r==o else '-'} {int(r)} {int(o)} {n1}>={n2} {[1 if b[0]>0 else 0 for b in cnf_temp[-(nbits*2):]]}")
