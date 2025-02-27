@@ -1,3 +1,7 @@
+#ifndef CPP_GAME
+#include "game.cpp"
+#endif
+
 #include "iostream"
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
