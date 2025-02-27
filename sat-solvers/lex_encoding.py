@@ -108,6 +108,35 @@ def ge(a,b,p,nbits) :
 
 # ----------------------------------------------------------------------------------------
 
+def sg(a,b,p,nbits) :
+    cnf = []
+
+    A = [ X[a, p, i] for i in range(nbits) ]
+    B = [ X[b, p, i] for i in range(nbits) ]
+    C = [ pool.id()  for _ in range(nbits) ]
+
+    n = nbits - 1 # -1 to start counting on 0;
+    
+    cnf.append([-C[n], +A[n]])
+    cnf.append([-C[n], -B[n]])
+    cnf.append([-A[n], +B[n], +C[n]])
+    
+    for i in range(n-1, -1, -1): # from n-1 to 0
+        cnf.append([-C[i], -B[i], +A[i]])
+        cnf.append([-C[i], +A[i], +C[i+1]])
+        cnf.append([-C[i], -B[i], +C[i+1]])
+
+        cnf.append([+C[i], +B[i], -A[i]])
+        cnf.append([+C[i], +B[i], -A[i], -C[i+1]])
+        cnf.append([+C[i], +B[i], -C[i+1]])
+        cnf.append([+C[i], -A[i], -C[i+1]])
+
+    cnf.append([C[0]]) # final clause encoding the fact that a >= b
+
+    return cnf
+
+# ----------------------------------------------------------------------------------------
+
 def write_dimacs(clauses, filename):
     with open(filename, "w") as f:
         f.write(f"p cnf {pool.top} {len(clauses)}\n")
@@ -123,7 +152,7 @@ X = {
 }
 
 cnf = []
-cnf = ge(0, 1, 0, nbits)
+cnf = sg(0, 1, 0, nbits)
 
 # import subprocess
 
@@ -159,5 +188,5 @@ for bits in product([-1, 1], repeat=nbits*2):
     solver.append_formula(pycnf)
 
     r = solver.solve()
-    o = n1>=n2
-    print(f"{' ' if r==o else '-'} {int(r)} {int(o)} {n1}>={n2} {[1 if b[0]>0 else 0 for b in cnf_temp[-(nbits*2):]]}")
+    o = n1>n2
+    print(f"{' ' if r==o else '-'} {int(r)} {int(o)} {n1}>{n2} {[1 if b[0]>0 else 0 for b in cnf_temp[-(nbits*2):]]}")
