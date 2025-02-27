@@ -23,8 +23,6 @@ def getSAT(g,start=0):
         A = [ X[a, p, i] for i in range(calculate_nbits(p)) ]
         B = [ X[b, p, i] for i in range(calculate_nbits(p)) ]
         C = [ pool.id()  for _ in range(calculate_nbits(p)) ]
-        Q = [ pool.id()  for _ in range(calculate_nbits(p)-1) ]
-        S = [ pool.id()  for _ in range(calculate_nbits(p)-1) ]
 
         n = calculate_nbits(p) - 1 # -1 to start counting on 0;
         
@@ -33,20 +31,15 @@ def getSAT(g,start=0):
         cnf.append([+C[n], +B[n]])
         
         for i in range(n-1, -1, -1): # from n-1 to 0
-            cnf.append([-Q[i], -A[i], +B[i]])
-            cnf.append([-Q[i], +A[i], -B[i]])
-            cnf.append([+Q[i], +A[i], +B[i]])
-            cnf.append([+Q[i], -A[i], -B[i]])
+            cnf.append([-C[i], -B[i], +A[i]])
+            cnf.append([-C[i], +A[i], +C[i+1]])
+            cnf.append([-C[i], -B[i], +C[i+1]])
 
-            cnf.append([-S[i], +A[i]])
-            cnf.append([-S[i], -B[i]])
-            cnf.append([+S[i], -A[i], +B[i]])
+            cnf.append([+C[i], +B[i], -A[i]])
+            cnf.append([+C[i], +B[i], -A[i], -C[i+1]])
+            cnf.append([+C[i], +B[i], -C[i+1]])
+            cnf.append([+C[i], -A[i], -C[i+1]])
 
-            cnf.append([-C[i], +S[i], +Q[i  ]])
-            cnf.append([-C[i], +S[i], +C[i+1]])
-            cnf.append([+C[i], -S[i]         ])
-            cnf.append([+C[i], -Q[i], -C[i+1]])
-        
         cnf.append([C[0]]) # final clause encoding the fact that a >= b
 
         return cnf
@@ -59,31 +52,24 @@ def getSAT(g,start=0):
         A = [ X[a, p, i] for i in range(calculate_nbits(p)) ]
         B = [ X[b, p, i] for i in range(calculate_nbits(p)) ]
         C = [ pool.id()  for _ in range(calculate_nbits(p)) ]
-        Q = [ pool.id()  for _ in range(calculate_nbits(p)-1) ]
-        S = [ pool.id()  for _ in range(calculate_nbits(p)-1) ]
 
         n = calculate_nbits(p) - 1 # -1 to start counting on 0;
-        
+                
         cnf.append([-C[n], +A[n]])
         cnf.append([-C[n], -B[n]])
-        cnf.append([+C[n], -A[n], +B[n]])
+        cnf.append([-A[n], +B[n], +C[n]])
         
         for i in range(n-1, -1, -1): # from n-1 to 0
-            cnf.append([-Q[i], -A[i], +B[i]])
-            cnf.append([-Q[i], +A[i], -B[i]])
-            cnf.append([+Q[i], +A[i], +B[i]])
-            cnf.append([+Q[i], -A[i], -B[i]])
+            cnf.append([-C[i], -B[i], +A[i]])
+            cnf.append([-C[i], +A[i], +C[i+1]])
+            cnf.append([-C[i], -B[i], +C[i+1]])
 
-            cnf.append([-S[i], +A[i]])
-            cnf.append([-S[i], -B[i]])
-            cnf.append([+S[i], -A[i], +B[i]])
+            cnf.append([+C[i], +B[i], -A[i]])
+            cnf.append([+C[i], +B[i], -A[i], -C[i+1]])
+            cnf.append([+C[i], +B[i], -C[i+1]])
+            cnf.append([+C[i], -A[i], -C[i+1]])
 
-            cnf.append([-C[i], +S[i], +Q[i  ]])
-            cnf.append([-C[i], +S[i], +C[i+1]])
-            cnf.append([+C[i], -S[i]         ])
-            cnf.append([+C[i], -Q[i], -C[i+1]])
-        
-        cnf.append([C[0]]) # final clause encoding the fact that a > b
+        cnf.append([C[0]]) # final clause encoding the fact that a >= b
 
         return cnf
 
@@ -150,16 +136,16 @@ def write_dimacs(clauses, filename="game.cnf"):
 
 # ========================================================================================
 
-filepath = "/home/chalo/Deleteme/bes-benchmarks/gm/"
-filename = "jurdzinskigame_50_50"
-g = Game(filepath+filename+".dzn",Game.FIRST0)
+# filepath = "/home/chalo/Deleteme/bes-benchmarks/gm/"
+# filename = "jurdzinskigame_50_50"
+# g = Game(filepath+filename+".dzn",Game.FIRST0)
 
 # arg = sys.argv
 
-# levels = int(arg[1])
-# blocks = int(arg[2])
+levels = 80 #int(arg[1])
+blocks = 10 #int(arg[2])
 
-# g = Game(Game.JURDZINSKI, levels, blocks, Game.FIRST0)
+g = Game(Game.JURDZINSKI, levels, blocks, Game.FIRST0)
 
 t1 = time.time()
 clauses = getSAT(g)
@@ -168,7 +154,7 @@ t2 = time.time()
 # ----------------------------------------------------------------------------------------
 # save dimacs file
 # ----------------------------------------------------------------------------------------
-write_dimacs(clauses, filepath+filename+".cnf")
+write_dimacs(clauses, "/home/chalo/new.cnf")
 
 
 # result = subprocess.run("~/zchaff /home/chalo/game.cnf | grep 'Total Run Time'", capture_output=True, text=True, shell=True)

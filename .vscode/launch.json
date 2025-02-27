@@ -6,7 +6,7 @@
 //             "type": "cppdbg",
 //             "request": "launch",
 //             "program": "${workspaceFolder}/build/experiments",
-//             "args": ["-solving","4"],
+//             "args": ["-jurd","2","1","-solving","2","-dimacs","~/nnew.cnf"],
 //             "cwd": "${workspaceFolder}",
 //         }
 //     ]

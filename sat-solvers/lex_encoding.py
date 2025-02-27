@@ -152,7 +152,7 @@ X = {
 }
 
 cnf = []
-cnf = sg(0, 1, 0, nbits)
+cnf = ge(0, 1, 0, nbits)
 
 # import subprocess
 
