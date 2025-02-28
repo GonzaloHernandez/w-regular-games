@@ -5,6 +5,7 @@
             "label": "C/C++: g++ build standard",
             "command": "/usr/bin/g++",
             "args": [
+                "-std=c++11",
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",

@@ -5,6 +5,7 @@
 #include <vector>
 #include <fstream>
 #include <regex>
+#include<sstream>
 
 const int EVEN  = 0;
 const int ODD   = 1;
@@ -18,6 +19,7 @@ public:
 
     friend class SATEncoder;
     friend class CPModel;
+    friend std::vector<int> attractor(std::vector<int>& V, int q, Game& g);
     friend int main(int, char*[]);
 protected:
     std::vector<int>    owners;

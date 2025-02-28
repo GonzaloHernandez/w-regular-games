@@ -1,13 +1,13 @@
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "C++ Debug",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/experiments",
-            "args": ["-gm","/home/chalo/Deleteme/bes-benchmarks/gm/randomgame(1000,_10,_1,_20)id=0.gm","-filter","2"],
-            "cwd": "${workspaceFolder}",
-        }
-    ]
-}
+// {
+//     "version": "0.2.0",
+//     "configurations": [
+//         {
+//             "name": "C++ Debug",
+//             "type": "cppdbg",
+//             "request": "launch",
+//             "program": "${workspaceFolder}/build/experiments",
+//             "args": ["-gm","/home/chalo/Deleteme/bes-benchmarks/gm/randomgame(1000,_10,_1,_20)id=0.gm","-filter","2"],
+//             "cwd": "${workspaceFolder}",
+//         }
+//     ]
+// }
