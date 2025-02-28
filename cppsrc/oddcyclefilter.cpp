@@ -108,11 +108,12 @@ public:
     }
     //-----------------------------------------------------------------------
     int filter2(vec<int> pathV, vec<int> pathE, int vertex, 
-        vec<BoolView> &E, int lastEdge, bool foundBefore) 
+        vec<BoolView> &E, int lastEdge, bool foundBefore, vec<bool>& touched) 
     {
         int indexV = findVertex(vertex,pathV);
         int indexE = findEdge(lastEdge,pathE);
         if (indexV >= 0) {
+            touched[vertex] = true;
             if (indexE>=indexV) {
                 if (mincolor(indexV,pathV)%2==ODD) {
                     vec<Lit> lits;
@@ -129,34 +130,38 @@ public:
             }
         }
         else {
-            for (int e=0; e<sources.size(); e++) {
-                if (sources[e]==vertex && !E[e].isFalse()) {
-                    vec<int> newpathV(pathV);
-                    vec<int> newpathE(pathE);
-                    newpathV.push(vertex);
-                    newpathE.push(e);
+            if (!touched[vertex]) {
+                touched[vertex] = true;
+                for (int e=0; e<sources.size(); e++) {
+                    if (sources[e]==vertex && !E[e].isFalse()) {
+                        vec<int> newpathV(pathV);
+                        vec<int> newpathE(pathE);
+                        newpathV.push(vertex);
+                        newpathE.push(e);
 
-                    if (!foundBefore && !E[e].isTrue()) {
-                        int status = filter2(newpathV, newpathE, targets[e], E, e, true);
-                        if (status == CF_CONFLICT) {
-                            return status;
+                        if (!foundBefore && !E[e].isTrue()) {
+                            int status = filter2(newpathV, newpathE, targets[e], E, e, true, touched);
+                            if (status == CF_CONFLICT) {
+                                return status;
+                            }
                         }
-                    }
-                    else if (!foundBefore && E[e].isTrue()) {
-                        int status = filter2(newpathV, newpathE, targets[e], E, e, false);
-                        if (status == CF_CONFLICT) {
-                            return status;
+                        else if (!foundBefore && E[e].isTrue()) {
+                            int status = filter2(newpathV, newpathE, targets[e], E, e, false, touched);
+                            if (status == CF_CONFLICT) {
+                                return status;
+                            }
                         }
-                    }
-                    else if (foundBefore && E[e].isTrue()) {
-                        int status = filter2(newpathV, newpathE, targets[e], E, lastEdge, true);
-                        if (status == CF_CONFLICT) {
-                            return status;
+                        else if (foundBefore && E[e].isTrue()) {
+                            int status = filter2(newpathV, newpathE, targets[e], E, lastEdge, true, touched);
+                            if (status == CF_CONFLICT) {
+                                return status;
+                            }
                         }
                     }
                 }
             }
         }
+        touched[vertex] = true;
         return CF_DONE;
     }
     //-----------------------------------------------------------------------
@@ -197,7 +202,6 @@ public:
     int filter4(vec<int> pathV, vec<int> pathE, int vertex, 
         vec<BoolView> &E, int lastEdge, bool foundBefore, vec<bool>& touched) 
     {
-        touched[vertex] = true;
         int indexV = findVertex(vertex,pathV);
         int indexE = findEdge(lastEdge,pathE);
         if (indexV >= 0) {
@@ -217,34 +221,38 @@ public:
             }
         }
         else {
-            for (int e=0; e<sources.size(); e++) {
-                if (sources[e]==vertex && !E[e].isFalse()) {
-                    vec<int> newpathV(pathV);
-                    vec<int> newpathE(pathE);
-                    newpathV.push(vertex);
-                    newpathE.push(e);
+            if (!touched[vertex]) {
+                touched[vertex] = true;
+                for (int e=0; e<sources.size(); e++) {
+                    if (sources[e]==vertex && !E[e].isFalse()) {
+                        vec<int> newpathV(pathV);
+                        vec<int> newpathE(pathE);
+                        newpathV.push(vertex);
+                        newpathE.push(e);
 
-                    if (!foundBefore && !E[e].isTrue()) {
-                        int status = filter4(newpathV, newpathE, targets[e], E, e, true, touched);
-                        if (status == CF_CONFLICT) {
-                            return status;
+                        if (!foundBefore && !E[e].isTrue()) {
+                            int status = filter4(newpathV, newpathE, targets[e], E, e, true, touched);
+                            if (status == CF_CONFLICT) {
+                                return status;
+                            }
                         }
-                    }
-                    else if (!foundBefore && E[e].isTrue()) {
-                        int status = filter4(newpathV, newpathE, targets[e], E, e, false, touched);
-                        if (status == CF_CONFLICT) {
-                            return status;
+                        else if (!foundBefore && E[e].isTrue()) {
+                            int status = filter4(newpathV, newpathE, targets[e], E, e, false, touched);
+                            if (status == CF_CONFLICT) {
+                                return status;
+                            }
                         }
-                    }
-                    else if (foundBefore && E[e].isTrue()) {
-                        int status = filter4(newpathV, newpathE, targets[e], E, lastEdge, true, touched);
-                        if (status == CF_CONFLICT) {
-                            return status;
+                        else if (foundBefore && E[e].isTrue()) {
+                            int status = filter4(newpathV, newpathE, targets[e], E, lastEdge, true, touched);
+                            if (status == CF_CONFLICT) {
+                                return status;
+                            }
                         }
                     }
                 }
             }
         }
+        touched[vertex] = true;
         return CF_DONE;
     }
     //-----------------------------------------------------------------------
@@ -262,7 +270,7 @@ public:
             break;
         
         case 2:
-            if (filter2(pathV,pathE,start,E,-1,false) == CF_CONFLICT)
+            if (filter2(pathV,pathE,start,E,-1,false,touched) == CF_CONFLICT)
                 return false;
             break;
 
