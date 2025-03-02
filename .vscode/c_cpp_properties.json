@@ -4,7 +4,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/home/chalo/.local/include"
+                "${env:HOME}/.local/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

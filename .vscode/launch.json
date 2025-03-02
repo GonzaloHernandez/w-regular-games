@@ -1,13 +1,32 @@
-// {
-//     "version": "0.2.0",
-//     "configurations": [
-//         {
-//             "name": "C++ Debug",
-//             "type": "cppdbg",
-//             "request": "launch",
-//             "program": "${workspaceFolder}/build/experiments",
-//             "args": ["-gm","/home/chalo/Deleteme/bes-benchmarks/gm/randomgame(1000,_10,_1,_20)id=0.gm","-filter","2"],
-//             "cwd": "${workspaceFolder}",
-//         }
-//     ]
-// }
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "C++ Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/experiments",
+            "cwd": "${workspaceFolder}",
+            "MIMode": "lldb",  // gdb for linux
+            // "externalConsole": true
+        },
+        {
+            "name": "C++ Debug (Arguments)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/experiments",
+            "args": ["-jurd", "10", "5", "-solving", "2", "-dimacs", "jurd-10-5.cnf"],
+            "cwd": "${workspaceFolder}",
+            "MIMode": "lldb",  // gdb for linux
+            // "externalConsole": true
+        },
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "cwd": "${fileDirname}"
+        }
+    ]
+}

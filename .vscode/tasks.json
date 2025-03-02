@@ -30,13 +30,14 @@
             "label": "C/C++: g++ build using chuffed",
             "command": "/usr/bin/g++",
             "args": [
+                "-std=c++11",
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",
                 "-o",
                 "${workspaceFolder}/build/${fileBasenameNoExtension}",
-                "-I/home/chalo/.local/include",
-                "-L/home/chalo/.local/lib",
+                "-I${env:HOME}/.local/include",
+                "-L${env:HOME}/.local/lib",
                 "-lchuffed",
             ],
             "options": {

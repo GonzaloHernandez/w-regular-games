@@ -59,24 +59,27 @@ private:
         std::vector<int>& A = P[a][p];
         std::vector<int>& B = P[b][p];
         std::vector<int> C;
+        std::vector<int> Q;
 
-        for (int i = 0; i < n+1; i++) {
-            C.push_back(pool.getId());
-        }
+        for (int i = 0; i < n+1; i++) C.push_back(pool.getId());
+        for (int i = 0; i < n;   i++) Q.push_back(pool.getId());
 
         cnf.push_back({-C[n], +A[n], -B[n]});
         cnf.push_back({+C[n], -A[n]});
         cnf.push_back({+C[n], +B[n]});
 
         for (int i = n-1; i >= 0; i--) {
-            cnf.push_back({-C[i], -B[i], +A[i]});
-            cnf.push_back({-C[i], +A[i], +C[i+1]});
-            cnf.push_back({-C[i], -B[i], +C[i+1]});
+            cnf.push_back({-Q[i], -A[i], +B[i]});
+            cnf.push_back({+A[i], +Q[i]});
+            cnf.push_back({-B[i], +Q[i]});
     
-            cnf.push_back({+C[i], +B[i], -A[i]});
-            cnf.push_back({+C[i], +B[i], -A[i], -C[i+1]});
-            cnf.push_back({+C[i], +B[i], -C[i+1]});
-            cnf.push_back({+C[i], -A[i], -C[i+1]});
+            cnf.push_back({-C[i], -B[i], +A[i]});
+            cnf.push_back({-C[i], -Q[i], +C[i+1]});
+    
+            cnf.push_back({+B[i], +Q[i],   C[i]});
+            cnf.push_back({+B[i], -C[i+1], C[i]});
+            cnf.push_back({-A[i], +Q[i],   C[i]});
+            cnf.push_back({-A[i], -C[i+1], C[i]});
         }
 
         cnf.push_back({C[0]});
@@ -97,24 +100,27 @@ private:
         std::vector<int>& A = P[a][p];
         std::vector<int>& B = P[b][p];
         std::vector<int> C;
+        std::vector<int> Q;
 
-        for (int i = 0; i < n+1; i++) {
-            C.push_back(pool.getId());
-        }
+        for (int i = 0; i < n+1; i++) C.push_back(pool.getId());
+        for (int i = 0; i < n;   i++) Q.push_back(pool.getId());
                 
         cnf.push_back({-C[n], +A[n]});
         cnf.push_back({-C[n], -B[n]});
         cnf.push_back({+C[n], -A[n], +B[n]});
         
         for (int i = n-1; i >= 0; i--) {
-            cnf.push_back({-C[i], -B[i], +A[i]});
-            cnf.push_back({-C[i], +A[i], +C[i+1]});
-            cnf.push_back({-C[i], -B[i], +C[i+1]});
+            cnf.push_back({-Q[i], -A[i], +B[i]});
+            cnf.push_back({+A[i], +Q[i]});
+            cnf.push_back({-B[i], +Q[i]});
     
-            cnf.push_back({+C[i], +B[i], -A[i]});
-            cnf.push_back({+C[i], +B[i], -A[i], -C[i+1]});
-            cnf.push_back({+C[i], +B[i], -C[i+1]});
-            cnf.push_back({+C[i], -A[i], -C[i+1]});
+            cnf.push_back({-C[i], -B[i], +A[i]});
+            cnf.push_back({-C[i], -Q[i], +C[i+1]});
+    
+            cnf.push_back({+B[i], +Q[i],   C[i]});
+            cnf.push_back({+B[i], -C[i+1], C[i]});
+            cnf.push_back({-A[i], +Q[i],   C[i]});
+            cnf.push_back({-A[i], -C[i+1], C[i]});
         }
 
         cnf.push_back({C[0]});
