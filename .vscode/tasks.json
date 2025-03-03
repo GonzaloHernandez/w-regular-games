@@ -5,7 +5,7 @@
             "label": "C/C++: g++ build standard",
             "command": "/usr/bin/g++",
             "args": [
-                "-std=c++11",
+                // "-std=c++11",
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",
@@ -30,7 +30,7 @@
             "label": "C/C++: g++ build using chuffed",
             "command": "/usr/bin/g++",
             "args": [
-                "-std=c++11",
+                // "-std=c++11",
                 "-fdiagnostics-color=always",
                 "-g",
                 "${file}",

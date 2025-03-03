@@ -1,32 +1,32 @@
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "C++ Debug",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/experiments",
-            "cwd": "${workspaceFolder}",
-            "MIMode": "lldb",  // gdb for linux
-            // "externalConsole": true
-        },
-        {
-            "name": "C++ Debug (Arguments)",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/experiments",
-            "args": ["-jurd", "10", "5", "-solving", "2", "-dimacs", "jurd-10-5.cnf"],
-            "cwd": "${workspaceFolder}",
-            "MIMode": "lldb",  // gdb for linux
-            // "externalConsole": true
-        },
-        {
-            "name": "Python: Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "cwd": "${fileDirname}"
-        }
-    ]
-}
+// {
+//     "version": "0.2.0",
+//     "configurations": [
+//         {
+//             "name": "C++ Debug",
+//             "type": "cppdbg",
+//             "request": "launch",
+//             "program": "${workspaceFolder}/build/experiments",
+//             "cwd": "${workspaceFolder}",
+//             // "MIMode": "lldb",  // lldb for osx / gdb for linux
+//             // "externalConsole": true
+//         },
+//         {
+//             "name": "C++ Debug (Arguments)",
+//             "type": "cppdbg",
+//             "request": "launch",
+//             "program": "${workspaceFolder}/build/experiments",
+//             "args": ["-jurd", "10", "5", "-solving", "2", "-dimacs", "jurd-10-5.cnf"],
+//             "cwd": "${workspaceFolder}",
+//             // "MIMode": "lldb",  // lldb for osx / gdb for linux
+//             // "externalConsole": true
+//         },
+//         {
+//             "name": "Python: Current File",
+//             "type": "debugpy",
+//             "request": "launch",
+//             "program": "${file}",
+//             "console": "integratedTerminal",
+//             "cwd": "${fileDirname}"
+//         }
+//     ]
+// }
