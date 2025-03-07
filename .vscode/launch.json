@@ -15,7 +15,8 @@
 //             "type": "cppdbg",
 //             "request": "launch",
 //             "program": "${workspaceFolder}/build/experiments",
-//             "args": ["-jurd", "10", "5", "-solving", "2", "-dimacs", "jurd-10-5.cnf"],
+//             // "args": ["-gm", "/home/chalo/Deleteme/bes-benchmarks/gm/steadygame(5000,_1,_20,_1,_20)id=3.gm","-start","1899","-solving","2"],
+//             "args": ["-gm", "/home/chalo/Deleteme/bes-benchmarks/gm/randomgame(5000,_10,_1,_20)id=17.gm","-start","2222","-solving","2"],
 //             "cwd": "${workspaceFolder}",
 //             // "MIMode": "lldb",  // lldb for osx / gdb for linux
 //             // "externalConsole": true

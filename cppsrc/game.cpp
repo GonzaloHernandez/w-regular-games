@@ -21,7 +21,7 @@ public:
     friend class CPModel;
     friend std::vector<int> attractor(std::vector<int>& V, int q, Game& g);
     friend int main(int, char*[]);
-protected:
+public:
     std::vector<int>    owners;
     std::vector<int>    colors;
     std::vector<int>    sources;
