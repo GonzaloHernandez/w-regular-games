@@ -1,5 +1,4 @@
 #include <vector>
-#include <unordered_set>
 #include <algorithm>
 #include "game.cpp"
 
@@ -8,6 +7,11 @@ public:
     std::vector<int>    vertices;
     std::vector<int>    edges;
 public:
+
+    GameExtended() : Game({},{},{},{},0){
+    }
+
+    //----------------------------------------------------------------------------------
 
     GameExtended(   std::vector<int> own,std::vector<int> col,
                     std::vector<int> sou,std::vector<int> tar, int startv)
@@ -33,12 +37,6 @@ public:
     {
         for(int v=0; v<=nvertices; v++) vertices.push_back(v);
         for(int e=0; e<=nedges;    e++) edges.push_back(e);
-    }
-
-    //----------------------------------------------------------------------------------
-
-    GameExtended& GameExtended(GameExtended& g) {
-        GameExtended ng(g.owners,g.colors,g.sources,g.targets,g.start);
     }
 
     //----------------------------------------------------------------------------------
@@ -75,6 +73,7 @@ public:
         }
         return es;
     }
+
     //----------------------------------------------------------------------------------
     
     GameExtended operator/(const std::vector<int>& novertices) {
@@ -89,8 +88,35 @@ public:
         }
         return g;
     }
+
+    //----------------------------------------------------------------------------------
+    
+    void diff(const std::vector<int>& novertices,GameExtended& g) const {
+        for (int v=0; v<nvertices; v++) {
+            g.owners.   push_back(owners[v]);
+            g.colors.   push_back(owners[v]);
+            g.vertices. push_back(vertices[v]);
+        }
+
+        for (int e=0; e<nedges; e++) {
+            g.sources.  push_back(sources[e]);
+            g.targets.  push_back(targets[e]);
+            g.edges.    push_back(edges[e]);
+        }
+
+        for (auto& v : novertices) {
+            g.vertices[v] = -1;
+            for (auto& e : edges) {
+                if (e >= 0) 
+                    if (g.sources[e] == v or g.targets[e] == v) 
+                        g.edges[e] = -1;
+            }
+        }
+    }
 };
     
+//======================================================================================
+
 std::vector<int> attractor(std::vector<int> V, int q, const GameExtended& g) {
     std::vector<int> A = V;
     for (int v : V) {
@@ -121,7 +147,10 @@ std::vector<int> attractor(std::vector<int> V, int q, const GameExtended& g) {
             }
         }
         
-        auto recursiveAttr = attractor(localattractor, q, g / A );
+        GameExtended g_A;
+        g.diff(A,g_A);
+
+        auto recursiveAttr = attractor(localattractor, q, g_A);
         for (int v : recursiveAttr) {
             if (std::find(A.begin(),A.end(),v) != A.end()) {
                 A.push_back(v);
@@ -147,13 +176,21 @@ std::vector<std::vector<int>> zielonka(GameExtended g) {
         }
         
         std::vector<int> A = attractor(U, q, g);
-        auto W = zielonka(g / A);
+
+        GameExtended g_A;
+        g.diff(A,g_A);
+
+        auto W = zielonka(g_A);
         
         if (W[1 - q].empty()) {
             Z[q] = A;
         } else {
             std::vector<int> B = attractor(W[1-q], 1 - q, g);
-            W = zielonka(g / B);
+
+            GameExtended g_B;
+            g.diff(A,g_B);
+    
+            W = zielonka(g_B);
             Z[q] = W[q];
             Z[1-q] = B;
             for (int v : W[1-q]) {
@@ -165,14 +202,16 @@ std::vector<std::vector<int>> zielonka(GameExtended g) {
     return Z;
 }
 
-int main(int argc, char *argv[]) {
-    GameExtended g("/home/chalo/Software/w-regular-games/data/game-wiki-min.dzn",Game::DZN);
-    std::vector<std::vector<int>>  W = zielonka(g);
-    for (auto& v : W[0]) std::cout << v;
-    std::cout << " - ";
-    for (auto& v : W[1]) std::cout << v;
-    std::cout << std::endl;
+//======================================================================================
 
-    // GameExtended g({0,1},{0,1},{0,1},{1,0},0);
-    // g.printGame();
-}
+// int main(int argc, char *argv[]) {
+//     GameExtended g("/Users/chalo/Software/w-regular-games/data/game-wiki-min.dzn",Game::DZN);
+//     // std::vector<std::vector<int>>  W = zielonka(g);
+//     // for (auto& v : W[0]) std::cout << v;
+//     // std::cout << " - ";
+//     // for (auto& v : W[1]) std::cout << v;
+//     // std::cout << std::endl;
+
+//     // GameExtended g({0,1},{0,1},{0,1},{1,0},0);
+//     g.printGame();
+// }

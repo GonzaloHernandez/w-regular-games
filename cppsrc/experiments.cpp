@@ -1,8 +1,8 @@
-
 #include "cpsolver.cpp"
 #include "satencoder.cpp"
 #include <cstdlib>
 #include <chrono>
+#include "Graph.h"
 
 struct options {
     int print_game      = 0; 
@@ -98,7 +98,7 @@ bool parseExperimentOptions(int argc, char *argv[]) {
                 }
                 char* endptr;
                 int solving = std::strtol(argv[i],&endptr,10);
-                if (errno == ERANGE || solving < 1 || solving > 4) {
+                if (errno == ERANGE || solving < 1 || solving > 6) {
                     std::cerr << "ERROR: Solving purppose out of range\n";
                     return false;
                 }
@@ -182,9 +182,9 @@ int main(int argc, char *argv[])
     switch (ex.solving_type) {
         case 1: { // cp solver
             CPModel* model;
-            model = new CPModel(*game, ex.filter_type);
+            model = new CPModel(*game, ex.filter_type,2);
             so.nof_solutions = 1;
-            so.print_sol = false;
+            so.print_sol = true;
             engine.solve(model);
             auto total_time = std::chrono::duration_cast<std::chrono::milliseconds>(chuffed_clock::now() - engine.start_time);
             const std::chrono::milliseconds search_time = total_time - engine.init_time;
@@ -208,7 +208,7 @@ int main(int argc, char *argv[])
 
             start = std::chrono::high_resolution_clock::now();
             if (ex.dimacs_filename != "") {
-                dimacs(cnf,ex.dimacs_filename);
+                encoder.dimacs(cnf,ex.dimacs_filename);
             }
             end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> dimacstime = end - start;
@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
             std::chrono::duration<double> encodetime = end - start;
             
             start = std::chrono::high_resolution_clock::now();
-            dimacs(cnf,"temp.cnf");
+            encoder.dimacs(cnf,"temp.cnf");
             end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> dimacstime = end - start;
             
@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
             std::chrono::duration<double> encodetime = end - start;
             
             start = std::chrono::high_resolution_clock::now();
-            dimacs(cnf,"temp.cnf");
+            encoder.dimacs(cnf,"temp.cnf");
             end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> dimacstime = end - start;
             
@@ -262,6 +262,65 @@ int main(int argc, char *argv[])
             std::cout << dimacstime.count() << " ";
             std::cout << output << std::endl;
             // std::cout << "[ nvertices nedges milliseconds_encode milliseconds_dimacs output ]" << std::endl;   
+            break;
+        }
+        case 5: { // zielonka
+            Graph zlk(ex.game_filename.c_str());
+            auto start = std::chrono::high_resolution_clock::now();
+            auto res = zlk.Solve();
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> zlktime = end - start;
+
+            if (std::find(res.first.begin(), res.first.end(), ex.game_start) != res.first.end()) {
+                std::cout << "Even wins" << " "; 
+            } else {
+                std::cout << "Odd wins" << " "; 
+            }
+            std::cout << zlktime.count() << std::endl;
+
+            std::cout << "evens=(";
+            for (auto& r : res.first) {
+                std::cout << r << " ";
+            }
+            std::cout << ")" << std::endl;
+            std::cout << "odds=(";
+            for (auto& r : res.second) {
+                std::cout << r << " ";
+            }
+            std::cout << ")" << std::endl;
+
+            break;
+        }
+        case 6: { // testing cp using zielonka
+            Graph zlk(ex.game_filename.c_str());
+            auto res = zlk.Solve();
+
+            std::cout << "Total Vertices for Even player: " << res.first.size() << std::endl;
+            std::cout << "Total Vertices for Odd player:  " << res.second.size() << std::endl;
+
+            std::cout << "---- Testing Event plays -----" << std::endl;
+            for (auto& r : res.first) {
+                CPModel* model;
+                game->start = r;
+                model = new CPModel(*game);
+                so.nof_solutions = 1;
+                so.print_sol = false;
+                engine.solve(model);
+                delete model;
+                std::cout << "Staring at " << r << " winner: " << (engine.solutions>0?"Even":"Odd") << std::endl;
+            }
+
+            std::cout << "---- Testing Odd plays -----" << std::endl;
+            for (auto& r : res.second) {
+                CPModel* model;
+                game->start = r;
+                model = new CPModel(*game, ex.filter_type);
+                so.nof_solutions = 1;
+                so.print_sol = false;
+                engine.solve(model);
+                delete model;
+                std::cout << "Staring at " << r << " winner: " << (engine.solutions>0?"Even":"Odd") << std::endl;
+            }
             break;
         }
         default:

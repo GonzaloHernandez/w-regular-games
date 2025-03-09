@@ -14,7 +14,7 @@ public:
     Pool() : id(0) {}
     int getId() { return ++id; }
     int top()   { return id; }
-} pool;
+};
 
 //======================================================================================
 
@@ -25,7 +25,7 @@ private:
     std::vector<int>    E;
     std::vector<std::vector<std::vector<int>>>    P;
     std::vector<int>    oddcolors;
-
+    Pool                pool;
     //----------------------------------------------------------------------------------
 
     void calculate_oddcolors() {
@@ -239,23 +239,27 @@ public:
         return cnf;
     }
     
+    //----------------------------------------------------------------------------------
+
+    void dimacs(std::vector<std::vector<int>>& cnf, std::string filename) {
+        std::ofstream file(filename);
+        if (!file) {
+            std::cerr << "Error: Could not open file!" << std::endl;
+            return;
+        }
+    
+        file << "p cnf " << pool.top() << " " << cnf.size() << std::endl;
+        for (auto& clause : cnf) {
+            for (auto& literal : clause) {
+                file << literal << " ";
+            }
+            file << "0" << std::endl;
+        }
+        file.close();
+    }
+
 };
 
 //======================================================================================
 
-void dimacs(std::vector<std::vector<int>>& cnf, std::string filename) {
-    std::ofstream file(filename);
-    if (!file) {
-        std::cerr << "Error: Could not open file!" << std::endl;
-        return;
-    }
 
-    file << "p cnf " << pool.top() << " " << cnf.size() << std::endl;
-    for (auto& clause : cnf) {
-        for (auto& literal : clause) {
-            file << literal << " ";
-        }
-        file << "0" << std::endl;
-    }
-    file.close();
-}

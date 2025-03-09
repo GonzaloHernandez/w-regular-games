@@ -1,33 +1,34 @@
-// {
-//     "version": "0.2.0",
-//     "configurations": [
-//         {
-//             "name": "C++ Debug",
-//             "type": "cppdbg",
-//             "request": "launch",
-//             "program": "${workspaceFolder}/build/experiments",
-//             "cwd": "${workspaceFolder}",
-//             // "MIMode": "lldb",  // lldb for osx / gdb for linux
-//             // "externalConsole": true
-//         },
-//         {
-//             "name": "C++ Debug (Arguments)",
-//             "type": "cppdbg",
-//             "request": "launch",
-//             "program": "${workspaceFolder}/build/experiments",
-//             // "args": ["-gm", "/home/chalo/Deleteme/bes-benchmarks/gm/steadygame(5000,_1,_20,_1,_20)id=3.gm","-start","1899","-solving","2"],
-//             "args": ["-gm", "/home/chalo/Deleteme/bes-benchmarks/gm/randomgame(5000,_10,_1,_20)id=17.gm","-start","2222","-solving","2"],
-//             "cwd": "${workspaceFolder}",
-//             // "MIMode": "lldb",  // lldb for osx / gdb for linux
-//             // "externalConsole": true
-//         },
-//         {
-//             "name": "Python: Current File",
-//             "type": "debugpy",
-//             "request": "launch",
-//             "program": "${file}",
-//             "console": "integratedTerminal",
-//             "cwd": "${fileDirname}"
-//         }
-//     ]
-// }
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "C++ Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/experiments",
+            "cwd": "${workspaceFolder}",
+            "MIMode": "lldb",  // lldb for osx / gdb for linux
+            // "externalConsole": true
+        },
+        {
+            "name": "C++ Debug (Arguments)",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/experiments",
+            // "args": ["-gm", "/home/chalo/Deleteme/bes-benchmarks/gm/steadygame(5000,_1,_20,_1,_20)id=3.gm","-start","1899","-solving","2"],
+            // "args": ["-gm", "/home/chalo/Deleteme/bes-benchmarks/gm/randomgame(5000,_10,_1,_20)id=17.gm","-start","2222","-solving","2"],
+            "args": ["-gm", "/Users/chalo/gm/cliquegame(100).gm","-solving","6"],
+            "cwd": "${workspaceFolder}",
+            // "MIMode": "lldb",  // lldb for osx / gdb for linux
+            // "externalConsole": true
+        },
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "cwd": "${fileDirname}"
+        }
+    ]
+}
