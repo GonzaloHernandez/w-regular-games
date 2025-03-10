@@ -83,7 +83,7 @@ public:
         }
 
         // Every infinite ODD play must be avoided.
-        new OddCycleFilter(g.owners,g.colors,g.sources,g.targets,V,E,g.start,filtertype);
+        new OddCycleFilter(g,V,E,filtertype);
 
         // Every unreachable vertex must be avoided.
         vec<vec<int>> _in, _out, _en;

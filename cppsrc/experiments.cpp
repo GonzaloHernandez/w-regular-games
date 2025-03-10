@@ -16,6 +16,65 @@ struct options {
     std::string dimacs_filename = "";
 } ex;
 
+//----------------------------------------------------------------------
+std::ostream& operator<<(std::ostream& os, const std::vector<int>& vec) {
+    os << "[";
+    for (size_t i = 0; i < vec.size(); ++i) {
+        os << vec[i];
+        if (i != vec.size() - 1) os << ", ";
+    }
+    os << "]";
+    return os;
+}
+
+void debug() {   
+    std::vector<int> viii;
+    std::cout << viii << std::endl;
+    vec<bool> vb;
+    vb.dbg();
+    vec<int> vi;
+    vi.dbg();
+    vec<vec<int>> vvi;
+    vvi.dbg();
+    vec<Lit> vl;
+    vl.dbg();
+    vec<vec<Lit>> vvl;
+    vvl.dbg();
+    vec<vec<WatchElem>> vvw;
+    vvw.dbg();
+    vec<Reason> vr;
+    vr.dbg();
+    vec<ChannelInfo> vci;
+    vci.dbg();
+    vec<int8_t> vi8;
+    vi8.dbg();
+    vec<Clause*> vc;
+    vc.dbg();
+    vec<vec<Clause*>> vvc;
+    vvc.dbg();
+    vec<IntVar*> viv;
+    viv.dbg();
+    vec<TrailElem> vt;
+    vt.dbg();
+    vec<Propagator*> vpr;
+    vpr.dbg();
+    vec<vec<Propagator*>> vvpr;
+    vvpr.dbg();
+    vec<DecInfo> vdi;
+    vdi.dbg();
+    vec<BoolView> vbv;
+    vbv.dbg();
+    vec<Lit> lss;
+    Clause cla(lss,false);
+    cla.dbg();
+    Lit l;
+    l.dbg();
+    BoolView b;
+    b.dbg();
+    sat.seen.dbg();
+    sat.assignsdbg();
+}
+
 //======================================================================================
 
 bool parseExperimentOptions(int argc, char *argv[]) {

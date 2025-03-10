@@ -26,12 +26,15 @@
             "label": "C/C++: g++ build using chuffed",
             "command": "/usr/bin/g++",
             "args": [
-                "-std=c++11",
+                "-std=c++14",
                 "-fdiagnostics-color=always",
                 "-g",
-                "${file}",
+                "-O0",
+                // "${file}",
+                "${workspaceFolder}/cppsrc/*.cpp",
                 "-o",
-                "${workspaceFolder}/build/${fileBasenameNoExtension}",
+                // "${workspaceFolder}/build/${fileBasenameNoExtension}",
+                "${workspaceFolder}/build/experiments",
                 "-I${env:HOME}/.local/include",
                 "-L${env:HOME}/.local/lib",
                 "-lchuffed"
