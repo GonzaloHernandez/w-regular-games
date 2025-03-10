@@ -162,11 +162,14 @@ public:
     }
     //-----------------------------------------------------------------------
     int filterRememberMins(vec<int> pathV, vec<int> pathE, int vertex, 
-        vec<BoolView> &E, int lastEdge, bool definedEdge, vec<int>& touched) 
+        vec<BoolView> &E, int lastEdge, bool definedEdge, std::vector<std::pair<int,int>>& touched) 
     {
         int index = findVertex(vertex,pathV);
         if (index >= 0) {
-            if (mincolor(index,pathV)%2==ODD) {
+            int min = mincolor(index,pathV);
+            touched[lastEdge].first = index;
+            touched[lastEdge].second = min;
+            if (min%2==ODD) {
                 vec<Lit> lits;
                 lits.push();
                 clausify(pathE,E,lits,index);
@@ -185,10 +188,25 @@ public:
                         vec<int> newpathE(pathE);
                         newpathV.push(vertex);
                         newpathE.push(e);
-                        int status = filterRememberMins(newpathV, newpathE, 
-                                        g.targets[e], E, e, E[e].isTrue());
-                        if (status == CF_CONFLICT) {
-                            return status;
+
+                        if (touched[e].first >= 0) {
+                            int min = mincolor(touched[e].first,pathV);
+                            if (min < touched[e].second) {
+                                int status = filterRememberMins(newpathV, newpathE,g.targets[e], E, e, E[e].isTrue(),touched);
+                                if (status == CF_CONFLICT) {
+                                    return status;
+                                }
+                            }
+                            else {
+                                touched[lastEdge].first = touched[e].first;
+                                touched[lastEdge].second = touched[e].second;
+                            }
+                        }
+                        else {
+                            int status = filterRememberMins(newpathV, newpathE,g.targets[e], E, e, E[e].isTrue(),touched);
+                            if (status == CF_CONFLICT) {
+                                return status;
+                            }
                         }
                     }
                 }
@@ -237,25 +255,18 @@ public:
         bool done = false;
 
         switch (filtertype) {
-        case 1:{
-            std::ofstream logFile("/home/chalo/wrg.log");
-            std::streambuf* originalCerr = std::cerr.rdbuf();
-            std::cerr.rdbuf(logFile.rdbuf());
-
-            if (filterSimple(pathV,pathE,g.start,E,-1,true) == CF_CONFLICT){
-                std::cerr.rdbuf(originalCerr);
+        case 1: { // Simple filter affecting the edge before starting the cycle
+            if (filterSimple(pathV,pathE,g.start,E,-1,true) == CF_CONFLICT)
                 return false;
-            }
-            std::cerr.rdbuf(originalCerr);
             break;
         }
-        case 2: {
+        case 2: { // Remebering the uniquely unassigned edge found in the cycle
             vec<bool> touched(V.size(),false);
             if (filterRememberEdge(pathV,pathE,g.start,E,-1,false,touched) == CF_CONFLICT)
                 return false;
             break;
         }
-        case 3: {
+        case 3: { // Applying SimpleFilter starting at every other vertex
             vec<bool> touched(V.size(),false);
             if (filterOthersStarts(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
                 return false;
@@ -267,8 +278,8 @@ public:
             }
             break;
         }
-        case 4:{
-            vec<int> touched(E.size(),-1);
+        case 4: { // Remembering the min plays
+            std::vector<std::pair<int,int>> touched(E.size(),{-1,-1});
             if (filterRememberMins(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
                 return false;
             break;
