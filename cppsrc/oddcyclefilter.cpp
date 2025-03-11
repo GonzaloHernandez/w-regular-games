@@ -21,7 +21,7 @@ private:
 public:
     //-----------------------------------------------------------------------
     OddCycleFilter(Game& g, vec<BoolView>& V,vec<BoolView>& E,int filtertype=1)
-    :   g(g), V(V), E(E), filtertype(filtertype) 
+    :   g(g), V(V), E(E), filtertype(filtertype)
     {
         for (int i=0; i<g.owners.size(); i++)  V[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.sources.size(); i++) E[i].attach(this, 1 , EVENT_F );
@@ -190,6 +190,9 @@ public:
                         newpathE.push(e);
 
                         if (touched[e].first >= 0) {
+                            if (pathV.size() <= touched[e].first) {
+                                return CF_DONE;
+                            }
                             int min = mincolor(touched[e].first,pathV);
                             if (min < touched[e].second) {
                                 int status = filterRememberMins(newpathV, newpathE,g.targets[e], E, e, E[e].isTrue(),touched);
@@ -278,9 +281,9 @@ public:
             }
             break;
         }
-        case 4: { // Remembering the min plays
-            std::vector<std::pair<int,int>> touched(E.size(),{-1,-1});
-            if (filterRememberMins(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
+        case 4: { // Remembering min plays
+            std::vector<std::pair<int,int>> touchedmins(g.nedges,{-1,-1});
+            if (filterRememberMins(pathV,pathE,g.start,E,-1,true,touchedmins) == CF_CONFLICT)
                 return false;
             break;
         }

@@ -2,7 +2,7 @@
 #include "satencoder.cpp"
 #include <cstdlib>
 #include <chrono>
-#include "Graph.h"
+#include "graph.h"
 
 struct options {
     int print_game      = 0; 
@@ -134,6 +134,24 @@ bool parseExperimentOptions(int argc, char *argv[]) {
                 }
                 ex.dimacs_filename = argv[i];                
             }
+            else if (strcmp(argv[i],"-print")==0) {
+                i++;
+                if (i>=argc || argv[i][0] == '-') {
+                    std::cerr << "ERROR: Print type number missing\n";
+                    return false;
+                }
+                char* endptr;
+                int print = std::strtol(argv[i],&endptr,10);
+                if (errno == ERANGE || print < 0 || print > 2) {
+                    std::cerr << "ERROR: Print type number out range (0,1,2)\n";
+                    return false;
+                }
+                if (*endptr != '\0') {
+                    std::cerr << "ERROR: Print type no numeric\n";
+                    return false;
+                }
+                ex.print_game = print;
+            }
         }
     }
     return true;
@@ -184,7 +202,8 @@ int main(int argc, char *argv[])
             CPModel* model;
             model = new CPModel(*game, ex.filter_type,ex.print_game);
             so.nof_solutions = 1;
-            so.print_sol = true;
+            so.sym_static = true;
+            so.print_sol = ex.print_game==0?false:true;
             engine.solve(model);
             auto total_time = std::chrono::duration_cast<std::chrono::milliseconds>(chuffed_clock::now() - engine.start_time);
             const std::chrono::milliseconds search_time = total_time - engine.init_time;
@@ -192,8 +211,9 @@ int main(int argc, char *argv[])
             std::cout << game->nvertices << " ";
             std::cout << game->nedges << " ";
             std::cout << engine.solutions << " ";
-            std::cout << engine.init_time.count() << " ";
-            std::cout << search_time.count()/1000.0 << std::endl;
+            std::cout << engine.init_time.count()/1000.0 << " ";
+            std::cout << search_time.count()/1000.0 << " ";
+            std::cout << memUsed() << std::endl;
             // std::cout << "[ nvertices nedges nsolutions milliseconds_init milliseconds_searching ]" << std::endl;
             
             delete model;
