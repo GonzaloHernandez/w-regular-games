@@ -189,26 +189,14 @@ public:
                         newpathV.push(vertex);
                         newpathE.push(e);
 
-                        if (touched[e].first >= 0) {
-                            if (pathV.size() <= touched[e].first) {
-                                return CF_DONE;
-                            }
-                            int min = mincolor(touched[e].first,pathV);
-                            if (min < touched[e].second) {
-                                int status = filterRememberMins(newpathV, newpathE,g.targets[e], E, e, E[e].isTrue(),touched);
-                                if (status == CF_CONFLICT) {
-                                    return status;
-                                }
-                            }
-                            else {
-                                touched[lastEdge].first = touched[e].first;
-                                touched[lastEdge].second = touched[e].second;
-                            }
-                        }
-                        else {
-                            int status = filterRememberMins(newpathV, newpathE,g.targets[e], E, e, E[e].isTrue(),touched);
+                        if (touched[e].first < 0 || (pathV.size() > touched[e].first && mincolor(touched[e].first, pathV) < touched[e].second)) {
+                            int status = filterRememberMins(newpathV, newpathE, g.targets[e], E, e, E[e].isTrue(), touched);
                             if (status == CF_CONFLICT) {
                                 return status;
+                            }
+                        } else {
+                            if (touched[lastEdge].first < 0 || touched[lastEdge].second > touched[e].second) {
+                                touched[lastEdge] = touched[e];
                             }
                         }
                     }
