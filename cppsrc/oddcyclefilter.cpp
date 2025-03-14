@@ -167,7 +167,7 @@ public:
         int index = findVertex(vertex,pathV);
         if (index >= 0) {
             int min = mincolor(index,pathV);
-            touched[lastEdge].first = index;
+            touched[lastEdge].first = vertex;
             touched[lastEdge].second = min;
             if (min%2==ODD) {
                 vec<Lit> lits;
@@ -189,13 +189,30 @@ public:
                         newpathV.push(vertex);
                         newpathE.push(e);
 
-                        if (touched[e].first < 0 || (pathV.size() > touched[e].first && mincolor(touched[e].first, pathV) < touched[e].second)) {
-                            int status = filterRememberMins(newpathV, newpathE, g.targets[e], E, e, E[e].isTrue(), touched);
+                        if (touched[e].first < 0) {
+                            int status = filterRememberMins(newpathV, newpathE,g.targets[e], E, e, E[e].isTrue(),touched);
                             if (status == CF_CONFLICT) {
                                 return status;
                             }
-                        } else {
-                            if (touched[lastEdge].first < 0 || touched[lastEdge].second > touched[e].second) {
+                        }
+                        else {
+                            int i;
+                            for (i=0; i<pathV.size(); i++) {
+                                if (pathV[i] == touched[e].first) {
+                                    int min = mincolor(i,pathV);
+                                    if (min < touched[e].second) {
+                                        int status = filterRememberMins(newpathV, newpathE,g.targets[e], E, e, E[e].isTrue(),touched);
+                                        if (status == CF_CONFLICT) {
+                                            return status;
+                                        }
+                                    }
+                                    else {
+                                        touched[lastEdge] = touched[e];
+                                    }
+                                    break;
+                                }
+                            }
+                            if (i == pathV.size()) {
                                 touched[lastEdge] = touched[e];
                             }
                         }

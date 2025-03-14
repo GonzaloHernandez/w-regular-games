@@ -12,6 +12,7 @@ struct options {
     int game_start      = 0;
     int solving_type    = 1; // 1=cpsolver 2=satencoding 3=zchaff 4=cadical
     int filter_type     = 1;
+    int reachability    = 1; // 1=Use 0=Don't use
     std::string game_filename   = "";
     std::string dimacs_filename = "";
 } ex;
@@ -20,138 +21,175 @@ struct options {
 
 bool parseExperimentOptions(int argc, char *argv[]) {
     for (int i=1; i<argc; i++) {
-        if (argv[i][0] == '-') {
-            if (strcmp(argv[i],"-jurd")==0) {
-                ex.game_type = 1;
-                if (i+1>=argc) return true;
-                if (argv[i+1][0] == '-') continue;
+        if (strcmp(argv[i],"-jurd")==0) {
+            ex.game_type = 1;
+            i++;
+            
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Number of levels missing\n";
+                return false;                    
+            }
+            char* endptr;
+            int levels = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || levels < 2 || levels > INT_MAX) {
+                std::cerr << "ERROR: Jurdzinski level out of range\n";
+                return false;
+            }
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: Jurdzinski level no numeric\n";
+                return false;
+            }
+            ex.jurd_levels = levels;
 
-                i++;
-                char* endptr;
-                int levels = std::strtol(argv[i],&endptr,10);
-                if (errno == ERANGE || levels < 2 || levels > INT_MAX) {
-                    std::cerr << "ERROR: Jurdzinski level out of range\n";
-                    return false;
-                }
-                if (*endptr != '\0') {
-                    std::cerr << "ERROR: Jurdzinski level no numeric\n";
-                    return false;
-                }
-                ex.jurd_levels = levels;
-
-                if (i+1>=argc) return true;
-                if (argv[i+1][0] == '-') continue;
-                i++;
-
-                int blocks = std::strtol(argv[i],&endptr,10);
-                if (errno == ERANGE || blocks < 1 || blocks > INT_MAX) {
-                    std::cerr << "ERROR: Jurdzinski blocks out of range\n";
-                    return false;
-                }            
-                if (*endptr != '\0') {
-                    std::cerr << "ERROR: Jurdzinski blocks no numeric\n";
-                    return false;
-                }
-                ex.jurd_blocks = blocks;
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Number of blocks missing\n";
+                return false;                    
             }
-            else if (strcmp(argv[i],"-dzn")==0) {
-                ex.game_type = 2;
-                i++;
-                if (i>=argc || argv[i][0] == '-') {
-                    std::cerr << "ERROR: DZN file name missing\n";
-                    return false;                    
-                }
-                ex.game_filename = argv[i];                
+            int blocks = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || blocks < 1 || blocks > INT_MAX) {
+                std::cerr << "ERROR: Jurdzinski blocks out of range\n";
+                return false;
+            }            
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: Jurdzinski blocks no numeric\n";
+                return false;
             }
-            else if (strcmp(argv[i],"-gm")==0) {
-                ex.game_type = 3;
-                i++;
-                if (i>=argc || argv[i][0] == '-') {
-                    std::cerr << "ERROR: GM file name missing\n";
-                    return false;                    
-                }
-                ex.game_filename = argv[i];                
+            ex.jurd_blocks = blocks;
+        }
+        else if (strcmp(argv[i],"-dzn")==0) {
+            ex.game_type = 2;
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: DZN file name missing\n";
+                return false;                    
             }
-            else if (strcmp(argv[i],"-start")==0) {
-                i++;
-                if (i>=argc || argv[i][0] == '-') {
-                    std::cerr << "ERROR: Starting vertex missing\n";
-                    return false;                    
-                }
-                char* endptr;
-                int start = std::strtol(argv[i],&endptr,10);
-                if (errno == ERANGE || start < 0 || start > INT_MAX) {
-                    std::cerr << "ERROR: Starting vertex out of range\n";
-                    return false;
-                }
-                if (*endptr != '\0') {
-                    std::cerr << "ERROR: Starting vertex no numeric\n";
-                    return false;
-                }
-                ex.game_start = start;
+            ex.game_filename = argv[i];                
+        }
+        else if (strcmp(argv[i],"-gm")==0) {
+            ex.game_type = 3;
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: GM file name missing\n";
+                return false;                    
             }
-            else if (strcmp(argv[i],"-solving")==0) {
-                i++;
-                if (i>=argc || argv[i][0] == '-') {
-                    std::cerr << "ERROR: Solving purppose missing\n";
-                    return false;                    
-                }
-                char* endptr;
-                int solving = std::strtol(argv[i],&endptr,10);
-                if (errno == ERANGE || solving < 1 || solving > 6) {
-                    std::cerr << "ERROR: Solving purppose out of range\n";
-                    return false;
-                }
-                if (*endptr != '\0') {
-                    std::cerr << "ERROR: Solving purppose no numeric\n";
-                    return false;
-                }
-                ex.solving_type = solving;
+            ex.game_filename = argv[i];                
+        }
+        else if (strcmp(argv[i],"-start")==0) {
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Starting vertex missing\n";
+                return false;                    
             }
-            else if (strcmp(argv[i],"-filter")==0) {
-                i++;
-                if (i>=argc || argv[i][0] == '-') {
-                    std::cerr << "ERROR: Filter number missing\n";
-                    return false;
-                }
-                char* endptr;
-                int filter = std::strtol(argv[i],&endptr,10);
-                if (errno == ERANGE || filter < 1 || filter > 4) {
-                    std::cerr << "ERROR: Odd Cycle Filter number out range (1,2,3,4)\n";
-                    return false;
-                }
-                if (*endptr != '\0') {
-                    std::cerr << "ERROR: Odd Cycle Filter no numeric\n";
-                    return false;
-                }
-                ex.filter_type = filter;
+            char* endptr;
+            int start = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || start < 0 || start > INT_MAX) {
+                std::cerr << "ERROR: Starting vertex out of range\n";
+                return false;
             }
-            else if (strcmp(argv[i],"-dimacs")==0) {
-                i++;
-                if (i>=argc || argv[i][0] == '-') {
-                    std::cerr << "ERROR: DIMACS file name missing\n";
-                    return false;                    
-                }
-                ex.dimacs_filename = argv[i];                
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: Starting vertex no numeric\n";
+                return false;
             }
-            else if (strcmp(argv[i],"-print")==0) {
-                i++;
-                if (i>=argc || argv[i][0] == '-') {
-                    std::cerr << "ERROR: Print type number missing\n";
-                    return false;
-                }
-                char* endptr;
-                int print = std::strtol(argv[i],&endptr,10);
-                if (errno == ERANGE || print < 0 || print > 2) {
-                    std::cerr << "ERROR: Print type number out range (0,1,2)\n";
-                    return false;
-                }
-                if (*endptr != '\0') {
-                    std::cerr << "ERROR: Print type no numeric\n";
-                    return false;
-                }
-                ex.print_game = print;
+            ex.game_start = start;
+        }
+        else if (strcmp(argv[i],"-solving")==0) {
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Solving purppose missing\n";
+                return false;                    
             }
+            char* endptr;
+            int solving = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || solving < 1 || solving > 6) {
+                std::cerr << "ERROR: Solving purppose out of range\n";
+                return false;
+            }
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: Solving purppose no numeric\n";
+                return false;
+            }
+            ex.solving_type = solving;
+        }
+        else if (strcmp(argv[i],"-filter")==0) {
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Filter number missing\n";
+                return false;
+            }
+            char* endptr;
+            int filter = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || filter < 1 || filter > 4) {
+                std::cerr << "ERROR: Odd Cycle Filter number out range (1,2,3,4)\n";
+                return false;
+            }
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: Odd Cycle Filter no numeric\n";
+                return false;
+            }
+            ex.filter_type = filter;
+        }
+        else if (strcmp(argv[i],"-dimacs")==0) {
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: DIMACS file name missing\n";
+                return false;                    
+            }
+            ex.dimacs_filename = argv[i];                
+        }
+        else if (strcmp(argv[i],"-print")==0) {
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Print type number missing\n";
+                return false;
+            }
+            char* endptr;
+            int print = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || print < 0 || print > 2) {
+                std::cerr << "ERROR: Print type number out range (0,1,2)\n";
+                return false;
+            }
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: Print type no numeric\n";
+                return false;
+            }
+            ex.print_game = print;
+        }
+        else if (strcmp(argv[i],"-reachability")==0) {
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: reachability value missing (0=don't use, 1=use)\n";
+                return false;
+            }
+            char* endptr;
+            int reach = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || reach < 0 || reach > 1) {
+                std::cerr << "ERROR: Print type number out range (0,1)\n";
+                return false;
+            }
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: Print type no numeric\n";
+                return false;
+            }
+            ex.reachability = reach;
+        }
+        else if (strcmp(argv[i],"-help")==0) {
+            std::cout << "Usage: " << argv[0] << " [options]\n";
+            std::cout << "Options:\n";
+            std::cout << "  -jurd <levels> <blocks>  : Jurdzinski game with <levels> levels and <blocks> blocks\n";
+            std::cout << "  -dzn <filename>          : DZN file name\n";
+            std::cout << "  -gm <filename>           : GM file name\n";
+            std::cout << "  -start <vertex>          : Starting vertex\n";
+            std::cout << "  -solving <type>          : Solving type (1=CP, 2=SAT encoding, 3=ZChaff, 4=Cadical, 5=Zielonka(GM))\n";
+            std::cout << "  -filter <type>           : Odd Cycle Filter type (1=Simple, 2=Remembering edge, 3=Multiple starting, 4=Remembering plays)\n";
+            std::cout << "  -dimacs <filename>       : DIMACS file name\n";
+            std::cout << "  -print <type>            : Print game (0=No, 1=yes(SAT/NOSAT), 2=verbose(Solution))\n";
+            std::cout << "  -reachability <value>    : Reachability (1=Use, 0=Don't use)\n";
+            return false;
+        }
+        else {
+            std::cerr << "ERROR: Unknown option: " << argv[i] << std::endl;
+            return false;
         }
     }
     return true;
@@ -200,7 +238,7 @@ int main(int argc, char *argv[])
     switch (ex.solving_type) {
         case 1: { // cp solver
             CPModel* model;
-            model = new CPModel(*game, ex.filter_type,ex.print_game);
+            model = new CPModel(*game, ex.filter_type,ex.print_game,ex.reachability);
             so.nof_solutions = 1;
             so.sym_static = true;
             so.print_sol = ex.print_game==0?false:true;

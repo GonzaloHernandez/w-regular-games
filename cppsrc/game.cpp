@@ -94,6 +94,8 @@ public:
         nvertices   = own.size();
         nedges      = sou.size();
 
+        edges.resize(nvertices);
+
         for(int i=0; i<nvertices; i++) {
             owners[i]=own[i];
             colors[i]=col[i];

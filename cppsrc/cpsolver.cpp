@@ -24,17 +24,17 @@ private:
 
 public:
 
-    CPModel(Game& g,int filtertype=1,int printtype=1) 
+    CPModel(Game& g,int filtertype=1,int printtype=1,int reachability=1) 
     : g(g), filtertype(filtertype), printtype(printtype) 
     {
         V.growTo(g.nvertices);
         E.growTo(g.nedges);
-        setupConstraints();
+        setupConstraints(reachability);
     }
 
     //----------------------------------------------------------------
 
-    void setupConstraints() {
+    void setupConstraints(int reachability=1) {
 
         for (int i=0; i<g.nvertices;  i++) V[i] = newBoolVar();
         for (int i=0; i<g.nedges;     i++) E[i] = newBoolVar();
@@ -85,26 +85,29 @@ public:
         // Every infinite ODD play must be avoided.
         new OddCycleFilter(g,V,E,filtertype);
 
+
         // Every unreachable vertex must be avoided.
-        vec<vec<int>> _in, _out, _en;
-        for (int v=0; v<g.owners.size(); v++) {
-            _in.push();
-            _out.push();
-            for (int e=0; e<g.targets.size(); e++) {
-                if (g.targets[e]==v) {
-                    _in[v].push(e);
-                }
-                if (g.sources[e]==v) {
-                    _out[v].push(e);
+        if (reachability == 1) {
+            vec<vec<int>> _in, _out, _en;
+            for (int v=0; v<g.owners.size(); v++) {
+                _in.push();
+                _out.push();
+                for (int e=0; e<g.targets.size(); e++) {
+                    if (g.targets[e]==v) {
+                        _in[v].push(e);
+                    }
+                    if (g.sources[e]==v) {
+                        _out[v].push(e);
+                    }
                 }
             }
+            for (int e=0; e<g.targets.size(); e++) {
+                _en.push();
+                _en[e].push(g.sources[e]);
+                _en[e].push(g.targets[e]);
+            }
+            new DReachabilityPropagator(g.start, V, E, _in, _out, _en);
         }
-        for (int e=0; e<g.targets.size(); e++) {
-            _en.push();
-            _en[e].push(g.sources[e]);
-            _en[e].push(g.targets[e]);
-        }
-        new DReachabilityPropagator(g.start, V, E, _in, _out, _en);
 
         //------------------------------------------------------------
 
