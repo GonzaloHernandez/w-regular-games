@@ -246,13 +246,17 @@ int main(int argc, char *argv[])
             auto total_time = std::chrono::duration_cast<std::chrono::milliseconds>(chuffed_clock::now() - engine.start_time);
             const std::chrono::milliseconds search_time = total_time - engine.init_time;
             
-            std::cout << game->nvertices << " ";
-            std::cout << game->nedges << " ";
-            std::cout << engine.solutions << " ";
-            std::cout << engine.init_time.count()/1000.0 << " ";
-            std::cout << search_time.count()/1000.0 << " ";
-            std::cout << memUsed() << std::endl;
-            // std::cout << "[ nvertices nedges nsolutions milliseconds_init milliseconds_searching ]" << std::endl;
+            if (ex.print_game > 0) {
+                std::cout << game->nvertices << " ";
+                std::cout << game->nedges << " ";
+                std::cout << engine.solutions << " ";
+                std::cout << engine.init_time.count()/1000.0 << " ";
+                std::cout << search_time.count()/1000.0 << " ";
+                std::cout << memUsed() << std::endl;    
+            }
+            else {
+                std::cout << search_time.count()/1000.0 << std::endl;
+            }
             
             delete model;
             break;
