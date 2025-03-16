@@ -24,7 +24,7 @@ private:
 
 public:
 
-    CPModel(Game& g,int filtertype=1,int printtype=1,int reachability=1) 
+    CPModel(Game& g,int filtertype=1,int reachability=1,int printtype=1) 
     : g(g), filtertype(filtertype), printtype(printtype) 
     {
         V.growTo(g.nvertices);

@@ -222,13 +222,13 @@ int main(int argc, char *argv[])
 
     switch (ex.game_type) {
         case 1: // jurd
-            game = new Game(ex.jurd_levels,ex.jurd_blocks,ex.game_start);
+            game = new Game(ex.jurd_levels, ex.jurd_blocks, ex.game_start);
             break;
         case 2: // dzn
-            game = new Game(ex.game_filename,ex.game_start,Game::DZN);
+            game = new Game(ex.game_filename, ex.game_start, Game::DZN);
             break;
         case 3: // gm
-            game = new Game(ex.game_filename,ex.game_start,Game::GM);
+            game = new Game(ex.game_filename, ex.game_start, Game::GM);
             break;
         default:
             game = new Game({0,1},{3,2},{0,1},{1,0},0);        
@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
     switch (ex.solving_type) {
         case 1: { // cp solver
             CPModel* model;
-            model = new CPModel(*game, ex.filter_type,ex.print_game,ex.reachability);
+            model = new CPModel(*game, ex.filter_type, ex.reachability, ex.print_game);
             so.nof_solutions = 1;
             so.sym_static = true;
             so.print_sol = ex.print_game==0?false:true;
