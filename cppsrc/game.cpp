@@ -5,7 +5,7 @@
 #include <vector>
 #include <fstream>
 #include <regex>
-#include<sstream>
+#include <sstream>
 
 const int EVEN  = 0;
 const int ODD   = 1;

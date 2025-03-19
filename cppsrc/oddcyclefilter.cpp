@@ -67,6 +67,38 @@ public:
         }
     }
     //-----------------------------------------------------------------------
+    int checker(vec<int> pathV, vec<int> pathE, int vertex, 
+        vec<BoolView> &E, int lastEdge) 
+    {
+        int index = findVertex(vertex,pathV);
+        if (index >= 0) {
+            if (mincolor(index,pathV)%2==ODD) {
+                vec<Lit> lits;
+                lits.push();
+                clausify(pathE,E,lits,index);
+                Clause* reason = Reason_new(lits);
+                if (! E[lastEdge].setVal(false,reason)) {
+                    return CF_CONFLICT;
+                }
+            }
+        }
+        else {
+            for (auto& e : g.edges[vertex]) {
+                if (E[e].isTrue()) {
+                    vec<int> newpathV(pathV);
+                    vec<int> newpathE(pathE);
+                    newpathV.push(vertex);
+                    newpathE.push(e);
+                    int status = checker(newpathV, newpathE, g.targets[e], E, e);
+                    if (status == CF_CONFLICT) {
+                        return status;
+                    }
+                }
+            }
+        }
+        return CF_DONE;
+    }
+    //-----------------------------------------------------------------------
     int filterSimple(vec<int> pathV, vec<int> pathE, int vertex, 
         vec<BoolView> &E, int lastEdge, bool definedEdge) 
     {
@@ -84,8 +116,7 @@ public:
         }
         else {
             if (definedEdge) {
-                for (int i=0; i<g.edges[vertex].size(); i++) {
-                    int e = g.edges[vertex][i];
+                for (auto& e : g.edges[vertex]) {
                     if (!E[e].isFalse()) {
                         vec<int> newpathV(pathV);
                         vec<int> newpathE(pathE);
@@ -181,8 +212,8 @@ public:
         }
         else {
             if (definedEdge) {
-                for (int i=0; i<g.edges[vertex].size(); i++) {
-                    int e = g.edges[vertex][i];
+
+                for (auto& e : g.edges[vertex]) {
                     if (!E[e].isFalse()) {
                         vec<int> newpathV(pathV);
                         vec<int> newpathE(pathE);
@@ -240,8 +271,9 @@ public:
             }
         }
         else if (definedEdge) {
-            for (int e=0; e<g.sources.size(); e++) {
-                if (g.sources[e]==vertex && !E[e].isFalse()) {
+
+            for (auto& e : g.edges[vertex]) {
+                if (!E[e].isFalse()) {
                     vec<int> newpathV(pathV);
                     vec<int> newpathE(pathE);
                     newpathV.push(vertex);
@@ -260,21 +292,19 @@ public:
     bool propagate() override {
         vec<int> pathV;
         vec<int> pathE;
-        bool done = false;
 
         switch (filtertype) {
+        case 0: { // Basic checker
+            if (checker(pathV,pathE,g.start,E,-1) == CF_CONFLICT)
+                return false;
+            break;
+        }
         case 1: { // Simple filter affecting the edge before starting the cycle
             if (filterSimple(pathV,pathE,g.start,E,-1,true) == CF_CONFLICT)
                 return false;
             break;
         }
-        case 2: { // Remebering the uniquely unassigned edge found in the cycle
-            vec<bool> touched(V.size(),false);
-            if (filterRememberEdge(pathV,pathE,g.start,E,-1,false,touched) == CF_CONFLICT)
-                return false;
-            break;
-        }
-        case 3: { // Applying SimpleFilter starting at every other vertex
+        case 2: { // Applying SimpleFilter starting at every other vertex
             vec<bool> touched(V.size(),false);
             if (filterOthersStarts(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
                 return false;
@@ -286,9 +316,15 @@ public:
             }
             break;
         }
-        case 4: { // Remembering min plays
+        case 3: { // Remembering min plays
             std::vector<std::pair<int,int>> touchedmins(g.nedges,{-1,-1});
             if (filterRememberMins(pathV,pathE,g.start,E,-1,true,touchedmins) == CF_CONFLICT)
+                return false;
+            break;
+        }
+        case 4: { // Remebering the uniquely unassigned edge found in the cycle
+            vec<bool> touched(V.size(),false);
+            if (filterRememberEdge(pathV,pathE,g.start,E,-1,false,touched) == CF_CONFLICT)
                 return false;
             break;
         }

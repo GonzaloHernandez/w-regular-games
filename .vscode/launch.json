@@ -19,7 +19,7 @@
             // "args": ["-gm", "${env:HOME}/gm/modelcheckerladder(100).gm","-filter","4"],
             // "args": ["-gm", "${env:HOME}/gm/steadygame(1000,_1,_20,_1,_20)id=0.gm","-start","756","-filter","4"],
             // "args": ["-dzn", "${env:HOME}/Software/w-regular-games/data/game-other.dzn","-filter","4"],
-            // "args": ["-jurd","2","1","-start","4"],
+            "args": ["-jurd","2","1","-start","0","-filter","0"],
             "cwd": "${workspaceFolder}",
             // "MIMode": "lldb",  // lldb for osx / gdb for linux
             // "externalConsole": true
