@@ -6,7 +6,7 @@
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
 
-class OddCycleFilter : public Propagator {
+class NoOddCycleFilter : public Propagator {
 private:
     Game& g;
     vec<BoolView> V;
@@ -20,7 +20,7 @@ private:
 
 public:
     //-----------------------------------------------------------------------
-    OddCycleFilter(Game& g, vec<BoolView>& V,vec<BoolView>& E,int filtertype=1)
+    NoOddCycleFilter(Game& g, vec<BoolView>& V,vec<BoolView>& E,int filtertype=1)
     :   g(g), V(V), E(E), filtertype(filtertype)
     {
         for (int i=0; i<g.owners.size(); i++)  V[i].attach(this, 1 , EVENT_F );
