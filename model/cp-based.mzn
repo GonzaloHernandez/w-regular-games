@@ -25,11 +25,7 @@ constraint
 array [int]	of int : Va ::output_only ::output = [v | v in vertices	where fix(V[v])];
 array [int]	of int : Ea ::output_only ::output = [e | e in edges		where fix(E[e])];
 
-% solve ::bool_search(V++E,input_order,indomain_max) satisfy ; 
-
 output
-% 	["V  = \(V) \n"] ++
-% 	["E  = \(E) \n"] ++
 	["Va = \(Va) \n"] ++
 	["Ea = \(Ea) \n"] ++
 	[]

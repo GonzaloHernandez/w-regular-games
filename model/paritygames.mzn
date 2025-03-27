@@ -16,8 +16,8 @@ predicate nooddcycle(	array [int] of int		: owners,
 
 % --------------------------------------------------------------------------
 
-predicate dreachability(	array [int] of int		: owners,
-							array [int] of int		: colors,
+predicate dreachability(	array [int] of int		: nvertices,
+							array [int] of int		: nedges,
 							array [int] of int		: sources,
 							array [int] of int		: targets,
 							array [int] of var bool	: V,
@@ -52,7 +52,7 @@ predicate parity_conditions(	array [int] of int		: owners,
 	
 	nooddcycle(owners,colors,sources,targets,V,E,[start]) /\
 	
-	dreachability(owners,colors,sources,targets,V,E,[start]);
+	dreachability([length(owners)],[length(sources)],sources,targets,V,E,[start]);
 
 
 % --------------------------------------------------------------------------
