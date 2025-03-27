@@ -1,4 +1,3 @@
-
 include "cyclefilter.mzn";
 
 int : even  = 0;

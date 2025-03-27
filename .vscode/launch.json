@@ -31,6 +31,19 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "cwd": "${fileDirname}"
-        }
+        },
+
+        {
+            "name": "Run MiniZinc Model",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/usr/bin/minizinc", 
+            "args": [
+                "${file}",
+                // "data/game-SAT.dzn",
+                "--solver", "mychuffed"
+            ],
+            "cwd": "${workspaceFolder}",
+        }        
     ]
 }

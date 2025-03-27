@@ -22,10 +22,12 @@ constraint
 
 % -------------------------------------------------------------------------------------
 
-array [int]	of int : Va ::output_only ::output = [v | v in vertices	where fix(V[v])];
-array [int]	of int : Ea ::output_only ::output = [e | e in edges		where fix(E[e])];
+% array [int]	of int : Va ::output_only ::output = [v | v in vertices	where fix(V[v])];
+% array [int]	of int : Ea ::output_only ::output = [e | e in edges		where fix(E[e])];
 
-output
-	["Va = \(Va) \n"] ++
-	["Ea = \(Ea) \n"] ++
-	[]
+% output
+% 	["Va = \(Va) \n"] ++
+% 	["Ea = \(Ea) \n"] ++
+% 	[]
+
+output["=====SAT=====\n"]
