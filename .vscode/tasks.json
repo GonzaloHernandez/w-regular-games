@@ -37,7 +37,7 @@
                 "${workspaceFolder}/build/experiments",
                 "-I${env:HOME}/.local/include",
                 "-L${env:HOME}/.local/lib",
-                "-lchuffed"
+                "-lchuffed",
             ],
             "options": {
                 "cwd": "${fileDirname}"

@@ -1,8 +1,11 @@
 {
     "openFiles": [
-        "model/reduction-cp.mzn"
+        "model/cp-based.mzn",
+        "model/cyclefilter.mzn",
+        "model/paritygames.mzn",
+        "model/progressmeasure.mzn"
     ],
-    "openTab": 0,
+    "openTab": 3,
     "projectFiles": [
         "data/game-SAT.dzn",
         "data/game-julian.dzn",
@@ -13,7 +16,9 @@
         "data/game-umbrella.dzn",
         "data/game-wiki-min.dzn",
         "model/cyclefilter.mzn",
-        "model/reduction-cp.mzn",
+        "model/paritygames.mzn",
+        "model/progressmeasure.mzn",
+        "model/cp-based.mzn",
         "model/reduction-sat.mzn"
     ],
     "selectedBuiltinConfigId": "sonar",

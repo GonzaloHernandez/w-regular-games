@@ -1,0 +1,7 @@
+output ["\"output\": {","\"default\": ",showJSON(concat((["Va = "++format(Va)++" \n"]++["Ea = "++format(Ea)++" \n"])++[])),", \"raw\": ",showJSON(concat((["Va = "++format(Va)++" \n"]++["Ea = "++format(Ea)++" \n"])++[])),"}, \"sections\": [\"default\", \"raw\"]"];
+set of int: vertices = 1..27;
+array [vertices] of bool: V;
+array [int] of int: Va = [v | v in vertices where fix(V[v])];
+set of int: edges = 1..60;
+array [edges] of bool: E;
+array [int] of int: Ea = [e | e in edges where fix(E[e])];
