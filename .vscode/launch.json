@@ -41,7 +41,8 @@
             "args": [
                 "${file}",
                 // "data/game-SAT.dzn",
-                "--solver", "mychuffed"
+                "--solver", "mychuffed",
+                "--all-solutions"
             ],
             "cwd": "${workspaceFolder}",
         }        
