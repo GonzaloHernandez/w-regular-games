@@ -1,5 +1,5 @@
 #ifndef CPP_GAME
-#include "game.cpp"
+#include "../chuffed-patch/game.cpp"
 #endif
 
 #include "iostream"
@@ -8,7 +8,7 @@
 #include "initializer_list"
 #include "chuffed/globals/dconnected.h"
 
-#include "nooddcyclefilter.cpp"
+#include "../chuffed-patch/nooddcyclefilter.cpp"
 
 class CPModel : public Problem {
 public:

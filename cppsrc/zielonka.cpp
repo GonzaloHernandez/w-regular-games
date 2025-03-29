@@ -1,6 +1,6 @@
 #include <vector>
 #include <algorithm>
-#include "game.cpp"
+#include "../chuffed-patch/game.cpp"
 
 class GameExtended : public Game {
 public:

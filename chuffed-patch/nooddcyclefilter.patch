@@ -1,0 +1,98 @@
+diff --git a/chuffed/flatzinc/registry.cpp b/chuffed/flatzinc/registry.cpp
+index bf209f7..d65d069 100644
+--- a/chuffed/flatzinc/registry.cpp
++++ b/chuffed/flatzinc/registry.cpp
+@@ -29,6 +29,10 @@
+ 
+ #include <list>
+ 
++// w-regular games
++#include "chuffed/support/nooddcyclefilter.cpp"
++#include "chuffed/globals/dconnected.h"
++
+ namespace FlatZinc {
+ 
+ Registry& registry() {
+@@ -1805,6 +1809,70 @@ void p_bounded_path_new(const ConExpr& ce, AST::Node* ann) {
+ 	bounded_path(s, t, vs, es, in, ou, en, ws, w);
+ }
+ 
++// w-regular games
++void p_nooddcycle(const ConExpr& ce, AST::Node* /*ann*/) {
++	vec<int> owners;	arg2intargs(owners,ce[0]);
++	vec<int> colors;	arg2intargs(colors,ce[1]);
++	vec<int> sources;	arg2intargs(sources,ce[2]);
++	vec<int> targets;	arg2intargs(targets,ce[3]);
++	vec<BoolView> V;	arg2BoolVarArgs(V,ce[4]);
++	vec<BoolView> E;	arg2BoolVarArgs(E,ce[5]);
++	int start =			ce[6]->getInt();
++
++	for (int i=0; i<sources.size(); i++) {
++		sources[i]--;
++		targets[i]--;
++	}
++
++	std::vector<int> os,cs,ss,ts;
++	for(int i=0; i<owners.size(); i++) {
++		os.push_back(owners[i]);
++		cs.push_back(colors[i]);
++	}
++
++	for(int i=0; i<sources.size(); i++) {
++		ss.push_back(sources[i]);
++		ts.push_back(targets[i]);
++	}
++
++	Game* g = new Game(os,cs,ss,ts,start-1);
++	new NoOddCycleFilter(*g,V,E);
++}
++
++void p_dreachability(const ConExpr& ce, AST::Node* /*ann*/) {
++	int nvertices =		ce[0]->getInt();
++	vec<int> sources;	arg2intargs(sources,ce[1]);
++	vec<int> targets;	arg2intargs(targets,ce[2]);
++	vec<BoolView> V;	arg2BoolVarArgs(V,ce[3]);
++	vec<BoolView> E;	arg2BoolVarArgs(E,ce[4]);
++	int start =			ce[5]->getInt();
++
++	for (int i=0; i<sources.size(); i++) {
++		sources[i]--;
++		targets[i]--;
++	}
++
++	vec<vec<int>> _in, _out, _en;
++	for (int v=0; v<nvertices; v++) {
++		_in.push();
++		_out.push();
++		for (int e=0; e<targets.size(); e++) {
++			if (targets[e]==v) {
++				_in[v].push(e);
++			}
++			if (sources[e]==v) {
++				_out[v].push(e);
++			}
++		}
++	}
++	for (int e=0; e<targets.size(); e++) {
++		_en.push();
++		_en[e].push(sources[e]);
++		_en[e].push(targets[e]);
++	}
++	new DReachabilityPropagator(start-1, V, E, _in, _out, _en);
++}
++
+ class IntPoster {
+ public:
+ 	IntPoster() {
+@@ -1951,6 +2019,11 @@ public:
+ 		registry().add("chuffed_dpath", &p_path_new);
+ 		registry().add("chuffed_dag", &p_dag_new);
+ 		registry().add("chuffed_bounded_dpath", &p_bounded_path_new);
++
++		// w-regular games
++		registry().add("nooddcycle", &p_nooddcycle);
++		registry().add("dreachability", &p_dreachability);
++
+ 	}
+ };
+ IntPoster _int_poster;

@@ -14,13 +14,11 @@ private:
     int filtertype;
 
     const int   CF_DONE     = 1;
-    const int   CF_ACTIVE   = 2;
-    const int   CF_CYCLE    = 3;
-    const int   CF_CONFLICT = 4;
+    const int   CF_CONFLICT = 2;
 
 public:
     //-----------------------------------------------------------------------
-    NoOddCycleFilter(Game& g, vec<BoolView>& V,vec<BoolView>& E,int filtertype=1)
+    NoOddCycleFilter(Game& g, vec<BoolView>& V,vec<BoolView>& E,int filtertype=3)
     :   g(g), V(V), E(E), filtertype(filtertype)
     {
         for (int i=0; i<g.owners.size(); i++)  V[i].attach(this, 1 , EVENT_F );

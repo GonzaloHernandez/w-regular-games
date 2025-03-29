@@ -3,3 +3,4 @@ __pycache__
 cadical
 zchaff
 build
+.DS_Store
