@@ -26,25 +26,45 @@ array [vertices] of var vertices union {0} : Ehistory;
 array [vertices] of var vertices union {0} : Vinfinity;
 array [vertices] of var vertices union {0} : Einfinity;
 
-constraint play(vertices,sources,targets,E,start,
+constraint 
+	even_play(	vertices,sources,targets,E,start,
 				Vhistory,Ehistory, Vinfinity,Einfinity);
 
 % -------------------------------------------------------------------
 
-array[edges] of int : energy = [+5,-10,+3,+8,11,+5,-10,+3,+8,-11,6,9];
-int : initialcredit = 30;
-var int : EL = initialcredit 
-			 + sum(e in edges where e in Ehistory ++ Einfinity)(energy[e]);
+% % Energy objective
+% array[edges] of int : energy = [+5,-10,+3,+8,11,+5,-10,+3,+8,-11,6,9];
+% int : initialcredit = 30;
+% constraint
+% 	sum ( e in edges where e in Einfinity )( energy [ e ]) >= 0;
 
-constraint
-	sum(e in edges where e in Einfinity)(energy[e]) > 0;
+% -------------------------------------------------------------------
 
-% solve maximize EL;
+% % Prompt objective
+% int : b = 3;
+% constraint
+% 	count(v in vertices)(v in Vhistory ++ Vinfinity) <= b;
+
+% -------------------------------------------------------------------
+
+% % Finitary parity condition
+% int : b = 3;
+% array [int] of var int : Vpath
+%  = [v | v in Vhistory ++ Vinfinity];
+% constraint
+% 	forall(i in 1..lenght(Vpath))(
+% 		if colors[Vpath[i]] mod 2 == odd then
+% 			array[int] of int: chunk = [Vpath[getPos(j)] | j in i..b]
+% 			exists(j in i+1..i+b)(
+% 				colors[Vpath[j]] mod 2 == even /\ colors[v] < colors[Vpath[i]]
+% 			)
+% 	);
 
 % -------------------------------------------------------------------
 
 output
-	[toStr(Vhistory) ++ toStr(Vinfinity) ++ " \(EL)\n"]
+	[toStr(Vhistory) ++ toStr(Vinfinity) ++ " \n"] ++ 
+	["b = \(getPos(Vhistory,Vinfinity,5))"]
 
 	% [toStr(Vhistory) ++ toStr(Vinfinity) ++ "\n"] ++
 	% ["energy = \(EL) \n"] ++

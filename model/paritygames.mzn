@@ -51,16 +51,16 @@ predicate parity_conditions(	array [int] of int		: owners,
 
 % --------------------------------------------------------------------------
 
-predicate play(	set of int				: steps,
-				array [int] of int		: sources,
-				array [int] of int		: targets,
-				array [int] of var bool	: E,
-				int						: start,
-				array[int] of var int 	: history_vertices,
-				array[int] of var int 	: history_edges,
-				array[int] of var int 	: cycle_vertices,
-				array[int] of var int 	: cycle_edges,
-				) =
+predicate even_play(	set of int				: steps,
+						array [int] of int		: sources,
+						array [int] of int		: targets,
+						array [int] of var bool	: E,
+						int						: start,
+						array[int] of var int 	: history_vertices,
+						array[int] of var int 	: history_edges,
+						array[int] of var int 	: cycle_vertices,
+						array[int] of var int 	: cycle_edges,
+						) =
 
 	let { 
 		array[steps] of var int : pathV,
@@ -123,3 +123,22 @@ function string : toStr(array [int] of var bool	: X) =
 
 function string : toStr(array [int] of var int	: N) =
 	"\([n | n in N where n>0])";
+
+% --------------------------------------------------------------------------
+
+function var int : getPos(	array[int] of var int: Vhistory, 
+							array[int] of var int: Vinfinity,
+							int: n) =
+	let {
+		var int: his = count(v in Vhistory)(v!=0);
+		var int: inf = count(v in Vinfinity)(v!=0);
+	} in
+	if n <= (his+inf) then
+		n
+	else
+		if ((n-his) mod inf) == 0 then
+			his + inf
+		else
+			his + ((n-his) mod inf)
+		endif
+	endif
