@@ -1,9 +1,9 @@
 {
-    "executable": "/Users/chalo/.local/bin/fzn-chuffed",
+    "executable": "/home/chalo/.local/bin/fzn-chuffed",
     "id": "sonar",
     "inputType": "FZN",
     "isGUIApplication": false,
-    "mznlib": "/Users/chalo/.local/share/minizinc/chuffed",
+    "mznlib": "/home/chalo/.local/share/minizinc/chuffed",
     "name": "Chuffed-Sonar",
     "needsSolns2Out": true,
     "stdFlags": [

@@ -41,7 +41,7 @@
             "args": [
                 "${file}",
                 // "data/game-SAT.dzn",
-                "--solver", "sonar.msc",
+                "--solver", "${workspaceFolder}/chuffed-patch/sonar.msc",
                 "--all-solutions"
             ],
             "cwd": "${workspaceFolder}",
