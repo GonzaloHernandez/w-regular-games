@@ -2,8 +2,10 @@ include "paritygames.mzn";
 
 % -------------------------------------------------------------------
 
-set of int              : vertices  = 1..7;
-set of int              : edges     = 1..12;
+int						: nvertices = 7;
+int						: nvedges	= 12;
+set of int              : vertices  = 1..nvertices;
+set of int              : edges     = 1..nvedges;
 array [vertices] of int	: owners    = [1,0,0,1,0,1,0];
 array [vertices] of int	: colors    = [2,1,2,2,4,3,4];
 array [edges] of int	: sources   = [1,1,2,3,3,3,4,5,6,6,6,7];
@@ -21,13 +23,14 @@ constraint parity_conditions(owners,colors,sources,targets,V,E,start);
 
 % -------------------------------------------------------------------
 
-array [vertices] of var vertices union {0} : Vhistory;
-array [vertices] of var vertices union {0} : Ehistory;
-array [vertices] of var vertices union {0} : Vinfinity;
-array [vertices] of var vertices union {0} : Einfinity;
+set of int: steps = 1..nvertices;
+array [steps] of var vertices union {0} : Vhistory;
+array [steps] of var vertices union {0} : Ehistory;
+array [steps] of var vertices union {0} : Vinfinity;
+array [steps] of var vertices union {0} : Einfinity;
 
 constraint 
-	even_play(	vertices,sources,targets,E,start,
+	even_play(	steps,sources,targets,E,start,
 				Vhistory,Ehistory, Vinfinity,Einfinity);
 
 % -------------------------------------------------------------------

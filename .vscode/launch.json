@@ -34,7 +34,7 @@
         },
 
         {
-            "name": "Run MiniZinc Model",
+            "name": "Run MiniZinc Model (LINUX)",
             "type": "cppdbg",
             "request": "launch",
             "program": "/usr/bin/minizinc", 
@@ -45,6 +45,23 @@
                 "--all-solutions"
             ],
             "cwd": "${workspaceFolder}",
-        }        
+        },
+
+        {
+            "name": "Run MiniZinc Model (OSX)",
+            // "type": "cppdbg",
+            "request": "launch",
+            "program": "/Applications/MiniZincIDE.app/Contents/Resources/minizinc",
+            "args": [
+                "${file}",
+                "--solver", "${workspaceFolder}/chuffed-patch/sonar.msc",
+                "--all-solutions"
+            ],
+            "cwd": "${workspaceFolder}",
+            // "MIMode": "lldb",
+            // "console": "integratedTerminal",
+            "stopAtEntry": false,
+            "externalConsole": false
+        }             
     ]
 }

@@ -51,16 +51,16 @@ predicate parity_conditions(	array [int] of int		: owners,
 
 % --------------------------------------------------------------------------
 
-predicate even_play(	set of int				: steps,
-						array [int] of int		: sources,
-						array [int] of int		: targets,
-						array [int] of var bool	: E,
-						int						: start,
-						array[int] of var int 	: history_vertices,
-						array[int] of var int 	: history_edges,
-						array[int] of var int 	: cycle_vertices,
-						array[int] of var int 	: cycle_edges,
-						) =
+predicate even_play(set of int				: steps,
+					array [int] of int		: sources,
+					array [int] of int		: targets,
+					array [int] of var bool	: E,
+					int						: start,
+					array[int] of var int 	: history_vertices,
+					array[int] of var int 	: history_edges,
+					array[int] of var int 	: cycle_vertices,
+					array[int] of var int 	: cycle_edges,
+					) =
 
 	let { 
 		array[steps] of var int : pathV,
