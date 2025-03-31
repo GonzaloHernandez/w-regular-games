@@ -56,15 +56,15 @@ predicate even_play(set of int				: steps,
 					array [int] of int		: targets,
 					array [int] of var bool	: E,
 					int						: start,
-					array[int] of var int 	: history_vertices,
-					array[int] of var int 	: history_edges,
-					array[int] of var int 	: cycle_vertices,
-					array[int] of var int 	: cycle_edges,
+					array[int] of var int 	: historyV,
+					array[int] of var int 	: historyE,
+					array[int] of var int 	: infinityV,
+					array[int] of var int 	: infinityE,
+					array[int] of var int 	: pathV,
+					array[int] of var int 	: pathE,
 					) =
 
 	let { 
-		array[steps] of var int : pathV,
-		array[steps] of var int : pathE,
 		var 0..length(steps) : token1,
 		var 0..length(steps) : token2,
 
@@ -72,6 +72,7 @@ predicate even_play(set of int				: steps,
 
 	pathV[1] = start 
 
+		% Constructing the path 
 	/\	forall(s in 2..token2)(
 			exists(e in edges)(
 				pathE[s-1] = e /\
@@ -79,34 +80,44 @@ predicate even_play(set of int				: steps,
 				sources[e] = pathV[s-1] /\ E[e]
 			)
 		)
-	
+
+		% Last edge equal to the first edge in the cycle 
+	/\	pathE[token2] = pathE[token1]
+
+		% Filling with Zeros in left remaining cells 
 	/\ 	forall(s in token2+1..length(steps))(
 			pathV[s] = 0 /\ pathE[s] = 0
 		)
 	
-	/\	forall(i,j in 1..token2-1 where i>j)(pathV[i] != pathV[j])
-	
+		% Every vertex only ones occurrence except last one
+	/\	forall(i,j in 1..token2-1 where i>j)(
+			pathV[i] != pathV[j]
+		)
+
+		% Finding the cycle	
 	/\	exists(i in 1..token2-1)(
 			(token1 = i) /\ (pathV[token1] = pathV[token2])
 		)
 
+		% Dumping path into history
 	/\	forall(s in steps)(
 			if s<token1 then
-				history_vertices[s] = pathV[s] /\
-				history_edges[s] = pathE[s]
+				historyV[s] = pathV[s] /\
+				historyE[s] = pathE[s]
 			else
-				history_vertices[s] = 0 /\
-				history_edges[s] = 0
+				historyV[s] = 0 /\
+				historyE[s] = 0
 			endif
 		)
 
+		% Dumping path into infinity
 	/\ 	forall(s in steps)(
 			if s<token2-token1+1 then
-				cycle_vertices[s] = pathV[s+token1-1] /\
-				cycle_edges[s] = pathE[s+token1-1]
+				infinityV[s] = pathV[s+token1-1] /\
+				infinityE[s] = pathE[s+token1-1]
 			else
-				cycle_vertices[s] = 0 /\
-				cycle_edges[s] = 0
+				infinityV[s] = 0 /\
+				infinityE[s] = 0
 			endif
 		)
 ;
@@ -126,12 +137,14 @@ function string : toStr(array [int] of var int	: N) =
 
 % --------------------------------------------------------------------------
 
-function var int : getPos(	array[int] of var int: Vhistory, 
-							array[int] of var int: Vinfinity,
-							int: n) =
+function var int : getPos(	
+							array[int] of var int: historyV,
+							array[int] of var int: infinityV,
+							int: n, 
+							) =
 	let {
-		var int: his = count(v in Vhistory)(v!=0);
-		var int: inf = count(v in Vinfinity)(v!=0);
+		var int: his = count(v in historyV)(v!=0);
+		var int: inf = count(v in infinityV)(v!=0);
 	} in
 	if n <= (his+inf) then
 		n
@@ -142,3 +155,4 @@ function var int : getPos(	array[int] of var int: Vhistory,
 			his + ((n-his) mod inf)
 		endif
 	endif
+;

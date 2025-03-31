@@ -23,15 +23,18 @@ constraint parity_conditions(owners,colors,sources,targets,V,E,start);
 
 % -------------------------------------------------------------------
 
+% Synthesis
 set of int: steps = 1..nvertices;
 array [steps] of var vertices union {0} : Vhistory;
 array [steps] of var vertices union {0} : Ehistory;
 array [steps] of var vertices union {0} : Vinfinity;
 array [steps] of var vertices union {0} : Einfinity;
+array [steps] of var vertices union {0} : Vpath;
+array [steps] of var vertices union {0} : Epath;
 
 constraint 
 	even_play(	steps,sources,targets,E,start,
-				Vhistory,Ehistory, Vinfinity,Einfinity);
+				Vhistory,Ehistory, Vinfinity,Einfinity, Vpath, Epath );
 
 % -------------------------------------------------------------------
 
@@ -51,25 +54,19 @@ constraint
 % -------------------------------------------------------------------
 
 % % Finitary parity condition
-% int : b = 3;
-% array [int] of var int : Vpath
-%  = [v | v in Vhistory ++ Vinfinity];
+% int : b = 1;
+% var int: len = count(v in Vpath)(v!=0)-1;
 % constraint
-% 	forall(i in 1..lenght(Vpath))(
+% 	forall(i in 1..len-b)(
 % 		if colors[Vpath[i]] mod 2 == odd then
-% 			array[int] of int: chunk = [Vpath[getPos(j)] | j in i..b]
-% 			exists(j in i+1..i+b)(
-% 				colors[Vpath[j]] mod 2 == even /\ colors[v] < colors[Vpath[i]]
+% 			exists(v in [ Vpath[getPos(Vhistory,Vinfinity,j)] | j in i+1..i+b])(
+% 				colors[v] mod 2 == even /\ colors[v] < colors[Vpath[i]]
 % 			)
+% 		endif
 % 	);
 
 % -------------------------------------------------------------------
 
 output
-	[toStr(Vhistory) ++ toStr(Vinfinity) ++ " \n"] ++ 
-	["b = \(getPos(Vhistory,Vinfinity,5))"]
-
-	% [toStr(Vhistory) ++ toStr(Vinfinity) ++ "\n"] ++
-	% ["energy = \(EL) \n"] ++
-	% ["V = " ++ toStr(V) ++ "\n"] ++
-	% ["E = " ++ toStr(E) ]
+	["play = " ++ toStr(Vhistory) ++ toStr(Vinfinity) ++ " \n"] ++ 
+	[]
