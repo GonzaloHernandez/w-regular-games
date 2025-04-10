@@ -30,6 +30,7 @@ public:
         V.growTo(g.nvertices);
         E.growTo(g.nedges);
         setupConstraints(reachability);
+        launchdebugwatchs();
     }
 
     //----------------------------------------------------------------

@@ -1,5 +1,9 @@
-#ifndef CPP_GAME
-#define CPP_GAME
+#ifndef game_cpp
+#define game_cpp
+
+#ifndef debugwatchs_h
+#include "../chuffed-patch/debugwatchs.h"
+#endif
 
 #include <iostream>
 #include <vector>

@@ -1,4 +1,4 @@
-#ifndef CPP_GAME
+#ifndef game_cpp
 #include "game.cpp"
 #endif
 

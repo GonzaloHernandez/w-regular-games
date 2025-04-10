@@ -1,18 +1,9 @@
 {
     "version": "0.2.0",
     "configurations": [
-        {
-            "name": "C++ Debug",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/experiments",
-            "cwd": "${workspaceFolder}",
-            // "MIMode": "lldb",  // lldb for osx / gdb for linux
-            // "externalConsole": true
-        },
+        // --------------------------------------------------------------
         {
             "name": "C++ Debug (Arguments)",
-            // "type": "lldb",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/experiments",
@@ -21,18 +12,18 @@
             // "args": ["-dzn", "${env:HOME}/Software/w-regular-games/data/game-other.dzn","-filter","4"],
             "args": ["-jurd","2","1","-start","0","-filter","0"],
             "cwd": "${workspaceFolder}",
-            // "MIMode": "lldb",  // lldb for osx / gdb for linux
-            // "externalConsole": true
+            "stopAtEntry": false,
+            "externalConsole": false,
+            "MIMode": "gdb",  // lldb for osx / gdb for linux
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]            
         },
-        {
-            "name": "Python: Current File",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "cwd": "${fileDirname}"
-        },
-
+        // --------------------------------------------------------------
         {
             "name": "Run MiniZinc Model (LINUX)",
             "type": "cppdbg",
@@ -46,22 +37,5 @@
             ],
             "cwd": "${workspaceFolder}",
         },
-
-        {
-            "name": "Run MiniZinc Model (OSX)",
-            // "type": "cppdbg",
-            "request": "launch",
-            "program": "/Applications/MiniZincIDE.app/Contents/Resources/minizinc",
-            "args": [
-                "${file}",
-                "--solver", "${workspaceFolder}/chuffed-patch/sonar.msc",
-                "--all-solutions"
-            ],
-            "cwd": "${workspaceFolder}",
-            // "MIMode": "lldb",
-            // "console": "integratedTerminal",
-            "stopAtEntry": false,
-            "externalConsole": false
-        }             
     ]
 }
