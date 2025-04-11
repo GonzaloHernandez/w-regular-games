@@ -3,7 +3,7 @@
         // --------------------------------------------------------------
         {
             "type": "cppbuild",
-            "label": "C/C++: g++ build standard",
+            "label": "C/C++: build standard",
             "command": "/usr/bin/g++",
             "args": [
                 "-std=c++11",
@@ -25,25 +25,20 @@
         // --------------------------------------------------------------
         {
             "type": "cppbuild",
-            "label": "C/C++: g++ build experiments",
+            "label": "C/C++: build experiments",
             "command": "/usr/bin/g++",
             "args": [
                 "-std=c++14",
                 "-fdiagnostics-color=always",
                 "-g",
                 "-O0",
-                // "${file}",
                 "${workspaceFolder}/cppsrc/*.cpp",
                 "-o",
-                // "${workspaceFolder}/build/${fileBasenameNoExtension}",
                 "${workspaceFolder}/build/experiments",
                 "-I${env:HOME}/.local/include",
                 "-L${env:HOME}/.local/lib",
                 "-lchuffed",
             ],
-            // "options": {
-            //     "cwd": "${fileDirname}"
-            // },
             "problemMatcher": [
                 "$gcc"
             ],

@@ -4,6 +4,10 @@
 #include <chrono>
 #include "graph.h"
 
+#ifndef debugwatchs_h
+#include "debugwatchs.h"
+#endif
+
 struct options {
     int print_game      = 0; 
     int game_type       = 0; // 0=default 1=jurd 2=dzn 3=gm
@@ -11,7 +15,7 @@ struct options {
     int jurd_blocks     = 1;
     int game_start      = 0;
     int solving_type    = 1; // 1=cpsolver 2=satencoding 3=zchaff 4=cadical
-    int filter_type     = 1;
+    int filter_type     = 3;
     int reachability    = 1; // 1=Use 0=Don't use
     std::string game_filename   = "";
     std::string dimacs_filename = "";
@@ -391,6 +395,7 @@ int main(int argc, char *argv[])
     }
 
     delete game;
+    launchdebugwatchs();
 
     return 0; 
 }

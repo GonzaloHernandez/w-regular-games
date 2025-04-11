@@ -24,13 +24,12 @@ private:
 
 public:
 
-    CPModel(Game& g,int filtertype=1,int reachability=1,int printtype=1) 
+    CPModel(Game& g,int filtertype=3,int reachability=1,int printtype=1) 
     : g(g), filtertype(filtertype), printtype(printtype) 
     {
         V.growTo(g.nvertices);
         E.growTo(g.nedges);
         setupConstraints(reachability);
-        launchdebugwatchs();
     }
 
     //----------------------------------------------------------------

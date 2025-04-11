@@ -7,10 +7,13 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/experiments",
-            // "args": ["-gm", "${env:HOME}/gm/modelcheckerladder(100).gm","-filter","4"],
-            // "args": ["-gm", "${env:HOME}/gm/steadygame(1000,_1,_20,_1,_20)id=0.gm","-start","756","-filter","4"],
-            // "args": ["-dzn", "${env:HOME}/Software/w-regular-games/data/game-other.dzn","-filter","4"],
-            "args": ["-jurd","2","1","-start","0","-filter","0"],
+            "args": [   
+                // "-gm", "${env:HOME}/gm/modelcheckerladder(100).gm",
+                "-dzn", "${workspaceFolder}/data/game-jurd-2-1.dzn",
+                // "-jurd","2","1",
+                "-start","0",
+                "-filter","3",
+                "-print","2"],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "externalConsole": false,
@@ -31,7 +34,7 @@
             "program": "/usr/bin/minizinc", 
             "args": [
                 "${file}",
-                // "data/game-SAT.dzn",
+                "${workspaceFolder}/data/game-jurd-2-1.dzn",
                 "--solver", "${workspaceFolder}/chuffed-patch/sonar.msc",
                 "--all-solutions"
             ],

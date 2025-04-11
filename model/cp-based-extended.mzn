@@ -2,14 +2,14 @@ include "paritygames.mzn";
 
 % -------------------------------------------------------------------
 
-int						: nvertices = 7;
-int						: nvedges	= 12;
+int						: nvertices;
+int						: nedges;
 set of int              : vertices  = 1..nvertices;
-set of int              : edges     = 1..nvedges;
-array [vertices] of int	: owners    = [1,0,0,1,0,1,0];
-array [vertices] of int	: colors    = [2,1,2,2,4,3,4];
-array [edges] of int	: sources   = [1,1,2,3,3,3,4,5,6,6,6,7];
-array [edges] of int	: targets   = [2,3,3,1,4,6,3,6,3,5,7,6];
+set of int              : edges     = 1..nedges;
+array [vertices] of int	: owners;
+array [vertices] of int	: colors;
+array [edges] of int	: sources;
+array [edges] of int	: targets;
 vertices                : start     = 1;
 
 % -------------------------------------------------------------------
@@ -23,18 +23,18 @@ constraint parity_conditions(owners,colors,sources,targets,V,E,start);
 
 % -------------------------------------------------------------------
 
-% Synthesis
-set of int: steps = 1..nvertices;
-array [steps] of var vertices union {0} : Vhistory;
-array [steps] of var vertices union {0} : Ehistory;
-array [steps] of var vertices union {0} : Vinfinity;
-array [steps] of var vertices union {0} : Einfinity;
-array [steps] of var vertices union {0} : Vpath;
-array [steps] of var vertices union {0} : Epath;
+% % Synthesis
+% set of int: steps = 1..nvertices;
+% array [steps] of var vertices union {0} : Vhistory;
+% array [steps] of var vertices union {0} : Ehistory;
+% array [steps] of var vertices union {0} : Vinfinity;
+% array [steps] of var vertices union {0} : Einfinity;
+% array [steps] of var vertices union {0} : Vpath;
+% array [steps] of var vertices union {0} : Epath;
 
-constraint 
-	even_play(	steps,sources,targets,E,start,
-				Vhistory,Ehistory, Vinfinity,Einfinity, Vpath, Epath );
+% constraint 
+% 	even_play(	steps,sources,targets,E,start,
+% 				Vhistory,Ehistory, Vinfinity,Einfinity, Vpath, Epath );
 
 % -------------------------------------------------------------------
 
@@ -68,5 +68,6 @@ constraint
 % -------------------------------------------------------------------
 
 output
-	["play = " ++ toStr(Vhistory) ++ toStr(Vinfinity) ++ " \n"] ++ 
+	% ["play = " ++ toStr(Vhistory) ++ toStr(Vinfinity) ++ " \n"] ++ 
+	[toStr(V) ++ "\n" ++ toStr(E)] ++
 	[]

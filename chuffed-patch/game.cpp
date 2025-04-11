@@ -1,10 +1,6 @@
 #ifndef game_cpp
 #define game_cpp
 
-#ifndef debugwatchs_h
-#include "../chuffed-patch/debugwatchs.h"
-#endif
-
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -279,4 +275,4 @@ public:
     }
 };
 
-#endif // CPP_GAME
+#endif // game_cpp
