@@ -273,6 +273,21 @@ public:
         std::cout << "}" << std::endl;
         std::cout << "start:     " << start << std::endl;
     }
+
+    //----------------------------------------------------------------------------------
+
+    std::vector<int> getOdds() {
+        std::vector<int> odds;
+        for (int i=0; i<nvertices; i++) {
+            if (colors[i] % 2 == ODD) {
+                odds.push_back(i);
+            }
+        }
+        std::sort(odds.begin(), odds.end(), [&](int a, int b) {
+            return colors[a] < colors[b];
+        });
+        return odds;
+    }
 };
 
 #endif // game_cpp

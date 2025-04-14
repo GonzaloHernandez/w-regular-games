@@ -8,7 +8,7 @@
 #include "initializer_list"
 #include "chuffed/globals/dconnected.h"
 
-#include "../chuffed-patch/nooddcyclefilter.cpp"
+#include "../chuffed-patch/nooddcycle.cpp"
 
 class CPModel : public Problem {
 public:
@@ -83,7 +83,7 @@ public:
         }
 
         // Every infinite ODD play must be avoided.
-        new NoOddCycleFilter(g,V,E,filtertype);
+        new NoOddCycle(g,V,E,filtertype);
 
 
         // Every unreachable vertex must be avoided.

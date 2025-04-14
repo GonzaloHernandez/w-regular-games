@@ -33,6 +33,6 @@ def explorePlays(path, current) :
     
 # ------------------------------------------------------------------------------------
 
-g = Game('./data/game-sat.dzn',Game.FIRST0)
-explorePlays([],0)
+g = Game('./data/game-jurd-2-1.dzn',Game.FIRST0)
+explore([],0)
 
