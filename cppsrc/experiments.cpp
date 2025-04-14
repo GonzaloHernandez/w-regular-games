@@ -123,8 +123,8 @@ bool parseExperimentOptions(int argc, char *argv[]) {
             }
             char* endptr;
             int filter = std::strtol(argv[i],&endptr,10);
-            if (errno == ERANGE || filter < 0 || filter > 4) {
-                std::cerr << "ERROR: Odd Cycle Filter number out range (0,1,2,3,4)\n";
+            if (errno == ERANGE || filter < 0 || filter > 3) {
+                std::cerr << "ERROR: Odd Cycle Filter number out range (0,1,2,3)\n";
                 return false;
             }
             if (*endptr != '\0') {
@@ -185,8 +185,7 @@ bool parseExperimentOptions(int argc, char *argv[]) {
             std::cout << "  -gm <filename>           : GM file name\n";
             std::cout << "  -start <vertex>          : Starting vertex\n";
             std::cout << "  -solving <type>          : Solving type (1=CP, 2=SAT encoding, 3=ZChaff, 4=Cadical, 5=Zielonka(GM))\n";
-            std::cout << "  -filter <type>           : Odd Cycle Filter type (0=Checker, 1=Simple, 2=Multiple starting,\n";
-            std::cout << "                             3=Remembering plays, 4=Remembering edge)\n";
+            std::cout << "  -filter <type>           : NOC-Filter type (0=Checker, 1=Basic, 2=MultiStart, 3=Memo)\n";
             std::cout << "  -dimacs <filename>       : DIMACS file name\n";
             std::cout << "  -print <type>            : Print game (0=No, 1=yes(SAT/NOSAT), 2=verbose(Solution))\n";
             std::cout << "  -reachability <value>    : Reachability (1=Use, 0=Don't use)\n";

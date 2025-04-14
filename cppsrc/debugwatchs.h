@@ -67,6 +67,17 @@ inline std::string wVecBoolView(vec<BoolView>& data) {
     return ss.str();
 }
 
+inline std::string wVecBoolViewChanneling(vec<BoolView>& data) {
+    std::stringstream out;
+    out << "[";
+    for (int i=0; i<data.size(); i++) {
+        if (data[i].isTrue())
+            out << i << ",";
+    }
+    out << "]";
+    return out.str();
+}
+
 // --------------------------------------------------------------------------------
 
 inline std::string wBoolView(BoolView& obj) {
@@ -91,6 +102,7 @@ inline void launchdebugwatchs() {
     wVecInt(cvi);
     vec<BoolView> cvb(1);
     wVecBoolView(cvb);
+    wVecBoolViewChanneling(cvb);
     BoolView cb = newBoolVar();
     wBoolView(cb);
 }
