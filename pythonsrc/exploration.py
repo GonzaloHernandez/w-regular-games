@@ -52,28 +52,23 @@ def explorePlays(path, current) :
 
 def getPlay(type, path, current) -> list :
     if current in path :
-        print(path+[current])
         h = path.index(current)
         best = min([ g.colors[v] for v in path[h:]])
-        if best%2 == type : 
-            return path
-        else :
-            return []
+        print(path+[current],best)
+        return best%2, path
     else :
-        for e in g.vedges[current] :
-            if g.owners[current] == type :
-                return getPlay(type, path + [current], g.targets[e])
-            else :
-                for e1 in g.vedges[current] :
-                    detourpath = getPlay(1-type, [], g.targets[e1])
-                    if detourpath != [] :
-                        
-                        return getPlay(type, path + [current], g.targets[e1])
+        if g.owners[current] == type :
+            for e in g.vedges[current] :
+                detourtype,detourpath = getPlay( type, path+[current], g.targets[e] )
+                if detourtype == type :
+                    return detourtype, detourpath
+            return detourtype, detourpath
+        else :
+            return getPlay( 1-type, path, current )
 
 # ------------------------------------------------------------------------------------
 
 g = Game('./data/game-jurd-2-1.dzn',Game.FIRST0)
-# g = Game(Game.JURDZINSKI,2,1,Game.FIRST0)
 
-path = getPlay(EVEN,[],0)
-print(path)
+type,path = getPlay(EVEN,[],2)
+print(path,"EVEN" if type==0 else "ODD")
