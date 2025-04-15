@@ -21,10 +21,13 @@ class Game :
             self.vertices   = [0]
             self.owners     = [0]
             self.colors     = [0]
-            self.nedges     = [0]
+
+            self.nedges     = 0
             self.edges      = []
             self.sources    = []
             self.targets    = []
+
+            self.vedges     = [[]]
 
         # ---------------------------------------------------------
         elif len(args) <= 2 and isinstance(args[0],str):
@@ -151,6 +154,9 @@ class Game :
             self.sources    = game[6]
             self.targets    = game[7]
             self.start      = 0
+
+        # ---------------------------------------------------------
+        self.vedges     = [ [ e for e in range(self.nedges) if self.sources[e]==v ] for v in range(self.nvertices) ]
 
     def __str__(self) -> str:
         text = ""

@@ -12,7 +12,6 @@ private:
     vec<BoolView> V;
     vec<BoolView> E;
     int filtertype;
-    std::vector<std::pair<int,int>> touched;
 
     const int   CF_DONE     = 1;
     const int   CF_CONFLICT = 2;
@@ -20,7 +19,7 @@ private:
 public:
     //-----------------------------------------------------------------------
     NoOddCycle(Game& g, vec<BoolView>& V,vec<BoolView>& E,int filtertype=3)
-    :   g(g), V(V), E(E), filtertype(filtertype), touched(g.nedges,{-1,-1})
+    :   g(g), V(V), E(E), filtertype(filtertype)
     {
         for (int i=0; i<g.owners.size(); i++)  V[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.sources.size(); i++) E[i].attach(this, 1 , EVENT_F );
@@ -134,7 +133,7 @@ public:
     }
     //-----------------------------------------------------------------------
     int filterMemo(vec<int> pathV, vec<int> pathE, int vertex, 
-        vec<BoolView> &E, int lastEdge, bool definedEdge) 
+        vec<BoolView> &E, int lastEdge, bool definedEdge,std::vector<std::pair<int,int>>& touched) 
     {
         int index = findVertex(vertex,pathV);
         if (index >= 0) {
@@ -162,7 +161,7 @@ public:
                         newpathE.push(e);
 
                         if (touched[e].first < 0) {
-                            int status = filterMemo(newpathV, newpathE,g.targets[e], E, e, E[e].isTrue());
+                            int status = filterMemo(newpathV, newpathE,g.targets[e], E, e, E[e].isTrue(),touched);
                             if (status == CF_CONFLICT) {
                                 return status;
                             }
@@ -173,7 +172,7 @@ public:
                                 if (pathV[i] == touched[e].first) {
                                     int min = mincolor(i,pathV);
                                     if (min < touched[e].second) {
-                                        int status = filterMemo(newpathV, newpathE,g.targets[e], E, e, E[e].isTrue());
+                                        int status = filterMemo(newpathV, newpathE,g.targets[e], E, e, E[e].isTrue(),touched);
                                         if (status == CF_CONFLICT) {
                                             return status;
                                         }
@@ -258,7 +257,8 @@ public:
             break;
         }
         case 3: { // Remembering best plays
-            if (filterMemo(pathV,pathE,g.start,E,-1,true) == CF_CONFLICT)
+            std::vector<std::pair<int,int>> touched(g.nedges,{-1,-1});
+            if (filterMemo(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
                 return false;
             break;
         }
