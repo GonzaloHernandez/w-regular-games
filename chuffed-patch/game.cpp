@@ -7,8 +7,13 @@
 #include <regex>
 #include <sstream>
 
-const int EVEN  = 0;
-const int ODD   = 1;
+enum parity {
+    EVEN,   // 0
+    ODD     // 1
+};
+
+// const int EVEN  = 0;
+// const int ODD   = 1;
 
 //======================================================================================
 

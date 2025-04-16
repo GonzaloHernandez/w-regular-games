@@ -3,7 +3,7 @@
     "configurations": [
         // --------------------------------------------------------------
         {
-            "name": "C++ Debug (Arguments)",
+            "name": "C++ Debug Experiments",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/experiments",
@@ -14,6 +14,31 @@
                 "-start","0",
                 "-filter","3",
                 "-print","2"],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "externalConsole": false,
+            "MIMode": "gdb",  // lldb for osx / gdb for linux
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]            
+        },
+        // --------------------------------------------------------------
+        {
+            "name": "C++ Debug Standard",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/${fileBasenameNoExtension}",
+            "args": [   
+                // "-gm", "${env:HOME}/gm/modelcheckerladder(100).gm",
+                "--dzn", "${workspaceFolder}/data/game-jurd-2-1.dzn",
+                // "-jurd","2","1",
+                "--start","0",
+                "--print","2"
+            ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "externalConsole": false,

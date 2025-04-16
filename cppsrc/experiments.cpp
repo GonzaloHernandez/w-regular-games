@@ -9,7 +9,7 @@
 #endif
 
 struct options {
-    int print_game      = 0; 
+    int game_print      = 0; 
     int game_type       = 0; // 0=default 1=jurd 2=dzn 3=gm
     int jurd_levels     = 2;
     int jurd_blocks     = 1;
@@ -157,7 +157,7 @@ bool parseExperimentOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Print type no numeric\n";
                 return false;
             }
-            ex.print_game = print;
+            ex.game_print = print;
         }
         else if (strcmp(argv[i],"-reachability")==0) {
             i++;
@@ -242,15 +242,15 @@ int main(int argc, char *argv[])
     switch (ex.solving_type) {
         case 1: { // cp solver
             CPModel* model;
-            model = new CPModel(*game, ex.filter_type, ex.reachability, ex.print_game);
+            model = new CPModel(*game, ex.filter_type, ex.reachability, ex.game_print);
             so.nof_solutions = 1;
             so.sym_static = true;
-            so.print_sol = ex.print_game==0?false:true;
+            so.print_sol = ex.game_print==0?false:true;
             engine.solve(model);
             auto total_time = std::chrono::duration_cast<std::chrono::milliseconds>(chuffed_clock::now() - engine.start_time);
             const std::chrono::milliseconds search_time = total_time - engine.init_time;
             
-            if (ex.print_game > 0) {
+            if (ex.game_print > 0) {
                 std::cout << game->nvertices << " ";
                 std::cout << game->nedges << " ";
                 std::cout << engine.solutions << " ";
