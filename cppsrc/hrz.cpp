@@ -37,21 +37,20 @@ int findVertex(int vertex,std::vector<int>& path) {
     return -1;
 }
 
-std::pair<int, std::vector<int>> getPlay(Game& g, int p, std::vector<int> path, int current) {
-
-    auto mincolor = [&g](int index,std::vector<int>& path) -> int {
-        int min = g.colors[path[index]];
-        for (int i=index+1; i<path.size(); i++) {
-            if (g.colors[path[i]] < min) {
-                min = g.colors[path[i]];
-            }
+int mincolor(Game& g, int index,std::vector<int>& path){
+    int min = g.colors[path[index]];
+    for (int i=index+1; i<path.size(); i++) {
+        if (g.colors[path[i]] < min) {
+            min = g.colors[path[i]];
         }
-        return min;
-    };
+    }
+    return min;
+}
 
+std::pair<int, std::vector<int>> getPlay(Game& g, int p, std::vector<int> path, int current) {
     int index = findVertex(current,path);
     if (index >= 0) {
-        int best = mincolor(index,path);
+        int best = mincolor(g,index,path);
         return {best%2, path};
     }
     else {
@@ -73,12 +72,56 @@ std::pair<int, std::vector<int>> getPlay(Game& g, int p, std::vector<int> path, 
     }
 }
 
+std::pair<int, std::vector<int>> getPlayMemo(Game& g, int p, std::vector<int> path, int current, std::vector<int>& memo) {
+    int index = findVertex(current,path);
+    if (index >= 0) {
+        int best = mincolor(g,index,path);
+        return {best%2, path};
+    }
+    else {
+        if (g.owners[current] == p) {
+            std::pair<int, std::vector<int>> detour;
+            for(auto& e : g.edges[current]) {
+                std::vector <int> newpath = path;
+                newpath.push_back(current);
+                if (memo[g.targets[e]] == p) {
+                    memo[current] = detour.first;
+                    return detour; // with this edge current can force p (already memoized)
+                }
+
+                if (memo[g.targets[e]] == 1-p) {
+                    continue; // skip this edge
+                }
+                
+                detour = getPlayMemo(g, p, newpath, g.targets[e], memo);
+                if (detour.first == p) {
+                    memo[current] = detour.first;
+                    return detour; // with this edge current can force p
+                }
+            }
+            memo[current] = detour.first;
+            return detour;
+        }
+        else {
+            if (memo[current] != -1) {
+                return {memo[current], path}; // already memoized
+            }
+            auto play = getPlayMemo(g, 1-p , path, current, memo);
+            memo[current] = play.first;
+            return play;
+        }
+    }
+}
+
+
+
 struct options {
     int game_print      = 0; 
     int game_type       = 0; // 0=default 1=jurd 2=dzn 3=gm
     int jurd_levels     = 2;
     int jurd_blocks     = 1;
     int game_start      = 0;
+    int game_parity     = 0; // looking for 0=EVEN or 1=ODD
     std::string game_filename   = "";
 } options;
 
@@ -131,7 +174,7 @@ bool parseOptions(int argc, char *argv[]) {
             }
             options.game_filename = argv[i];                
         }
-        else if (strcmp(argv[i],"-gm")==0) {
+        else if (strcmp(argv[i],"--gm")==0) {
             options.game_type = 3;
             i++;
             if (i>=argc || argv[i][0] == '-') {
@@ -176,6 +219,24 @@ bool parseOptions(int argc, char *argv[]) {
             }
             options.game_print = print;
         }
+        else if (strcmp(argv[i],"--parity")==0) {
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Kynd of play missing\n";
+                return false;
+            }
+            char* endptr;
+            int parity = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || parity < 0 || parity > 1) {
+                std::cerr << "ERROR: Parity of play 0=EVEN 1=ODD  \n";
+                return false;
+            }
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: Print type no numeric\n";
+                return false;
+            }
+            options.game_parity = parity;
+        }
         else if (strcmp(argv[i],"--help")==0) {
             std::cout << "Usage: " << argv[0] << " [options]\n";
             std::cout << "Options:\n";
@@ -184,6 +245,7 @@ bool parseOptions(int argc, char *argv[]) {
             std::cout << "  --gm <filename>           : GM file name\n";
             std::cout << "  --start <vertex>          : Starting vertex\n";
             std::cout << "  --print <type>            : Print game (0=Parity, 1=Path+Parity, 2=verbose)\n";
+            std::cout << "  --parity <type>           : Parity of play to seek (0=EVEN, 1=ODD)\n";
             return false;
         }
         else {
@@ -220,20 +282,23 @@ int main(int argc, char *argv[])
     }
 
     std::vector<int> path;
-    auto play = getPlay(*game, EVEN, path, options.game_start);
+    // auto play = getPlay(*game, options.game_parity, path, options.game_start);
+
+    std::vector<int> memo(game->nvertices, -1);
+    auto play = getPlayMemo(*game, options.game_parity, path, options.game_start,memo);
 
     switch (options.game_print) {
         case 0:
-            std::cout << (play.first==EVEN?"EVEN":"ODD") << std::endl;
+            std::cout   << (play.first==EVEN?"EVEN":"ODD") << std::endl;
             break;
         case 1:
-            std::cout   << play.second
-                        << " " << (play.first==EVEN?"EVEN":"ODD") << std::endl; 
+            std::cout   << play.second << " " 
+                        << (play.first==EVEN?"EVEN":"ODD") << std::endl; 
             break;
         case 2:
             game->printGame();
-            std::cout   << play.second
-                        << " " << (play.first==EVEN?"EVEN":"ODD") << std::endl; 
+            std::cout   << play.second << " " 
+                        << (play.first==EVEN?"EVEN":"ODD") << std::endl; 
             break;    
         default:
             break;
