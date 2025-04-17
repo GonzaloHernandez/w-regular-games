@@ -6,6 +6,7 @@
 #include <fstream>
 #include <regex>
 #include <sstream>
+#include <cassert>
 
 enum parity {
     EVEN,   // 0
@@ -99,6 +100,8 @@ public:
         nvertices   = own.size();
         nedges      = sou.size();
 
+        assert(start >= 0 && start < nvertices);
+
         edges.resize(nvertices);
 
         for(int i=0; i<nvertices; i++) {
@@ -143,6 +146,9 @@ public:
                     }
                 }
                 file.close();
+
+                assert(start >= 0 && start < nvertices);
+
                 fixStartingZero();
                 edges.resize(nvertices);
                 for(int i=0; i<nedges; i++) {
@@ -174,6 +180,9 @@ public:
                 file.close();
 
                 nvertices = counter;
+
+                assert(start >= 0 && start < nvertices);
+
                 edges.resize(nvertices);
 
                 nedges = 0;
@@ -198,6 +207,8 @@ public:
     Game( int levels, int blocks, int start ) : start(start) {
         nvertices   = ((blocks*3)+1)*(levels-1) + ((blocks*2)+1);
         nedges      = (blocks*6)*(levels-1) + (blocks*4) + (blocks*2*(levels-1));
+
+        assert(start >= 0 && start < nvertices);
 
         int es = 1;
         int os = 0;

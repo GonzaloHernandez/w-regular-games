@@ -2,6 +2,7 @@
 #include <vector>
 #include <initializer_list>
 #include <cstring>
+#include <chrono>
 
 #ifndef game_cpp 
 #include "../chuffed-patch/game.cpp"
@@ -107,7 +108,6 @@ std::pair<int, std::vector<int>> getPlayMemo(Game& g, int p, std::vector<int> pa
                 return {memo[current], path}; // already memoized
             }
             auto play = getPlayMemo(g, 1-p , path, current, memo);
-            memo[current] = play.first;
             return play;
         }
     }
@@ -139,7 +139,7 @@ bool parseOptions(int argc, char *argv[]) {
             }
             char* endptr;
             int levels = std::strtol(argv[i],&endptr,10);
-            if (errno == ERANGE || levels < 2 || levels > 1000) {
+            if (errno == ERANGE || levels < 2 || levels > 1000000) {
                 std::cerr << "ERROR: Jurdzinski level out of range\n";
                 return false;
             }
@@ -155,7 +155,7 @@ bool parseOptions(int argc, char *argv[]) {
                 return false;                    
             }
             int blocks = std::strtol(argv[i],&endptr,10);
-            if (errno == ERANGE || blocks < 1 || blocks > 1000) {
+            if (errno == ERANGE || blocks < 1 || blocks > 1000000) {
                 std::cerr << "ERROR: Jurdzinski blocks out of range\n";
                 return false;
             }            
@@ -191,7 +191,7 @@ bool parseOptions(int argc, char *argv[]) {
             }
             char* endptr;
             int start = std::strtol(argv[i],&endptr,10);
-            if (errno == ERANGE || start < 0 || start > 1000000) {
+            if (errno == ERANGE || start < 0 || start > 10000000) {
                 std::cerr << "ERROR: Starting vertex out of range\n";
                 return false;
             }
@@ -209,8 +209,8 @@ bool parseOptions(int argc, char *argv[]) {
             }
             char* endptr;
             int print = std::strtol(argv[i],&endptr,10);
-            if (errno == ERANGE || print < 0 || print > 2) {
-                std::cerr << "ERROR: Print type number out range (0,1,2)\n";
+            if (errno == ERANGE || print < 0 || print > 3) {
+                std::cerr << "ERROR: Print type number out range (0,1,3)\n";
                 return false;
             }
             if (*endptr != '\0') {
@@ -244,7 +244,7 @@ bool parseOptions(int argc, char *argv[]) {
             std::cout << "  --dzn <filename>          : DZN file name\n";
             std::cout << "  --gm <filename>           : GM file name\n";
             std::cout << "  --start <vertex>          : Starting vertex\n";
-            std::cout << "  --print <type>            : Print game (0=Parity, 1=Path+Parity, 2=verbose)\n";
+            std::cout << "  --print <type>            : Print game (0=Parity, 1=Time+ 2=Path+, 3=Verbose)\n";
             std::cout << "  --parity <type>           : Parity of play to seek (0=EVEN, 1=ODD)\n";
             return false;
         }
@@ -266,6 +266,8 @@ int main(int argc, char *argv[])
 
     //------------------------------------------------------------
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     switch (options.game_type) {
         case 1: // jurd
             game = new Game(options.jurd_levels, options.jurd_blocks, options.game_start);
@@ -280,25 +282,42 @@ int main(int argc, char *argv[])
             game = new Game({0,1},{3,2},{0,1},{1,0},0);        
             break;
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> preptime = end - start;
 
     std::vector<int> path;
-    // auto play = getPlay(*game, options.game_parity, path, options.game_start);
 
     std::vector<int> memo(game->nvertices, -1);
+
+    start = std::chrono::high_resolution_clock::now();
+
     auto play = getPlayMemo(*game, options.game_parity, path, options.game_start,memo);
+
+    end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> totaltime = end - start;
 
     switch (options.game_print) {
         case 0:
-            std::cout   << (play.first==EVEN?"EVEN":"ODD") << std::endl;
+            std::cout   << (play.first==EVEN?"EVEN":"ODD") 
+                        << std::endl;
             break;
         case 1:
-            std::cout   << play.second << " " 
-                        << (play.first==EVEN?"EVEN":"ODD") << std::endl; 
+            std::cout   << (play.first==EVEN?"EVEN":"ODD") << " "
+                        << preptime.count() << " " << totaltime.count() 
+                        << std::endl; 
             break;
         case 2:
+            std::cout   << play.second << " " 
+                        << (play.first==EVEN?"EVEN":"ODD") << " "
+                        << preptime.count() << " " << totaltime.count() 
+                        << std::endl; 
+            break;
+        case 3:
             game->printGame();
             std::cout   << play.second << " " 
-                        << (play.first==EVEN?"EVEN":"ODD") << std::endl; 
+                        << (play.first==EVEN?"EVEN":"ODD") << " "
+                        << preptime.count() << " " << totaltime.count() 
+                        << std::endl; 
             break;    
         default:
             break;
