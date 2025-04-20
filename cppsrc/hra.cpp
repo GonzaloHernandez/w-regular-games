@@ -83,17 +83,20 @@ std::pair<int, std::vector<int>> getPlayMemo(Game& g, int p, std::vector<int> pa
         if (g.owners[current] == p) {
             std::pair<int, std::vector<int>> detour;
             for(auto& e : g.edges[current]) {
-                std::vector <int> newpath = path;
-                newpath.push_back(current);
+
                 if (memo[g.targets[e]] == p) {
-                    memo[current] = detour.first;
-                    return detour; // with this edge current can force p (already memoized)
+                    memo[current] = p;
+                    return {p, path}; // with this edge current can force p (already memoized)
                 }
 
                 if (memo[g.targets[e]] == 1-p) {
+                    detour.first = 1-p;
+                    detour.second = path;
                     continue; // skip this edge
                 }
-                
+
+                std::vector <int> newpath = path;
+                newpath.push_back(current);                
                 detour = getPlayMemo(g, p, newpath, g.targets[e], memo);
                 if (detour.first == p) {
                     memo[current] = detour.first;
