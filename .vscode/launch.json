@@ -34,11 +34,11 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/${fileBasenameNoExtension}",
             "args": [   
-                "--gm", "${env:HOME}/gm/randomgame(1000,_10,_1,_20)id=0.gm",
-                // "--dzn", "${workspaceFolder}/data/game-jurd-2-1.dzn",
+                "--gm", "${env:HOME}/gm/randomgame(5000,_10,_1,_20)id=0.gm",
+                // "--dzn", "${workspaceFolder}/data/game-other.dzn",
                 // "-jurd","2","1",
-                "--start","2",
-                "--print","2"
+                "--starts","'16,30,48'",
+                "--print","1"
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

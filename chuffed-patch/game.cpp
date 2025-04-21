@@ -267,6 +267,13 @@ public:
 
     //----------------------------------------------------------------------------------
 
+    void setStart(int startv) {
+        assert(startv >= 0 && startv < nvertices);
+        start = startv;
+    }
+
+    //----------------------------------------------------------------------------------
+
     void printGame() {
         std::cout << "nvertices: " << owners.size() << std::endl;
         std::cout << "owners:    {";
@@ -287,7 +294,7 @@ public:
         for(int e=0; e<targets.size(); e++) 
             std::cout<<targets[e]<<(e<targets.size()-1?",":"");
         std::cout << "}" << std::endl;
-        std::cout << "start:     " << start << std::endl;
+        // std::cout << "start:     " << start << std::endl;
     }
 
     //----------------------------------------------------------------------------------

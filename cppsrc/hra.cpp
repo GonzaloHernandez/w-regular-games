@@ -73,50 +73,42 @@ std::pair<int, std::vector<int>> getPlay(Game& g, int p, std::vector<int> path, 
     }
 }
 
-std::pair<int, std::vector<int>> getPlayMemo(Game& g, int p, std::vector<int> path, int current, std::vector<int>& memo) {
+signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std::vector<int>& memo) {
     int index = findVertex(current,path);
     if (index >= 0) {
         int best = mincolor(g,index,path);
-        return {best%2, path};
+        return best%2;
     }
     else {
         if (g.owners[current] == p) {
-            std::pair<int, std::vector<int>> detour;
             for(auto& e : g.edges[current]) {
 
                 if (memo[g.targets[e]] == p) {
                     memo[current] = p;
-                    return {p, path}; // with this edge current can force p (already memoized)
+                    return p; // with this edge current can force p (already memoized)
                 }
 
                 if (memo[g.targets[e]] == 1-p) {
-                    detour.first = 1-p;
-                    detour.second = path;
                     continue; // skip this edge
                 }
 
                 std::vector <int> newpath = path;
                 newpath.push_back(current);                
-                detour = getPlayMemo(g, p, newpath, g.targets[e], memo);
-                if (detour.first == p) {
-                    memo[current] = detour.first;
-                    return detour; // with this edge current can force p
+                auto detour = getPlayMemo(g, p, newpath, g.targets[e], memo);
+                if (detour == p) {
+                    memo[current] = p;
+                    return p; // with this edge current can force p
                 }
             }
-            memo[current] = detour.first;
-            return detour;
+            memo[current] = 1-p;
+            return 1-p;
         }
         else {
-            if (memo[current] != -1) {
-                return {memo[current], path}; // already memoized
-            }
             auto play = getPlayMemo(g, 1-p , path, current, memo);
             return play;
         }
     }
 }
-
-
 
 struct options {
     int game_print      = 0; 
@@ -125,7 +117,8 @@ struct options {
     int jurd_blocks     = 1;
     int game_start      = 0;
     int game_parity     = 0; // looking for 0=EVEN or 1=ODD
-    std::string game_filename   = "";
+    std::vector<int> game_starts    = {0};
+    std::string game_filename       = "";
 } options;
 
 //======================================================================================
@@ -192,17 +185,22 @@ bool parseOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Starting vertex missing\n";
                 return false;                    
             }
-            char* endptr;
-            int start = std::strtol(argv[i],&endptr,10);
-            if (errno == ERANGE || start < 0 || start > 10000000) {
-                std::cerr << "ERROR: Starting vertex out of range\n";
-                return false;
+
+            options.game_starts.clear();
+            std::string s = argv[i];
+            std::stringstream ss(s);
+            std::string item;
+            while (std::getline(ss, item, ',')) {
+                size_t start = item.find_first_not_of(" \t");
+                size_t end = item.find_last_not_of(" \t");
+
+                if (start == std::string::npos || end == std::string::npos) {
+                    std::cerr << "ERROR: Empty or invalid element found between commas\n";
+                    return false;
+                }
+
+                options.game_starts.push_back(std::stoi(item));
             }
-            if (*endptr != '\0') {
-                std::cerr << "ERROR: Starting vertex no numeric\n";
-                return false;
-            }
-            options.game_start = start;
         }
         else if (strcmp(argv[i],"--print")==0) {
             i++;
@@ -210,10 +208,11 @@ bool parseOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Print type number missing\n";
                 return false;
             }
+
             char* endptr;
             int print = std::strtol(argv[i],&endptr,10);
-            if (errno == ERANGE || print < 0 || print > 3) {
-                std::cerr << "ERROR: Print type number out range (0,1,3)\n";
+            if (errno == ERANGE || print < 0 || print > 2) {
+                std::cerr << "ERROR: Print type number out range (0,1,2)\n";
                 return false;
             }
             if (*endptr != '\0') {
@@ -247,7 +246,7 @@ bool parseOptions(int argc, char *argv[]) {
             std::cout << "  --dzn <filename>          : DZN file name\n";
             std::cout << "  --gm <filename>           : GM file name\n";
             std::cout << "  --start <vertex>          : Starting vertex\n";
-            std::cout << "  --print <type>            : Print game (0=Parity, 1=Time+ 2=Path+, 3=Verbose)\n";
+            std::cout << "  --print <type>            : Print game (0=Parity, 1=Parity+Time, 2=Verbose)\n";
             std::cout << "  --parity <type>           : Parity of play to seek (0=EVEN, 1=ODD)\n";
             return false;
         }
@@ -273,57 +272,55 @@ int main(int argc, char *argv[])
 
     switch (options.game_type) {
         case 1: // jurd
-            game = new Game(options.jurd_levels, options.jurd_blocks, options.game_start);
+            game = new Game(options.jurd_levels, options.jurd_blocks, options.game_starts[0]);
             break;
         case 2: // dzn
-            game = new Game(options.game_filename, options.game_start, Game::DZN);
+            game = new Game(options.game_filename, options.game_starts[0], Game::DZN);
             break;
         case 3: // gm
-            game = new Game(options.game_filename, options.game_start, Game::GM);
+            game = new Game(options.game_filename, options.game_starts[0], Game::GM);
             break;
         default:
-            game = new Game({0,1},{3,2},{0,1},{1,0},0);        
+            game = new Game({0,1},{3,2},{0,1},{1,0},0);
             break;
     }
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> preptime = end - start;
 
-    std::vector<int> path;
+    if (options.game_print == 2) {
+        game->printGame();
+    }
 
-    std::vector<int> memo(game->nvertices, -1);
+    while (true) {
+        std::vector<int> path;
+        std::vector<int> memo(game->nvertices, -1);
 
-    start = std::chrono::high_resolution_clock::now();
+        start = std::chrono::high_resolution_clock::now();
 
-    auto play = getPlayMemo(*game, options.game_parity, path, options.game_start,memo);
+        auto play = getPlayMemo(*game, options.game_parity, path, options.game_starts[0],memo);
 
-    end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> totaltime = end - start;
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> totaltime = end - start;
 
-    switch (options.game_print) {
-        case 0:
-            std::cout   << (play.first==EVEN?"EVEN":"ODD") 
-                        << std::endl;
-            break;
-        case 1:
-            std::cout   << (play.first==EVEN?"EVEN":"ODD") << " "
-                        << preptime.count() << " " << totaltime.count() 
-                        << std::endl; 
-            break;
-        case 2:
-            std::cout   << play.second << " " 
-                        << (play.first==EVEN?"EVEN":"ODD") << " "
-                        << preptime.count() << " " << totaltime.count() 
-                        << std::endl; 
-            break;
-        case 3:
-            game->printGame();
-            std::cout   << play.second << " " 
-                        << (play.first==EVEN?"EVEN":"ODD") << " "
-                        << preptime.count() << " " << totaltime.count() 
-                        << std::endl; 
-            break;    
-        default:
-            break;
+        switch (options.game_print) {
+            case 0:
+                std::cout   << options.game_starts[0] << ": "
+                            << (play==EVEN?"EVEN":"ODD") 
+                            << std::endl;
+                break;
+            case 1: case 2:
+                std::cout   << options.game_starts[0] << ": "
+                            << (play==EVEN?"EVEN":"ODD") << " "
+                            << preptime.count() << " " << totaltime.count() 
+                            << std::endl; 
+                break;
+            default:
+                break;
+        }
+
+        options.game_starts.erase(options.game_starts.begin());
+        if (options.game_starts.size() == 0) break;
+        game->setStart(options.game_starts[0]);
     }
 
     delete game;
