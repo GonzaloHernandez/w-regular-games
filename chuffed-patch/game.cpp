@@ -8,9 +8,14 @@
 #include <sstream>
 #include <cassert>
 
-enum parity {
+enum parity_type {
     EVEN,   // 0
     ODD     // 1
+};
+
+enum reward_type {
+    MIN,    // 0
+    MAX     // 1
 };
 
 // const int EVEN  = 0;
@@ -36,6 +41,7 @@ public:
     int nvertices;
     int nedges;
     int start;
+    reward_type reward;
 
     //----------------------------------------------------------------------------------
 
@@ -94,8 +100,10 @@ public:
 public:
 
     Game(   std::vector<int> own,std::vector<int> col,
-            std::vector<int> sou,std::vector<int> tar, int startv) 
-    :   owners(own), colors(col), sources(sou), targets(tar), start(startv) 
+            std::vector<int> sou,std::vector<int> tar, 
+            int startv, reward_type rew=MIN) 
+    :   owners(own), colors(col), sources(sou), targets(tar), 
+        start(startv), reward(rew) 
     {
         nvertices   = own.size();
         nedges      = sou.size();
@@ -117,8 +125,8 @@ public:
 
     //----------------------------------------------------------------------------------
 
-    Game(std::string filename, int start, int type=DZN) 
-    : nvertices(0), nedges(0), start(start) 
+    Game(int type, std::string filename, int start, reward_type rew=MIN) 
+    :   nvertices(0), nedges(0), start(start), reward(rew) 
     {
         std::ifstream file(filename);
         if (!file) {
@@ -204,7 +212,9 @@ public:
 
     //----------------------------------------------------------------------------------
 
-    Game( int levels, int blocks, int start ) : start(start) {
+    Game(int levels, int blocks, int start, reward_type rew=MIN) 
+    :   start(start), reward(rew)  
+    {
         nvertices   = ((blocks*3)+1)*(levels-1) + ((blocks*2)+1);
         nedges      = (blocks*6)*(levels-1) + (blocks*4) + (blocks*2*(levels-1));
 
@@ -270,6 +280,12 @@ public:
     void setStart(int startv) {
         assert(startv >= 0 && startv < nvertices);
         start = startv;
+    }
+
+    //----------------------------------------------------------------------------------
+
+    void setReward(reward_type rew) {
+        reward = rew;
     }
 
     //----------------------------------------------------------------------------------

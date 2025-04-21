@@ -30,7 +30,6 @@ inline void launchdebugwatchs() {
 
 }
 
-
 int findVertex(int vertex,std::vector<int>& path) {
     for (int i=0; i<path.size(); i++) {
         if (path[i] == vertex) return i;
@@ -38,34 +37,36 @@ int findVertex(int vertex,std::vector<int>& path) {
     return -1;
 }
 
-int mincolor(Game& g, int index,std::vector<int>& path){
-    int min = g.colors[path[index]];
+int bestcolor(Game& g, int index,std::vector<int>& path){
+    int m = g.colors[path[index]];
     for (int i=index+1; i<path.size(); i++) {
-        if (g.colors[path[i]] < min) {
-            min = g.colors[path[i]];
+        if (g.reward==MIN && g.colors[path[i]] < m) {
+            m = g.colors[path[i]];
+        }
+        else if (g.reward==MAX && g.colors[path[i]] > m) {
+            m = g.colors[path[i]];
         }
     }
-    return min;
+    return m;
 }
 
-std::pair<int, std::vector<int>> getPlay(Game& g, int p, std::vector<int> path, int current) {
+signed char getPlay(Game& g, int p, std::vector<int> path, int current) {
     int index = findVertex(current,path);
     if (index >= 0) {
-        int best = mincolor(g,index,path);
-        return {best%2, path};
+        int best = bestcolor(g,index,path);
+        return best%2;
     }
     else {
         if (g.owners[current] == p) {
-            std::pair<int, std::vector<int>> detour;
             for(auto& e : g.edges[current]) {
                 std::vector <int> newpath = path;
                 newpath.push_back(current);
-                detour = getPlay(g, p, newpath, g.targets[e]);
-                if (detour.first == p) {
-                    return detour;
+                auto detour = getPlay(g, p, newpath, g.targets[e]);
+                if (detour == p) {
+                    return p;
                 }
             }
-            return detour;
+            return 1-p;
         }
         else {
             return getPlay(g, 1-p , path, current);
@@ -76,7 +77,7 @@ std::pair<int, std::vector<int>> getPlay(Game& g, int p, std::vector<int> path, 
 signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std::vector<int>& memo) {
     int index = findVertex(current,path);
     if (index >= 0) {
-        int best = mincolor(g,index,path);
+        int best = bestcolor(g,index,path);
         return best%2;
     }
     else {
@@ -93,7 +94,7 @@ signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std:
                 }
 
                 std::vector <int> newpath = path;
-                newpath.push_back(current);                
+                newpath.push_back(current);
                 auto detour = getPlayMemo(g, p, newpath, g.targets[e], memo);
                 if (detour == p) {
                     memo[current] = p;
@@ -104,8 +105,7 @@ signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std:
             return 1-p;
         }
         else {
-            auto play = getPlayMemo(g, 1-p , path, current, memo);
-            return play;
+            return getPlayMemo(g, 1-p , path, current, memo);
         }
     }
 }
@@ -115,8 +115,8 @@ struct options {
     int game_type       = 0; // 0=default 1=jurd 2=dzn 3=gm
     int jurd_levels     = 2;
     int jurd_blocks     = 1;
-    int game_start      = 0;
     int game_parity     = 0; // looking for 0=EVEN or 1=ODD
+    reward_type game_reward         = MIN; 
     std::vector<int> game_starts    = {0};
     std::string game_filename       = "";
 } options;
@@ -221,23 +221,17 @@ bool parseOptions(int argc, char *argv[]) {
             }
             options.game_print = print;
         }
-        else if (strcmp(argv[i],"--parity")==0) {
-            i++;
-            if (i>=argc || argv[i][0] == '-') {
-                std::cerr << "ERROR: Kynd of play missing\n";
-                return false;
-            }
-            char* endptr;
-            int parity = std::strtol(argv[i],&endptr,10);
-            if (errno == ERANGE || parity < 0 || parity > 1) {
-                std::cerr << "ERROR: Parity of play 0=EVEN 1=ODD  \n";
-                return false;
-            }
-            if (*endptr != '\0') {
-                std::cerr << "ERROR: Print type no numeric\n";
-                return false;
-            }
-            options.game_parity = parity;
+        else if (strcmp(argv[i],"--parity-even")==0) {
+            options.game_parity = EVEN;
+        }
+        else if (strcmp(argv[i],"--parity-odd")==0) {
+            options.game_parity = ODD;
+        }
+        else if (strcmp(argv[i],"--reward-max")==0) {
+            options.game_reward = MAX;
+        }
+        else if (strcmp(argv[i],"--reward-min")==0) {
+            options.game_reward = MIN;
         }
         else if (strcmp(argv[i],"--help")==0) {
             std::cout << "Usage: " << argv[0] << " [options]\n";
@@ -247,7 +241,10 @@ bool parseOptions(int argc, char *argv[]) {
             std::cout << "  --gm <filename>           : GM file name\n";
             std::cout << "  --start <vertex>          : Starting vertex\n";
             std::cout << "  --print <type>            : Print game (0=Parity, 1=Parity+Time, 2=Verbose)\n";
-            std::cout << "  --parity <type>           : Parity of play to seek (0=EVEN, 1=ODD)\n";
+            std::cout << "  --parity-even             : Search for play EVEN\n";
+            std::cout << "  --parity-odd              : Search for play ODD\n";
+            std::cout << "  --reward-max              : Seek to maximize the color\n";
+            std::cout << "  --reward-min              : Seek to minimize the color\n";
             return false;
         }
         else {
@@ -272,16 +269,19 @@ int main(int argc, char *argv[])
 
     switch (options.game_type) {
         case 1: // jurd
-            game = new Game(options.jurd_levels, options.jurd_blocks, options.game_starts[0]);
+            game = new Game(options.jurd_levels, options.jurd_blocks, 
+                            options.game_starts[0], options.game_reward);
             break;
         case 2: // dzn
-            game = new Game(options.game_filename, options.game_starts[0], Game::DZN);
+            game = new Game(Game::DZN, options.game_filename,
+                            options.game_starts[0], options.game_reward);
             break;
         case 3: // gm
-            game = new Game(options.game_filename, options.game_starts[0], Game::GM);
+            game = new Game(Game::GM, options.game_filename,
+                            options.game_starts[0], options.game_reward);
             break;
         default:
-            game = new Game({0,1},{3,2},{0,1},{1,0},0);
+            game = new Game({0,1},{3,2},{0,1},{1,0},EVEN,MIN);
             break;
     }
     auto end = std::chrono::high_resolution_clock::now();

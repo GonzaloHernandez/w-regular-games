@@ -229,10 +229,10 @@ int main(int argc, char *argv[])
             game = new Game(ex.jurd_levels, ex.jurd_blocks, ex.game_start);
             break;
         case 2: // dzn
-            game = new Game(ex.game_filename, ex.game_start, Game::DZN);
+            game = new Game(Game::DZN, ex.game_filename, ex.game_start);
             break;
         case 3: // gm
-            game = new Game(ex.game_filename, ex.game_start, Game::GM);
+            game = new Game(Game::GM, ex.game_filename, ex.game_start);
             break;
         default:
             game = new Game({0,1},{3,2},{0,1},{1,0},0);        
