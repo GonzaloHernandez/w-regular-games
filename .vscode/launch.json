@@ -54,6 +54,31 @@
         },
         // --------------------------------------------------------------
         {
+            "name": "C++ Debug HRA Solver",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/test",
+            "args": [   
+                // "--gm", "${env:HOME}/gm/randomgame(5000,_10,_1,_20)id=0.gm",
+                "--dzn", "${workspaceFolder}/data/game-jurd-2-1.dzn",
+                // "-jurd","2","1",
+                // "--start","0",
+                // "--verbose"
+            ],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "externalConsole": false,
+            "MIMode": "gdb",  // lldb for osx / gdb for linux
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]            
+        },
+        // --------------------------------------------------------------
+        {
             "name": "Run MiniZinc Model (LINUX)",
             "type": "cppdbg",
             "request": "launch",

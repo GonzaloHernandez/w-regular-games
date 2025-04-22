@@ -58,7 +58,7 @@ signed char getPlay(Game& g, int p, std::vector<int> path, int current) {
     }
     else {
         if (g.owners[current] == p) {
-            for(auto& e : g.edges[current]) {
+            for(auto& e : g.vedges[current]) {
                 std::vector <int> newpath = path;
                 newpath.push_back(current);
                 auto detour = getPlay(g, p, newpath, g.targets[e]);
@@ -82,7 +82,7 @@ signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std:
     }
     else {
         if (g.owners[current] == p) {
-            for(auto& e : g.edges[current]) {
+            for(auto& e : g.vedges[current]) {
 
                 if (memo[g.targets[e]] == p) {
                     memo[current] = p;

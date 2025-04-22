@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
     
     HRAModel* model;
     model = new HRAModel(*game);
-    so.nof_solutions = 1;
+    so.nof_solutions = 0;
     engine.solve(model);
 
     delete model;

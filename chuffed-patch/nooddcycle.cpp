@@ -81,7 +81,7 @@ public:
             }
         }
         else {
-            for (auto& e : g.edges[vertex]) {
+            for (auto& e : g.vedges[vertex]) {
                 if (E[e].isTrue()) {
                     vec<int> newpathV(pathV);
                     vec<int> newpathE(pathE);
@@ -114,7 +114,7 @@ public:
         }
         else {
             if (definedEdge) {
-                for (auto& e : g.edges[vertex]) {
+                for (auto& e : g.vedges[vertex]) {
                     if (!E[e].isFalse()) {
                         vec<int> newpathV(pathV);
                         vec<int> newpathE(pathE);
@@ -153,7 +153,7 @@ public:
         else {
             if (definedEdge) {
 
-                for (auto& e : g.edges[vertex]) {
+                for (auto& e : g.vedges[vertex]) {
                     if (!E[e].isFalse()) {
                         vec<int> newpathV(pathV);
                         vec<int> newpathE(pathE);
@@ -212,7 +212,7 @@ public:
         }
         else if (definedEdge) {
 
-            for (auto& e : g.edges[vertex]) {
+            for (auto& e : g.vedges[vertex]) {
                 if (!E[e].isFalse()) {
                     vec<int> newpathV(pathV);
                     vec<int> newpathE(pathE);

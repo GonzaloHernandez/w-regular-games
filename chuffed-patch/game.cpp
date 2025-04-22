@@ -37,7 +37,7 @@ public:
     std::vector<int>    colors;
     std::vector<int>    sources;
     std::vector<int>    targets;
-    std::vector<std::vector<int>>    edges;
+    std::vector<std::vector<int>>   vedges;
     int nvertices;
     int nedges;
     int start;
@@ -110,7 +110,7 @@ public:
 
         assert(start >= 0 && start < nvertices);
 
-        edges.resize(nvertices);
+        vedges.resize(nvertices);
 
         for(int i=0; i<nvertices; i++) {
             owners[i]=own[i];
@@ -119,7 +119,7 @@ public:
         for(int i=0; i<nedges; i++) {
             sources[i]=sou[i];
             targets[i]=tar[i];
-            edges[sources[i]].push_back(i);
+            vedges[sources[i]].push_back(i);
         }
     }
 
@@ -158,9 +158,9 @@ public:
                 assert(start >= 0 && start < nvertices);
 
                 fixStartingZero();
-                edges.resize(nvertices);
+                vedges.resize(nvertices);
                 for(int i=0; i<nedges; i++) {
-                    edges[sources[i]].push_back(i);
+                    vedges[sources[i]].push_back(i);
                 }
                 break;
 
@@ -191,14 +191,14 @@ public:
 
                 assert(start >= 0 && start < nvertices);
 
-                edges.resize(nvertices);
+                vedges.resize(nvertices);
 
                 nedges = 0;
                 for(int s=0; s<nvertices; s++) {
                     for(int t=1; t<tedges[s].size(); t++) {
                         sources.push_back(verts[tedges[s][0]]);
                         targets.push_back(verts[tedges[s][t]]);
-                        edges[verts[tedges[s][0]]].push_back(nedges);
+                        vedges[verts[tedges[s][0]]].push_back(nedges);
                         nedges++;
                     }
                 }
@@ -269,9 +269,9 @@ public:
         colors.push_back(l*2);
 
         fixStartingZero();
-        edges.resize(nvertices);
+        vedges.resize(nvertices);
         for(int i=0; i<nedges; i++) {
-            edges[sources[i]].push_back(i);
+            vedges[sources[i]].push_back(i);
         }
     }
 
