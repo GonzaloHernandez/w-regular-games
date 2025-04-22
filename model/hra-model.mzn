@@ -96,65 +96,46 @@ constraint
 % -------------------------------------------------------------------
 % Qualifying vertices on the type of play that can force
 
-array[vertices] of var bool : Qv;
-array[edges]    of var bool : Qe;
+array[vertices] of var bool : Q;
 
 % If v is even and exists one even edge, from v the play is even
 constraint
     forall(v in vertices)(
-        (
-            V[v]
-        /\  colors[v] = even
-        /\  exists(e in edges where sources[e]=v)(Qe[e] = even)
-        ) -> Qv[v] = even
-    );
-
-% If v is even and all edges are odd, from v the play is odd
-constraint
-    forall(v in vertices)(
-        (
-            V[v]
-        /\  colors[v] = odd
-        /\  forall(e in edges where sources[e]=v)(Qe[e] = even)
-        ) -> Qv[v] = even
+        (   owners[v] = even /\
+            exists(w in vertices,e in edges where sources[e]=v /\ targets[e]=w)(Q[w]=even)
+        ) -> Q[v] = even
     );
 
 % If v is odd and exists one odd edge, from v the play is odd
 constraint
     forall(v in vertices)(
-        (
-            V[v]
-        /\  colors[v] = odd
-        /\  exists(e in edges where sources[e]=v)(Qe[e] = odd)
-        ) -> Qv[v] = odd
+        (   owners[v] = odd /\
+            exists(w in vertices,e in edges where sources[e]=v /\ targets[e]=w)(Q[w]=odd)
+        ) -> Q[v] = odd
+    );
+
+% If v is even and all edges are odd, from v the play is odd
+constraint
+    forall(v in vertices)(
+        (   owners[v] = even /\
+            forall(w in vertices,e in edges where sources[e]=v /\ targets[e]=w)(Q[w]=odd)
+        ) -> Q[v] = odd
     );
 
 % If v is odd and all edges are even, from v the play is even
 constraint
     forall(v in vertices)(
         (
-            V[v]
-        /\  colors[v] = even
-        /\  forall(e in edges where sources[e]=v)(Qe[e] = odd)
-        ) -> Qv[v] = odd
+            owners[v] = odd /\
+            forall(w in vertices,e in edges where sources[e]=v /\ targets[e]=w)(Q[w]=even)
+        ) -> Q[v] = even
     );
 
 % Vertices and edges not activated do not have winning strategy
-constraint
-    forall(v in vertices)(
-        not V[v] -> Qv[v] = Qv[start]
-    ) /\
-    forall(e in edges)(
-        not E[e] -> Qe[e] = Qv[start]
-    );
-
-% Every edge gets the same play of the target vertex 
-constraint
-    forall(w in vertices)(
-        forall(e in edges where targets[e]=w) (
-            Qe[e] = Qv[w]
-        )
-    );
+% constraint
+%     forall(v in vertices)(
+%         (not V[v]) -> Q[v] = Q[start]
+%     );
 
 % predicate qualify(  array [int] of int		: owners,
 %                     array [int] of int		: colors,
@@ -166,10 +147,16 @@ constraint
 %                     int				 		: start );
 
 constraint
-    exists(e in edges)(
-        E[e] /\ Qe[e] = (min(v in h..t)(colors[P[v]]) mod 2)
-    );
+    Q[P[h]] = (min(v in h..t)(colors[P[v]]) mod 2);
 
+% -------------------------------------------------------------------
+
+constraint
+    forall(v in vertices where v in {1,3,5,6})(V[v]) /\
+    forall(v in vertices where v in {2})(not V[v]);
+
+% constraint
+%     Q[3] = 0;
 % -------------------------------------------------------------------
 
 function string : toStr(array [int] of var bool	: X) =
@@ -181,7 +168,6 @@ function string : toStr(array [int] of var bool	: X) =
 output [
     "V: " ++ toStr(V) ++ "\n" ++ 
     "E: " ++ toStr(E) ++ "\n" ++ 
-    "P: " ++ show(P)  ++ " \(t)" ++ " \(h)" ++ "\n" ++
-    "Qv: " ++ show([bool2int(q) | q in Qv]) ++ "\n" ++
-    "Qe: " ++ show([bool2int(q) | q in Qe])
+    "P: " ++ show(P)  ++ " \(h)" ++ " \(t)" ++ "\n" ++
+    "Q: " ++ show([bool2int(q) | q in Q]) ++ "\n"
 ];
