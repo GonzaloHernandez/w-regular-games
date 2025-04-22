@@ -48,7 +48,7 @@ public:
             }
         }
 
-        // For every activated edge, the source and target vertex must be activated
+        // For every activated edge, the target vertex must be activated
         for (int e=0; e<g.nedges; e++) {
             vec<Lit> clause;
             clause.push( E[e].getLit(false) );
