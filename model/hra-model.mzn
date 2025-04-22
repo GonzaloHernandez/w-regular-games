@@ -1,3 +1,5 @@
+int : even  = 0;
+int : odd   = 1;
 
 % -------------------------------------------------------------------
 
@@ -17,6 +19,7 @@ array [vertices]	of var bool	: V;
 array [edges]		of var bool	: E;
 
 % -------------------------------------------------------------------
+% searching for Plays
 
 constraint
     V[start] = true;
@@ -47,18 +50,22 @@ constraint
     );
 
 
-predicate dreachability(	int						: nvertices,
-							array [int] of int		: sources,
-							array [int] of int		: targets,
-							array [int] of var bool	: V,
-							array [int] of var bool	: E,
-							int				 		: start );
+% predicate dreachability(	int						: nvertices,
+% 							array [int] of int		: sources,
+% 							array [int] of int		: targets,
+% 							array [int] of var bool	: V,
+% 							array [int] of var bool	: E,
+% 							int				 		: start );
 
+% constraint
+%     dreachability(length(owners),sources,targets,V,E,start);
+
+include "globals.mzn";
 constraint
-    dreachability(length(owners),sources,targets,V,E,start);
+	dreachable(nvertices,nedges,sources,targets,start,V,E);
 
 % -------------------------------------------------------------------
-% Chanelling path:
+% Chanelling path of plays:
 
 array [vertices] of var vertices union {0}: P;
 var vertices: t;
@@ -86,7 +93,83 @@ constraint
         E[e] /\ sources[e]=P[t] /\ targets[e]=P[h]
     );
 
-    
+% -------------------------------------------------------------------
+% Qualifying vertices on the type of play that can force
+
+array[vertices] of var bool : Qv;
+array[edges]    of var bool : Qe;
+
+% If v is even and exists one even edge, from v the play is even
+constraint
+    forall(v in vertices)(
+        (
+            V[v]
+        /\  colors[v] = even
+        /\  exists(e in edges where sources[e]=v)(Qe[e] = even)
+        ) -> Qv[v] = even
+    );
+
+% If v is even and all edges are odd, from v the play is odd
+constraint
+    forall(v in vertices)(
+        (
+            V[v]
+        /\  colors[v] = odd
+        /\  forall(e in edges where sources[e]=v)(Qe[e] = even)
+        ) -> Qv[v] = even
+    );
+
+% If v is odd and exists one odd edge, from v the play is odd
+constraint
+    forall(v in vertices)(
+        (
+            V[v]
+        /\  colors[v] = odd
+        /\  exists(e in edges where sources[e]=v)(Qe[e] = odd)
+        ) -> Qv[v] = odd
+    );
+
+% If v is odd and all edges are even, from v the play is even
+constraint
+    forall(v in vertices)(
+        (
+            V[v]
+        /\  colors[v] = even
+        /\  forall(e in edges where sources[e]=v)(Qe[e] = odd)
+        ) -> Qv[v] = odd
+    );
+
+% Vertices and edges not activated do not have winning strategy
+constraint
+    forall(v in vertices)(
+        not V[v] -> Qv[v] = Qv[start]
+    ) /\
+    forall(e in edges)(
+        not E[e] -> Qe[e] = Qv[start]
+    );
+
+% Every edge gets the same play of the target vertex 
+constraint
+    forall(w in vertices)(
+        forall(e in edges where targets[e]=w) (
+            Qe[e] = Qv[w]
+        )
+    );
+
+% predicate qualify(  array [int] of int		: owners,
+%                     array [int] of int		: colors,
+%                     array [int] of int		: sources,
+%                     array [int] of int		: targets,
+%                     array [int] of var bool	: V,
+%                     array [int] of var bool	: E,
+%                     array [int] of int      : Qe
+%                     int				 		: start );
+
+constraint
+    exists(e in edges)(
+        E[e] /\ Qe[e] = (min(v in h..t)(colors[P[v]]) mod 2)
+    );
+
 % -------------------------------------------------------------------
 
 function string : toStr(array [int] of var bool	: X) =
@@ -98,5 +181,7 @@ function string : toStr(array [int] of var bool	: X) =
 output [
     "V: " ++ toStr(V) ++ "\n" ++ 
     "E: " ++ toStr(E) ++ "\n" ++ 
-    "P: " ++ show(P) ++ " \(t)" ++ " \(h)"
+    "P: " ++ show(P)  ++ " \(t)" ++ " \(h)" ++ "\n" ++
+    "Qv: " ++ show([bool2int(q) | q in Qv]) ++ "\n" ++
+    "Qe: " ++ show([bool2int(q) | q in Qe])
 ];
