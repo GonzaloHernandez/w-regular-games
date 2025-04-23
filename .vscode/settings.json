@@ -92,6 +92,7 @@
         "locale": "cpp",
         "print": "cpp",
         "queue": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "source_location": "cpp"
     }
 }

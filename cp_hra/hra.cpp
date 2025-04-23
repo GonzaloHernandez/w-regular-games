@@ -61,8 +61,8 @@ signed char getPlay(Game& g, int p, std::vector<int> path, int current) {
             for(auto& e : g.vedges[current]) {
                 std::vector <int> newpath = path;
                 newpath.push_back(current);
-                auto detour = getPlay(g, p, newpath, g.targets[e]);
-                if (detour == p) {
+                auto next = getPlay(g, p, newpath, g.targets[e]);
+                if (next == p) {
                     return p;
                 }
             }
@@ -74,6 +74,41 @@ signed char getPlay(Game& g, int p, std::vector<int> path, int current) {
     }
 }
 
+// signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std::vector<int>& memo) {
+//     int index = findVertex(current,path);
+//     if (index >= 0) {
+//         int best = bestcolor(g,index,path);
+//         return best%2;
+//     }
+//     else {
+//         if (g.owners[current] == p) {
+//             for(auto& e : g.vedges[current]) {
+//                 if (memo[g.targets[e]] == p) {
+//                     memo[current] = p;
+//                     return p; // with this edge current can force p (already memoized)
+//                 }
+
+//                 if (memo[g.targets[e]] == 1-p) {
+//                     continue; // skip this edge
+//                 }
+
+//                 std::vector <int> newpath = path;
+//                 newpath.push_back(current);
+//                 auto next = getPlayMemo(g, p, newpath, g.targets[e], memo);
+//                 if (next == p) {
+//                     memo[current] = p;
+//                     return p; // with this edge current can force p
+//                 }
+//             }
+//             memo[current] = 1-p;
+//             return 1-p;
+//         }
+//         else {
+//             return getPlayMemo(g, 1-p , path, current, memo);
+//         }
+//     }
+// }
+
 signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std::vector<int>& memo) {
     int index = findVertex(current,path);
     if (index >= 0) {
@@ -81,34 +116,31 @@ signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std:
         return best%2;
     }
     else {
-        if (g.owners[current] == p) {
-            for(auto& e : g.vedges[current]) {
-
-                if (memo[g.targets[e]] == p) {
-                    memo[current] = p;
-                    return p; // with this edge current can force p (already memoized)
-                }
-
-                if (memo[g.targets[e]] == 1-p) {
-                    continue; // skip this edge
-                }
-
-                std::vector <int> newpath = path;
-                newpath.push_back(current);
-                auto detour = getPlayMemo(g, p, newpath, g.targets[e], memo);
-                if (detour == p) {
-                    memo[current] = p;
-                    return p; // with this edge current can force p
-                }
+        int np = ( g.owners[current]==p ? p : 1-p );
+        for(auto& e : g.vedges[current]) {
+            if (memo[g.targets[e]] == np) {
+                memo[current] = np;
+                return np; // using this edge current can force np (already memoized)
             }
-            memo[current] = 1-p;
-            return 1-p;
+
+            if (memo[g.targets[e]] == 1-np) {
+                continue; // skip this edge
+            }
+
+            std::vector <int> newpath = path;
+            newpath.push_back(current);
+            auto next = getPlayMemo(g, np, newpath, g.targets[e], memo);
+            if (next == np) {
+                memo[current] = np;
+                return np; // using this edge current can force np 
+            }
         }
-        else {
-            return getPlayMemo(g, 1-p , path, current, memo);
-        }
+        memo[current] = 1-np;
+        return 1-np;
     }
 }
+
+//======================================================================================
 
 struct options {
     int game_print      = 0; 
@@ -121,7 +153,6 @@ struct options {
     std::string game_filename       = "";
 } options;
 
-//======================================================================================
 
 bool parseOptions(int argc, char *argv[]) {
     for (int i=1; i<argc; i++) {
