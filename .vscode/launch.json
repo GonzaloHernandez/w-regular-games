@@ -37,8 +37,9 @@
                 "--gm", "${env:HOME}/gm/randomgame(5000,_10,_1,_20)id=0.gm",
                 // "--dzn", "${workspaceFolder}/data/game-other.dzn",
                 // "-jurd","2","1",
-                "--starts","'16,30,48'",
-                "--print","1"
+                "--rand","5","4","2","5",
+                // "--starts","'16,30,48'",
+                "--print","2"
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

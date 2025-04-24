@@ -116,7 +116,7 @@ signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std:
         return best%2;
     }
     else {
-        int np = ( g.owners[current]==p ? p : 1-p );
+        int np = g.owners[current];
         for(auto& e : g.vedges[current]) {
             if (memo[g.targets[e]] == np) {
                 memo[current] = np;
@@ -144,15 +144,20 @@ signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std:
 
 struct options {
     int game_print      = 0; 
-    int game_type       = 0; // 0=default 1=jurd 2=dzn 3=gm
+    int game_type       = 0; // 0=default 1=jurd 2=dzn 3=gm 4=rand
     int jurd_levels     = 2;
     int jurd_blocks     = 1;
+    int rand_ns         = 2;
+    int rand_ps         = 2;
+    int rand_d1         = 2;
+    int rand_d2         = 2;
     int game_parity     = 0; // looking for 0=EVEN or 1=ODD
-    reward_type game_reward         = MIN; 
-    std::vector<int> game_starts    = {0};
-    std::string game_filename       = "";
+    reward_type         game_reward             = MIN; 
+    std::vector<int>    game_starts             = {0};
+    std::string         game_filename           = "";
+    std::string         game_export_filename    = "";
+    int                 game_export_type        = 0; // 0=not export 2=dzn 3=gm
 } options;
-
 
 bool parseOptions(int argc, char *argv[]) {
     for (int i=1; i<argc; i++) {
@@ -191,6 +196,74 @@ bool parseOptions(int argc, char *argv[]) {
                 return false;
             }
             options.jurd_blocks = blocks;
+        }
+        else if (strcmp(argv[i],"--rand")==0) {
+            options.game_type = 4;
+            i++;
+            
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Number of vertices missing\n";
+                return false;                    
+            }
+            char* endptr;
+            int ns = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || ns < 1 || ns > 10000000) {
+                std::cerr << "ERROR: Number of vertices out of range\n";
+                return false;
+            }
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: Number of vertices no numeric\n";
+                return false;
+            }
+            options.rand_ns = ns;
+
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Number of priorities missing\n";
+                return false;                    
+            }
+            int ps = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || ps < 1 || ps > 10000000) {
+                std::cerr << "ERROR: Amount of priorities out of range\n";
+                return false;
+            }            
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: Amount of priorities no numeric\n";
+                return false;
+            }
+            options.rand_ps = ps;
+
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Min amount of edges missing\n";
+                return false;                    
+            }
+            int d1 = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || d1 < 1 || d1 > 99) {
+                std::cerr << "ERROR: Min amount of edges out of range\n";
+                return false;
+            }
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: Min amount of edges  no numeric\n";
+                return false;
+            }
+            options.rand_d1 = d1;
+
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Max amount of edges missing\n";
+                return false;                    
+            }
+            int d2 = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || d2 < 2 || d2 > 100) {
+                std::cerr << "ERROR: Max amount of edges out of range\n";
+                return false;
+            }
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: Max amount of edges  no numeric\n";
+                return false;
+            }
+            options.rand_d2 = d2;
         }
         else if (strcmp(argv[i],"--dzn")==0) {
             options.game_type = 2;
@@ -264,18 +337,39 @@ bool parseOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--reward-min")==0) {
             options.game_reward = MIN;
         }
+        else if (strcmp(argv[i],"--export-dzn")==0) {
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Target DZN file name missing\n";
+                return false;                    
+            }
+            options.game_export_type = 2;
+            options.game_export_filename = argv[i];                
+        }
+        else if (strcmp(argv[i],"--export-gm")==0) {
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Target GM file name missing\n";
+                return false;                    
+            }
+            options.game_export_type = 3;
+            options.game_export_filename = argv[i];                
+        }
         else if (strcmp(argv[i],"--help")==0) {
             std::cout << "Usage: " << argv[0] << " [options]\n";
             std::cout << "Options:\n";
-            std::cout << "  --jurd <levels> <blocks>  : Jurdzinski game with <levels> levels and <blocks> blocks\n";
-            std::cout << "  --dzn <filename>          : DZN file name\n";
-            std::cout << "  --gm <filename>           : GM file name\n";
-            std::cout << "  --start <vertex>          : Starting vertex\n";
-            std::cout << "  --print <type>            : Print game (0=Parity, 1=Parity+Time, 2=Verbose)\n";
-            std::cout << "  --parity-even             : Search for play EVEN\n";
-            std::cout << "  --parity-odd              : Search for play ODD\n";
-            std::cout << "  --reward-max              : Seek to maximize the color\n";
-            std::cout << "  --reward-min              : Seek to minimize the color\n";
+            std::cout << "  --jurd <levels> <blocks>   : Jurdzinski game with <levels> levels and <blocks> blocks\n";
+            std::cout << "  --dzn <filename>           : DZN file name\n";
+            std::cout << "  --gm <filename>            : GM file name\n";
+            std::cout << "  --rand <ns> <ps> <d1> <d2> : Random game\n";
+            std::cout << "  --start <vertex>           : Starting vertex\n";
+            std::cout << "  --print <type>             : Print game (0=Parity, 1=Parity+Time, 2=Verbose)\n";
+            std::cout << "  --parity-even              : Search for play EVEN\n";
+            std::cout << "  --parity-odd               : Search for play ODD\n";
+            std::cout << "  --reward-max               : Seek to maximize the color\n";
+            std::cout << "  --reward-min               : Seek to minimize the color\n";
+            std::cout << "  --export-dzn <filename>    : Export game to DZN format (not solve)\n";
+            std::cout << "  --export-gm <filename>     : Export game to GM format (not solve)\n";
             return false;
         }
         else {
@@ -311,6 +405,11 @@ int main(int argc, char *argv[])
             game = new Game(Game::GM, options.game_filename,
                             options.game_starts[0], options.game_reward);
             break;
+        case 4: // random
+            game = new Game(options.rand_ns, options.rand_ps,
+                            options.rand_d1, options.rand_d2,
+                            options.game_starts[0], options.game_reward);
+            break;
         default:
             game = new Game({0,1},{3,2},{0,1},{1,0},EVEN,MIN);
             break;
@@ -322,7 +421,14 @@ int main(int argc, char *argv[])
         game->printGame();
     }
 
-    while (true) {
+    if (options.game_export_type == 2) {
+        game->exportFile(Game::DZN, options.game_export_filename);
+    }
+    else if (options.game_export_type == 3) {
+        game->exportFile(Game::GM, options.game_export_filename);
+    }
+
+    while (!options.game_export_type) {
         std::vector<int> path;
         std::vector<int> memo(game->nvertices, -1);
 
@@ -333,6 +439,10 @@ int main(int argc, char *argv[])
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> totaltime = end - start;
 
+        if (options.game_print > 0) {
+            std::cout << "Preparation time: " << preptime.count() << std::endl;
+        }
+        
         switch (options.game_print) {
             case 0:
                 std::cout   << options.game_starts[0] << ": "
@@ -342,7 +452,7 @@ int main(int argc, char *argv[])
             case 1: case 2:
                 std::cout   << options.game_starts[0] << ": "
                             << (play==EVEN?"EVEN":"ODD") << " "
-                            << preptime.count() << " " << totaltime.count() 
+                            << totaltime.count() 
                             << std::endl; 
                 break;
             default:

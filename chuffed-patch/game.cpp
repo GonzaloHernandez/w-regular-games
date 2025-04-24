@@ -7,6 +7,9 @@
 #include <regex>
 #include <sstream>
 #include <cassert>
+#include <algorithm>
+#include <random>
+#include <chrono> 
 
 enum parity_type {
     EVEN,   // 0
@@ -277,6 +280,46 @@ public:
 
     //----------------------------------------------------------------------------------
 
+    Game(int n, int p, int d1, int d2, int start, reward_type rew=MIN) 
+    :   start(start), reward(rew)  
+    {
+        nvertices   = n;
+        nedges      = 0;
+
+        assert(start >= 0 && start < nvertices);
+
+        std::random_device rd;
+        std::mt19937 g(rd());
+
+        owners.resize(n/2,0);
+        owners.resize(n,1);
+        std::shuffle(owners.begin(), owners.end(), g);  // Unsort (shuffle) the vector
+
+        std::uniform_int_distribution<> rndcolors(0, p);
+
+        for(int i=0; i<nvertices; i++) {
+            colors.push_back(rndcolors(g));
+        }
+
+        vedges.resize(nvertices);
+        for(int v=0; v<nvertices; v++) {
+            std::vector<int> ws;
+            for (int i=0; i < nvertices; i++) { ws.push_back(i); }
+            std::shuffle(ws.begin(), ws.end(), g);
+
+            std::uniform_int_distribution<> rndnedges(2, 5);
+            for (int i=0; i<rndnedges(g); i++) {
+                sources.push_back(v);
+                targets.push_back(ws[i]);
+                vedges[v].push_back(ws[i]);
+                nedges++;
+            }
+        }
+    }
+
+
+    //----------------------------------------------------------------------------------
+
     void setStart(int startv) {
         assert(startv >= 0 && startv < nvertices);
         start = startv;
@@ -286,6 +329,43 @@ public:
 
     void setReward(reward_type rew) {
         reward = rew;
+    }
+
+    //----------------------------------------------------------------------------------
+
+    void exportFile(int type, std::string filename) {
+        std::ofstream file(filename);
+        if (!file) {
+            std::cerr << "Error: Could not open file!" << std::endl;
+            exit(0);
+        }
+
+        switch (type) {
+        case DZN:
+            file << "nvertices = " << nvertices << ";" << std::endl;
+            file << "owners    = ["; 
+            for(int i=0; i<owners.size(); i++)  file<<(i?",":"")<<owners[i];  file<<"];"<<std::endl;
+            file << "colors    = ["; 
+            for(int i=0; i<colors.size(); i++)  file<<(i?",":"")<<colors[i];  file<<"];"<<std::endl;
+
+            file << "nedges    = " << nedges << ";" << std::endl;
+            file << "sources   = ["; 
+            for(int i=0; i<sources.size(); i++) file<<(i?",":"")<<sources[i]; file<<"];"<<std::endl;
+            file << "targets   = ["; 
+            for(int i=0; i<targets.size(); i++) file<<(i?",":"")<<targets[i]; file<<"];"<<std::endl;
+            break;
+
+        case GM:
+            file << "parity " << nvertices << ";" << std::endl;
+            for (int i=0; i<nvertices; i++) {
+                file << i << " " << colors[i] << " " << owners[i] << " ";
+                for (int j=0; j<vedges[i].size(); j++) {
+                    file << targets[vedges[i][j]] << (j<vedges[i].size()-1?",":"");
+                }
+                file << " \"" << i << "\";" << std::endl;
+            }
+            break;
+        }
     }
 
     //----------------------------------------------------------------------------------
@@ -315,18 +395,6 @@ public:
 
     //----------------------------------------------------------------------------------
 
-    std::vector<int> getOdds() {
-        std::vector<int> odds;
-        for (int i=0; i<nvertices; i++) {
-            if (colors[i] % 2 == ODD) {
-                odds.push_back(i);
-            }
-        }
-        std::sort(odds.begin(), odds.end(), [&](int a, int b) {
-            return colors[a] < colors[b];
-        });
-        return odds;
-    }
 };
 
 #endif // game_cpp
