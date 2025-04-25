@@ -61,13 +61,14 @@
             "program": "${workspaceFolder}/build/ex2",
             "args": [   
                 // "--gm", "${env:HOME}/gm/randomgame(5000,_10,_1,_20)id=0.gm",
-                // "--dzn", "${workspaceFolder}/data/game-jurd-2-1.dzn",
+                "--dzn", "${workspaceFolder}/data/game-rand.dzn",
                 // "--jurd","2","1",
-                "--gm","build/rand01.gm",
-                // "--start","0",
+                // "--gm","build/rand01.gm",
+                "--start","4",
                 // "--verbose"
-                "--proof",
+                // "--proof",
                 "--reward-max",
+                // "--export-gm","/home/chalo/dbg.gm",
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

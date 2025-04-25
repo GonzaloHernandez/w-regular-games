@@ -19,7 +19,7 @@ struct options {
     std::string         game_filename           = "";
     std::string         game_export_filename    = "";
     int                 game_export_type        = 0; // 0=not export 2=DZN 3=GM
-    int                 game_proof              = 0; // 0=no 1=yes
+    int                 game_proof              = 0; // 0=no 1=yes 2=matrixbased
 } options;
 
 //--------------------------------------------------------------------------------------
@@ -223,6 +223,9 @@ bool parseOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--proof")==0) {
             options.game_proof = 1;
         }
+        else if (strcmp(argv[i],"--matrix-based")==0) {
+            options.game_proof = 2;
+        }
         else if (strcmp(argv[i],"--help")==0) {
             std::cout << "Usage: " << argv[0] << " [options]\n";
             std::cout << "Options:\n";
@@ -336,7 +339,7 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------------------------------------------
 
-    if (options.game_proof) {
+    if (options.game_proof==1) { //using matrix-based to proof HRA
         // game->reward = MAX;
         if (options.game_type != GM) {
 
@@ -374,6 +377,53 @@ int main(int argc, char *argv[])
     }
 
     //----------------------------------------------------------------------------------
+
+    if (options.game_proof==2) { //matrix-based
+
+        start = std::chrono::high_resolution_clock::now();
+
+        Graph zlk(options.game_filename.c_str());
+
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> preptime = end - start;
+
+        if (options.game_print > 0) {
+            std::cout << "Preparation time: " << preptime.count() << std::endl;
+        }
+
+        start = std::chrono::high_resolution_clock::now();
+
+        auto res = zlk.Solve();
+
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> totaltime = end - start;
+
+        std::cout   << options.game_starts[0] << ": ";
+        if (std::find(res.first.begin(), res.first.end(), game->start) != res.first.end()) {
+            std::cout << "EVEN " ;
+        } else {
+            std::cout << "ODD " ; 
+        }
+
+        if (options.game_print >= 1) {
+            std::cout << totaltime.count() << std::endl;
+        }
+
+        if (options.game_print >= 2) {
+            std::cout << "EVENs=(";
+            for (auto& r : res.first) { std::cout << r << " "; }
+            std::cout << ")" << std::endl;
+
+            std::cout << "ODDs=(";
+            for (auto& r : res.second) {std::cout << r << " "; }
+            std::cout << ")" << std::endl;
+        }
+
+        std::cout << std::endl;
+    }
+
+    //----------------------------------------------------------------------------------
+
 
     delete game;
 

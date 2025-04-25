@@ -62,8 +62,7 @@ void Game::parseline_gm(const std::string& line,std::vector<int>& vinfo,
 }
 
 //----------------------------------------------------------------------------------
-
-
+// Default game
 
 Game::Game( std::vector<int> own,std::vector<int> col,
             std::vector<int> sou,std::vector<int> tar, 
@@ -90,6 +89,7 @@ Game::Game( std::vector<int> own,std::vector<int> col,
 }
 
 //----------------------------------------------------------------------------------
+// Imported game from DZN or GM
 
 Game::Game(int type, std::string filename, int start, reward_type rew) 
 :   nvertices(0), nedges(0), start(start), reward(rew) 
@@ -177,6 +177,7 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
 }
 
 //----------------------------------------------------------------------------------
+// Jurdzinski game
 
 Game::Game(int levels, int blocks, int start, reward_type rew) 
 :   start(start), reward(rew)  
@@ -242,6 +243,7 @@ Game::Game(int levels, int blocks, int start, reward_type rew)
 }
 
 //----------------------------------------------------------------------------------
+// Random game
 
 Game::Game(int ns, int ps, int d1, int d2, int start, reward_type rew) 
 :   start(start), reward(rew)  
@@ -271,15 +273,15 @@ Game::Game(int ns, int ps, int d1, int d2, int start, reward_type rew)
         std::shuffle(ws.begin(), ws.end(), g);
 
         std::uniform_int_distribution<> rndnedges(d1, d2);
-        for (int i=0; i<rndnedges(g); i++) {
+        int es = rndnedges(g);
+        for (int i=0; i<es; i++) {
             sources.push_back(v);
             targets.push_back(ws[i]);
-            vedges[v].push_back(ws[i]);
+            vedges[v].push_back(nedges);
             nedges++;
         }
     }
 }
-
 
 //----------------------------------------------------------------------------------
 
@@ -320,10 +322,10 @@ void Game::exportFile(int type, std::string filename) {
 
     case GM:
         file << "parity " << nvertices << ";" << std::endl;
-        for (int i=0; i<nvertices; i++) {
-            file << i << " " << colors[i] << " " << owners[i] << " ";
-            for (int j=0; j<vedges[i].size(); j++) {
-                file << targets[vedges[i][j]] << (j<vedges[i].size()-1?",":"");
+        for (int v=0; v<nvertices; v++) {
+            file << v << " " << colors[v] << " " << owners[v] << " ";
+            for (int e=0; e<vedges[v].size(); e++) {
+                file << (e?",":"") << targets[vedges[v][e]];
             }
             file << ";" << std::endl;
         }
@@ -336,23 +338,35 @@ void Game::exportFile(int type, std::string filename) {
 void Game::printGame() {
     std::cout << "nvertices: " << owners.size() << std::endl;
     std::cout << "owners:    {";
-    for(int v=0; v<owners.size(); v++) 
+    for(int v=0; v<nvertices; v++) 
         std::cout<<owners[v]<<(v<owners.size()-1?",":"");
     std::cout << "}" << std::endl;
     std::cout << "colors:    {";
-    for(int v=0; v<colors.size(); v++) 
+    for(int v=0; v<nvertices; v++) 
         std::cout<<colors[v]<<(v<colors.size()-1?",":"");
     std::cout << "}" << std::endl;
 
     std::cout << "nedges:    " << sources.size() << std::endl;
     std::cout << "sources:   {";
-    for(int e=0; e<sources.size(); e++) 
+    for(int e=0; e<nedges; e++) 
         std::cout<<sources[e]<<(e<sources.size()-1?",":"");
     std::cout << "}" << std::endl;
     std::cout << "targets:   {";
-    for(int e=0; e<targets.size(); e++) 
+    for(int e=0; e<nedges; e++) 
         std::cout<<targets[e]<<(e<targets.size()-1?",":"");
     std::cout << "}" << std::endl;
+
+    for(int v=0; v<nvertices; v++) {
+        std::cout << v << ":";
+        for(int e=0; e<vedges[v].size(); e++) {
+            std::cout << vedges[v][e] << ",";            
+        }
+        std::cout << "  ";
+        for(int e=0; e<vedges[v].size(); e++) {
+            std::cout << targets[vedges[v][e]] << ",";            
+        }
+        std::cout << std::endl;
+    }
     // std::cout << "start:     " << start << std::endl;
 }
 
