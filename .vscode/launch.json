@@ -55,16 +55,19 @@
         },
         // --------------------------------------------------------------
         {
-            "name": "C++ Debug HRA Solver",
+            "name": "C++ Debug CP-HRA",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/test",
+            "program": "${workspaceFolder}/build/ex2",
             "args": [   
                 // "--gm", "${env:HOME}/gm/randomgame(5000,_10,_1,_20)id=0.gm",
-                "--dzn", "${workspaceFolder}/data/game-jurd-2-1.dzn",
-                // "-jurd","2","1",
+                // "--dzn", "${workspaceFolder}/data/game-jurd-2-1.dzn",
+                // "--jurd","2","1",
+                "--gm","build/rand01.gm",
                 // "--start","0",
                 // "--verbose"
+                "--proof",
+                "--reward-max",
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

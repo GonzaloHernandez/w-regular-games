@@ -93,6 +93,10 @@
         "print": "cpp",
         "queue": "cpp",
         "stack": "cpp",
-        "source_location": "cpp"
+        "source_location": "cpp",
+        "strstream": "cpp",
+        "csetjmp": "cpp",
+        "csignal": "cpp",
+        "shared_mutex": "cpp"
     }
 }
