@@ -7,20 +7,28 @@
 #include "chuffed/core/propagator.h"
 
 #include "chuffed/globals/dconnected.h"
+#include "../chuffed-patch/qualify.cpp"
 
 class HRAModel : public Problem {
 private:
     Game&   g;
     vec<BoolView>   V;
     vec<BoolView>   E;
+    vec<BoolView>   Q;
 
 public:
+
     HRAModel(Game&g) : g(g) {
         V.growTo(g.nvertices);
         E.growTo(g.nedges);
+        Q.growTo(g.nvertices);
 
         for (int i=0; i<g.nvertices;  i++) V[i] = newBoolVar();
         for (int i=0; i<g.nedges;     i++) E[i] = newBoolVar();
+        for (int i=0; i<g.nvertices;  i++) Q[i] = newBoolVar();
+
+        // -------------------------------------------------------------------
+        // Connecting the graph
 
         // Activating first vertex
         vec<Lit> clause;
@@ -29,23 +37,12 @@ public:
 
         // For every vertice needs to have one outgoing edge activated
         for (int v=0; v<g.nvertices; v++) {
-
             vec<Lit> clause;
             clause.push( V[v].getLit(false) );
             for (auto& e : g.vedges[v]) {
                 clause.push( E[e].getLit(true) );
             }
             sat.addClause(clause);
-
-            for (auto& e1 : g.vedges[v]) {
-                for (auto& e2 : g.vedges[v]) if (e1 < e2) {
-                    vec<Lit> clause;
-                    clause.push( V[v].getLit(false) );
-                    clause.push( E[e1].getLit(false) );
-                    clause.push( E[e2].getLit(false) );
-                    sat.addClause(clause);
-                }
-            }
         }
 
         // For every activated edge, the target vertex must be activated
@@ -87,18 +84,76 @@ public:
         }
         new DReachabilityPropagator(g.start, V, E, _in, _out, _en);
 
+        // -------------------------------------------------------------------
+        // Qualifying vertices on the type of play that can force
 
+        // If v is EVEN and exists one EVEN edge, from v the play is EVEN
+        for (int v=0; v<g.nvertices; v++) {
+            for (auto& e : g.vedges[v]) { int w = g.targets[e];
+                vec<Lit> clause;
+                clause.push( g.owners[v]==EVEN?lit_False:lit_True );
+                clause.push( Q[w].getLit(!EVEN) );
+                clause.push( Q[v].getLit(EVEN) );
+                sat.addClause(clause);
+            }
+        }
 
+        // If v is ODD and exists one ODD edge, from v the play is ODD
+        for (int v=0; v<g.nvertices; v++) {
+            for (auto& e : g.vedges[v]) { int w = g.targets[e];
+                vec<Lit> clause;
+                clause.push( g.owners[v]==ODD?lit_False:lit_True );
+                clause.push( Q[w].getLit(!ODD) );
+                clause.push( Q[v].getLit(ODD) );
+                sat.addClause(clause);
+            }
+        }
+
+        // If v is EVEN and all edges are ODD, from v the play is ODD
+        for (int v=0; v<g.nvertices; v++) {
+            vec<Lit> clause;
+            clause.push( g.owners[v]==EVEN?lit_False:lit_True );
+            for (auto& e : g.vedges[v]) { int w = g.targets[e];
+                clause.push( Q[w].getLit(!ODD) );
+            }
+            clause.push( Q[v].getLit(ODD) );
+            sat.addClause(clause);
+        }
+
+        // If v is ODD and all edges are EVEN, from v the play is EVEN
+        for (int v=0; v<g.nvertices; v++) {
+            vec<Lit> clause;
+            clause.push( g.owners[v]==ODD?lit_False:lit_True );
+            for (auto& e : g.vedges[v]) { int w = g.targets[e];
+                clause.push( Q[w].getLit(!EVEN) );
+            }
+            clause.push( Q[v].getLit(EVEN) );
+            sat.addClause(clause);
+        }
+
+        // -------------------------------------------------------------------
+
+        new Qualify(g,V,E,Q);
+
+        // -------------------------------------------------------------------
+
+        fix(Q,{3},{4});
+
+        // -------------------------------------------------------------------
 
         vec<Branching*> bv(static_cast<unsigned int>(g.nvertices));
         vec<Branching*> be(static_cast<unsigned int>(g.nedges));
+        vec<Branching*> bq(static_cast<unsigned int>(g.nvertices));
         for (int i = g.nvertices; (i--) != 0;) bv[i] = &V[i];
         for (int i = g.nedges;    (i--) != 0;) be[i] = &E[i];
+        for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
         
         branch(bv, VAR_INORDER, VAL_MIN);
         branch(be, VAR_INORDER, VAL_MIN);
+        branch(bq, VAR_INORDER, VAL_MIN);
         output_vars(bv);
         output_vars(be);
+        output_vars(bq);
     }
 
     //----------------------------------------------------------------
@@ -138,6 +193,24 @@ public:
                 out << i;
             }
         }
+        out << "]\nQ=[";
+        first = true;
+        for (int i=0; i<Q.size(); i++) {
+            out << (!i?"":",") << Q[i].getVal();
+        }
         out << "]";
     }
 };
+
+int main(int argc, char *argv[])
+{
+    Game g(DZN, "data/game-other.dzn",0,MIN);
+
+    HRAModel* model = new HRAModel(g);
+
+    so.nof_solutions = 1;
+    engine.solve(model);
+
+    // delete model;
+    return 0;
+}

@@ -34,12 +34,12 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/${fileBasenameNoExtension}",
             "args": [   
-                "--gm", "${env:HOME}/gm/randomgame(5000,_10,_1,_20)id=0.gm",
+                // "--gm", "${env:HOME}/gm/randomgame(5000,_10,_1,_20)id=0.gm",
                 // "--dzn", "${workspaceFolder}/data/game-other.dzn",
                 // "-jurd","2","1",
-                "--rand","5","4","2","5",
+                // "--rand","5","4","2","5",
                 // "--starts","'16,30,48'",
-                "--print","2"
+                // "--print","2"
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
@@ -91,7 +91,7 @@
             "args": [
                 "${file}",
                 "${workspaceFolder}/data/game-jurd-2-1.dzn",
-                // "--solver", "${workspaceFolder}/chuffed-patch/sonar.msc",
+                "--solver", "${workspaceFolder}/chuffed-patch/sonar.msc",
                 "--all-solutions"
             ],
             "cwd": "${workspaceFolder}",

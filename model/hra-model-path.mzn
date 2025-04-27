@@ -19,46 +19,86 @@ array [vertices]	of var bool	: V;
 array [edges]		of var bool	: E;
 
 % -------------------------------------------------------------------
-% Connecting the graph
+% searching for Plays
 
-% Activating first vertex
 constraint
     V[start] = true;
 
-% For every vertice needs to have one outgoing edge activated
 constraint
     forall(v in vertices)(
         V[v] -> exists(e in edges where sources[e]=v)(E[e])
     );
 
-% For every activated edge, the target vertex must be activated
+constraint
+    forall(v in vertices)(
+        V[v] ->
+            forall(e1,e2 in edges where 
+            sources[e1]=v /\ sources[e2]=v /\ e1<e2)
+            (
+                not E[e1] \/ not E[e2]
+            )
+    );
+
 constraint
     forall(e in edges)(
         E[e] -> V[targets[e]]
     );
 
-% For every vertice, one incoming edge must be activated
 constraint
     forall(w in vertices where w != start)(
         exists(e in edges where targets[e]=w)(V[w] -> E[e])
     );
 
-predicate dreachability(	int						: nvertices,
-							array [int] of int		: sources,
-							array [int] of int		: targets,
-							array [int] of var bool	: V,
-							array [int] of var bool	: E,
-							int				 		: start );
+
+% predicate dreachability(	int						: nvertices,
+% 							array [int] of int		: sources,
+% 							array [int] of int		: targets,
+% 							array [int] of var bool	: V,
+% 							array [int] of var bool	: E,
+% 							int				 		: start );
+
+% constraint
+%     dreachability(length(owners),sources,targets,V,E,start);
+
+include "globals.mzn";
+constraint
+	dreachable(nvertices,nedges,sources,targets,start,V,E);
+
+% -------------------------------------------------------------------
+% Chanelling path of plays:
+
+array [vertices] of var vertices union {0}: P;
+var vertices: t;
+var vertices: h;
 
 constraint
-    dreachability(length(owners),sources,targets,V,E,start);
+    P[1] = start;
+
+constraint
+    forall(i in 2..t)(
+        exists(e in edges)(
+            E[e] /\ sources[e]=P[i-1] /\ targets[e]=P[i]
+        )
+    );
+
+constraint
+    forall(i in t+1..nvertices)(
+        P[i] = 0
+    );
+
+constraint
+    t = sum(v in vertices)(V[v])
+    /\
+    exists(e in edges)(
+        E[e] /\ sources[e]=P[t] /\ targets[e]=P[h]
+    );
 
 % -------------------------------------------------------------------
 % Qualifying vertices on the type of play that can force
 
 array[vertices] of var bool : Q;
 
-% If v is EVEN and exists one EVEN edge, from v the play is EVEN
+% If v is even and exists one even edge, from v the play is even
 constraint
     forall(v in vertices)(
         (   owners[v] = even /\
@@ -66,7 +106,7 @@ constraint
         ) -> Q[v] = even
     );
 
-% If v is ODD and exists one ODD edge, from v the play is ODD
+% If v is odd and exists one odd edge, from v the play is odd
 constraint
     forall(v in vertices)(
         (   owners[v] = odd /\
@@ -74,7 +114,7 @@ constraint
         ) -> Q[v] = odd
     );
 
-% If v is EVEN and all edges are ODD, from v the play is ODD
+% If v is even and all edges are odd, from v the play is odd
 constraint
     forall(v in vertices)(
         (   owners[v] = even /\
@@ -82,7 +122,7 @@ constraint
         ) -> Q[v] = odd
     );
 
-% If v is ODD and all edges are EVEN, from v the play is EVEN
+% If v is odd and all edges are even, from v the play is even
 constraint
     forall(v in vertices)(
         (
@@ -97,27 +137,26 @@ constraint
 %         (not V[v]) -> Q[v] = Q[start]
 %     );
 
-predicate qualify(  array [int] of int		: owners,
-                    array [int] of int		: colors,
-                    array [int] of int		: sources,
-                    array [int] of int		: targets,
-                    array [int] of var bool	: V,
-                    array [int] of var bool	: E,
-                    array [int] of var bool	: Q,
-                    int				 		: start );
+% predicate qualify(  array [int] of int		: owners,
+%                     array [int] of int		: colors,
+%                     array [int] of int		: sources,
+%                     array [int] of int		: targets,
+%                     array [int] of var bool	: V,
+%                     array [int] of var bool	: E,
+%                     array [int] of int      : Qe
+%                     int				 		: start );
 
 constraint
-    qualify(owners,colors,sources,targets,V,E,Q,start);
+    Q[P[h]] = (min(v in h..t)(colors[P[v]]) mod 2);
 
 % -------------------------------------------------------------------
 
-% constraint
-%     forall(v in vertices where v in {1,3,5,6})(V[v]) /\
-%     forall(v in vertices where v in {2})(not V[v]);
+constraint
+    forall(v in vertices where v in {1,3,5,6})(V[v]) /\
+    forall(v in vertices where v in {2})(not V[v]);
 
 % constraint
 %     Q[3] = 0;
-
 % -------------------------------------------------------------------
 
 function string : toStr(array [int] of var bool	: X) =
@@ -129,5 +168,6 @@ function string : toStr(array [int] of var bool	: X) =
 output [
     "V: " ++ toStr(V) ++ "\n" ++ 
     "E: " ++ toStr(E) ++ "\n" ++ 
+    "P: " ++ show(P)  ++ " \(h)" ++ " \(t)" ++ "\n" ++
     "Q: " ++ show([bool2int(q) | q in Q]) ++ "\n"
 ];
