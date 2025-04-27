@@ -1,6 +1,7 @@
 
 #include "hra.h"
 #include "graph.h"
+#include "debugstd.h"
 
 //--------------------------------------------------------------------------------------
 
@@ -256,6 +257,7 @@ bool parseOptions(int argc, char *argv[]) {
 
 int main(int argc, char *argv[])
 {
+    launchdebugwatchs();
     if (!parseOptions(argc, argv)) exit(1);
     Game* game = nullptr;
 
@@ -302,12 +304,9 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
 
     while (!options.game_export_type && !options.game_proof) {
-        std::vector<int> path;
-        std::vector<int> memo(game->nvertices, -1);
-
         start = std::chrono::high_resolution_clock::now();
 
-        auto play = getPlayMemo(*game, options.game_parity, path, options.game_starts[0],memo);
+        auto play = getPlay(*game, options.game_parity, options.game_starts[0]);
 
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> totaltime = end - start;
@@ -354,10 +353,8 @@ int main(int argc, char *argv[])
                 counter++;
                 continue;
             }
-            std::vector<int> path;
-            std::vector<int> memo(game->nvertices, -1);
             game->start = r;
-            auto play = getPlayMemo(*game,EVEN,path,game->start,memo);
+            auto play = getPlay(*game,EVEN,game->start);
             if (play != EVEN)   std::cout << r << ",";
             else                counter++;
         }
@@ -366,10 +363,8 @@ int main(int argc, char *argv[])
         std::cout << "Testing ODD (" << res.second.size() <<  ") Faults: ";
         counter=0;
         for (auto& r : res.second) {
-            std::vector<int> path;
-            std::vector<int> memo(game->nvertices, -1);
             game->start = r;
-            auto play = getPlayMemo(*game,EVEN,path,game->start,memo);
+            auto play = getPlay(*game,EVEN,game->start);
             if (play != ODD)   std::cout << r << ",";
             else                counter++;
         }

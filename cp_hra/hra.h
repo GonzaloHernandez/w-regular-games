@@ -11,9 +11,12 @@
 #include "../chuffed-patch/game.h"
 #endif
 
-int findVertex(int vertex,std::vector<int>& path);
-int bestcolor(Game& g, int index,std::vector<int>& path);
-signed char getPlay(Game& g, int p, std::vector<int> path, int current);
-signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std::vector<int>& memo);
+// private functions:
+// int findVertex(int vertex,std::vector<int>& path);
+// int bestcolor(Game& g, int index,std::vector<int>& path);
+// signed char getPlayBasic(Game& g, int p, std::vector<int> path, int current);
+// signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std::vector<int>& memo);
+
+signed char getPlay(Game& g, int p, int start);
 
 #endif // HRA_H

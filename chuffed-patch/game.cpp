@@ -355,18 +355,6 @@ void Game::printGame() {
     for(int e=0; e<nedges; e++) 
         std::cout<<targets[e]<<(e<targets.size()-1?",":"");
     std::cout << "}" << std::endl;
-
-    for(int v=0; v<nvertices; v++) {
-        std::cout << v << ":";
-        for(int e=0; e<vedges[v].size(); e++) {
-            std::cout << vedges[v][e] << ",";            
-        }
-        std::cout << "  ";
-        for(int e=0; e<vedges[v].size(); e++) {
-            std::cout << targets[vedges[v][e]] << ",";            
-        }
-        std::cout << std::endl;
-    }
     // std::cout << "start:     " << start << std::endl;
 }
 
