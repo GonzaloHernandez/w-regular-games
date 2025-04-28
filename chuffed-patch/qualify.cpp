@@ -12,18 +12,22 @@ private:
     vec<BoolView> V;
     vec<BoolView> E;
     vec<BoolView> Q;
+    vec<BoolView> C;
 
     const int   CF_DONE     = 1;
     const int   CF_CONFLICT = 2;
 
 public:
     //-----------------------------------------------------------------------
-    Qualify(Game& g, vec<BoolView>& V,vec<BoolView>& E,vec<BoolView>& Q)
-    :   g(g), V(V), E(E), Q(Q)
+    Qualify(Game& g, 
+            vec<BoolView>& V,vec<BoolView>& E,
+            vec<BoolView>& Q,vec<BoolView>& C)
+    :   g(g), V(V), E(E), Q(Q), C(C)
     {
         for (int i=0; i<g.nvertices; i++)   V[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.nedges; i++)      E[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.nvertices; i++)   Q[i].attach(this, 1 , EVENT_F );
+        for (int i=0; i<g.nvertices; i++)   C[i].attach(this, 1 , EVENT_F );
     }
     //-----------------------------------------------------------------------
     int findVertex(int vertex,vec<int>& path) {
@@ -73,19 +77,21 @@ public:
     {
         int index = findVertex(vertex,pathV);
         if (index >= 0) {
-            if (Q[vertex].isFixed()) {
-                return CF_DONE;
-            }
             int best = bestcolor(index,pathV);
+
             vec<Lit> lits;
             lits.push();
             clausify(pathV,V,lits,0);
-            for (auto& e : g.vedges[vertex]) {
-                lits.push(E[e].getValLit());
-            }
             Clause* reason = Reason_new(lits);
-            if (! Q[pathV[pathV.size()-1]].setVal( best%2 ,reason)) {
-                return CF_CONFLICT;
+            if (g.owners[vertex]==best && !Q[vertex].isFixed()) {
+                if (! Q[vertex].setVal( best%2 ,reason)) {
+                    return CF_CONFLICT;
+                }
+            }
+            else if (!C[vertex].isFixed()) {
+                    if (! C[vertex].setVal( best%2 ,reason)) {
+                    return CF_CONFLICT;
+                }
             }
         }
         else {

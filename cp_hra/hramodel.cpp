@@ -13,12 +13,17 @@
 #include "debugchuffed.h"
 #endif
 
+#ifndef debugstd_h
+#include "debugstd.h"
+#endif
+
 class HRAModel : public Problem {
 private:
     Game&   g;
     vec<BoolView>   V;
     vec<BoolView>   E;
     vec<BoolView>   Q;
+    vec<BoolView>   C;
 
 public:
 
@@ -26,10 +31,12 @@ public:
         V.growTo(g.nvertices);
         E.growTo(g.nedges);
         Q.growTo(g.nvertices);
+        C.growTo(g.nvertices);
 
         for (int i=0; i<g.nvertices;  i++) V[i] = newBoolVar();
         for (int i=0; i<g.nedges;     i++) E[i] = newBoolVar();
         for (int i=0; i<g.nvertices;  i++) Q[i] = newBoolVar();
+        for (int i=0; i<g.nvertices;  i++) C[i] = newBoolVar();
 
         // -------------------------------------------------------------------
         // Connecting the graph
@@ -50,6 +57,7 @@ public:
         // }
 
         // For every vertice needs to every outgoing edge activated
+        // \bigwedge v \in V ( \mathcal{V}_v \rightarrow  \exists e \in E \mathcal{E}_e)
         for (int v=0; v<g.nvertices; v++) {
             for (auto& e : g.vedges[v]) {
                 vec<Lit> clause;
@@ -109,7 +117,7 @@ public:
         // -------------------------------------------------------------------
         // Qualifying vertices on the type of play that can force
 
-        // If v is EVEN and exists one EVEN edge, from v the play is EVEN
+        // If v is EVEN and exists one EVEN edge or Even cycle, from v the play is EVEN
         for (int v=0; v<g.nvertices; v++) {
             for (auto& e : g.vedges[v]) { int w = g.targets[e];
                 vec<Lit> clause;
@@ -118,6 +126,11 @@ public:
                 clause.push( Q[v].getLit(EVEN) );
                 sat.addClause(clause);
             }
+            vec<Lit> clause;
+            clause.push( g.owners[v]==EVEN?lit_False:lit_True );
+            clause.push( C[v].getLit(!EVEN) );
+            clause.push( Q[v].getLit(EVEN) );
+            sat.addClause(clause);
         }
 
         // If v is ODD and exists one ODD edge, from v the play is ODD
@@ -129,6 +142,11 @@ public:
                 clause.push( Q[v].getLit(ODD) );
                 sat.addClause(clause);
             }
+            vec<Lit> clause;
+            clause.push( g.owners[v]==ODD?lit_False:lit_True );
+            clause.push( C[v].getLit(!ODD) );
+            clause.push( Q[v].getLit(ODD) );
+            sat.addClause(clause);
         }
 
         // If v is EVEN and all edges are ODD, from v the play is ODD
@@ -138,6 +156,7 @@ public:
             for (auto& e : g.vedges[v]) { int w = g.targets[e];
                 clause.push( Q[w].getLit(!ODD) );
             }
+            clause.push( C[v].getLit(!ODD) );
             clause.push( Q[v].getLit(ODD) );
             sat.addClause(clause);
         }
@@ -149,6 +168,7 @@ public:
             for (auto& e : g.vedges[v]) { int w = g.targets[e];
                 clause.push( Q[w].getLit(!EVEN) );
             }
+            clause.push( C[v].getLit(!EVEN) );
             clause.push( Q[v].getLit(EVEN) );
             sat.addClause(clause);
         }
@@ -172,7 +192,7 @@ public:
 
         // -------------------------------------------------------------------
 
-        new Qualify(g,V,E,Q);
+        new Qualify(g,V,E,Q,C);
 
         // -------------------------------------------------------------------
 
@@ -183,16 +203,20 @@ public:
         vec<Branching*> bv(static_cast<unsigned int>(g.nvertices));
         vec<Branching*> be(static_cast<unsigned int>(g.nedges));
         vec<Branching*> bq(static_cast<unsigned int>(g.nvertices));
+        vec<Branching*> bc(static_cast<unsigned int>(g.nvertices));
         for (int i = g.nvertices; (i--) != 0;) bv[i] = &V[i];
         for (int i = g.nedges;    (i--) != 0;) be[i] = &E[i];
         for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
+        for (int i = g.nvertices; (i--) != 0;) bc[i] = &C[i];
         
         branch(bv, VAR_INORDER, VAL_MIN);
         branch(be, VAR_INORDER, VAL_MIN);
         branch(bq, VAR_INORDER, VAL_MIN);
+        branch(bc, VAR_INORDER, VAL_MIN);
         output_vars(bv);
         output_vars(be);
         output_vars(bq);
+        output_vars(bc);
     }
 
     //----------------------------------------------------------------
@@ -237,6 +261,11 @@ public:
         for (int i=0; i<Q.size(); i++) {
             out << (!i?"":",") << Q[i].getVal();
         }
+        out << "]\nC=[";
+        first = true;
+        for (int i=0; i<C.size(); i++) {
+            out << (!i?"":",") << C[i].getVal();
+        }
         out << "]";
     }
 };
@@ -244,6 +273,7 @@ public:
 int main(int argc, char *argv[])
 {
     launchdebugchuffed();
+    launchdebugstd();
     Game g(DZN, "data/game-other.dzn",0,MIN);
 
     HRAModel* model = new HRAModel(g);

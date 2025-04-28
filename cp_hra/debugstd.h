@@ -17,7 +17,7 @@ inline std::ostream& operator<<(std::ostream& os, const std::vector<int>& obj) {
     return os;
 }
 
-inline std::string wvi(std::vector<int>& data) {
+inline std::string wsvi(std::vector<int>& data) {
     std::stringstream ss;
     ss << data;
     return ss.str();
@@ -25,9 +25,9 @@ inline std::string wvi(std::vector<int>& data) {
 
 // --------------------------------------------------------------------------------
 
-inline void launchdebugwatchs() {
+inline void launchdebugstd() {
     std::vector<int> svi;
-    wvi(svi);
+    wsvi(svi);
 }
 
 #endif
