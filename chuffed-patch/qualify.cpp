@@ -73,12 +73,18 @@ public:
     {
         int index = findVertex(vertex,pathV);
         if (index >= 0) {
+            if (Q[vertex].isFixed()) {
+                return CF_DONE;
+            }
             int best = bestcolor(index,pathV);
             vec<Lit> lits;
             lits.push();
-            clausify(pathV,V,lits,index);
+            clausify(pathV,V,lits,0);
+            for (auto& e : g.vedges[vertex]) {
+                lits.push(E[e].getValLit());
+            }
             Clause* reason = Reason_new(lits);
-            if (! Q[lastEdge].setVal( best%2 ,reason)) {
+            if (! Q[pathV[pathV.size()-1]].setVal( best%2 ,reason)) {
                 return CF_CONFLICT;
             }
         }
@@ -117,45 +123,4 @@ public:
         in_queue = false;
     }
     //-----------------------------------------------------------------------
-    std::string currentV() {
-        std::stringstream out;
-        out << "V=[";
-        for (int i=0; i<V.size(); i++) {
-            // out << i << ":";
-            if (V[i].isFixed())
-                out << (int)V[i].isTrue() << (i<V.size()-1?",":"");
-            else
-                out << " " << (i<V.size()-1?",":"");
-        }
-        out << "]";
-        return out.str();
-    }
-    //-----------------------------------------------------------------------
-    std::string currentE() {
-        std::stringstream out;
-        out << "E=[";
-        for (int i=0; i<E.size(); i++) {
-            // out << i << ":";
-            if (E[i].isFixed())
-                out << (int)E[i].isTrue() << (i<E.size()-1?",":"");
-            else
-                out << " " << (i<E.size()-1?",":"");
-        }
-        out << "]";
-        return out.str();
-    }
-    //-----------------------------------------------------------------------
-    std::string currentP() {
-        std::stringstream out;
-        out << "Q=[";
-        for (int i=0; i<Q.size(); i++) {
-            // out << i << ":";
-            if (Q[i].isFixed())
-                out << (int)Q[i].isTrue() << (i<Q.size()-1?",":"");
-            else
-                out << " " << (i<Q.size()-1?",":"");
-        }
-        out << "]";
-        return out.str();
-    }
 };

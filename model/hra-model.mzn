@@ -91,11 +91,11 @@ constraint
         ) -> Q[v] = even
     );
 
-% Vertices and edges not activated do not have winning strategy
-% constraint
-%     forall(v in vertices)(
-%         (not V[v]) -> Q[v] = Q[start]
-%     );
+% Vertices not activated do not have qualifying play
+constraint
+    forall(v in vertices)(
+        not V[v] -> (Q[v]=Q[start])
+    );
 
 predicate qualify(  array [int] of int		: owners,
                     array [int] of int		: colors,

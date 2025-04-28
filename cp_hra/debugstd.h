@@ -1,5 +1,5 @@
-#ifndef debugwatchs_h
-#define debugwatchs_h
+#ifndef debugstd_h
+#define debugstd_h
 
 #include <ostream>
 #include <vector>

@@ -9,6 +9,10 @@
 #include "chuffed/globals/dconnected.h"
 #include "../chuffed-patch/qualify.cpp"
 
+#ifndef debugchuffed_h
+#include "debugchuffed.h"
+#endif
+
 class HRAModel : public Problem {
 private:
     Game&   g;
@@ -36,13 +40,23 @@ public:
         sat.addClause(clause);
 
         // For every vertice needs to have one outgoing edge activated
+        // for (int v=0; v<g.nvertices; v++) {
+        //     vec<Lit> clause;
+        //     clause.push( V[v].getLit(false) );
+        //     for (auto& e : g.vedges[v]) {
+        //         clause.push( E[e].getLit(true) );
+        //     }
+        //     sat.addClause(clause);
+        // }
+
+        // For every vertice needs to every outgoing edge activated
         for (int v=0; v<g.nvertices; v++) {
-            vec<Lit> clause;
-            clause.push( V[v].getLit(false) );
             for (auto& e : g.vedges[v]) {
+                vec<Lit> clause;
+                clause.push( V[v].getLit(false) );
                 clause.push( E[e].getLit(true) );
+                sat.addClause(clause);
             }
-            sat.addClause(clause);
         }
 
         // For every activated edge, the target vertex must be activated
@@ -82,7 +96,15 @@ public:
             _en[e].push(g.sources[e]);
             _en[e].push(g.targets[e]);
         }
-        new DReachabilityPropagator(g.start, V, E, _in, _out, _en);
+        // new DReachabilityPropagator(g.start, V, E, _in, _out, _en);
+
+        // for every edge, the source vertex must be activated
+        for (int e=0; e<g.nedges; e++) {
+            vec<Lit> clause;
+            clause.push( E[e].getLit(false) );
+            clause.push( V[g.sources[e]].getLit(true) );
+            sat.addClause(clause);
+        }
 
         // -------------------------------------------------------------------
         // Qualifying vertices on the type of play that can force
@@ -131,13 +153,30 @@ public:
             sat.addClause(clause);
         }
 
+        // for (int v=0; v<g.nvertices; v++) {
+        //     {
+        //         vec<Lit> clause;
+        //         clause.push( V[v].getLit(true) );
+        //         clause.push( Q[v].getLit(true) );
+        //         clause.push( Q[g.start].getLit(false) );
+        //         sat.addClause(clause);
+        //     }
+        //     {
+        //         vec<Lit> clause;
+        //         clause.push( V[v].getLit(true) );
+        //         clause.push( Q[v].getLit(false) );
+        //         clause.push( Q[g.start].getLit(true) );
+        //         sat.addClause(clause);    
+        //     }
+        // }
+
         // -------------------------------------------------------------------
 
         new Qualify(g,V,E,Q);
 
         // -------------------------------------------------------------------
 
-        fix(Q,{3},{4});
+        // fix(Q,{},{0,1,2,3,4});
 
         // -------------------------------------------------------------------
 
@@ -204,11 +243,12 @@ public:
 
 int main(int argc, char *argv[])
 {
+    launchdebugchuffed();
     Game g(DZN, "data/game-other.dzn",0,MIN);
 
     HRAModel* model = new HRAModel(g);
 
-    so.nof_solutions = 1;
+    so.nof_solutions = 0;
     engine.solve(model);
 
     // delete model;
