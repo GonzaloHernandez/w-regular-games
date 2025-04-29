@@ -31,12 +31,12 @@ public:
         V.growTo(g.nvertices);
         E.growTo(g.nedges);
         Q.growTo(g.nvertices);
-        C.growTo(g.nvertices);
+        C.growTo(g.nedges);
 
-        for (int i=0; i<g.nvertices;  i++) V[i] = newBoolVar();
-        for (int i=0; i<g.nedges;     i++) E[i] = newBoolVar();
-        for (int i=0; i<g.nvertices;  i++) Q[i] = newBoolVar();
-        for (int i=0; i<g.nvertices;  i++) C[i] = newBoolVar();
+        for (int i=0; i<g.nvertices; i++) V[i] = newBoolVar();
+        for (int i=0; i<g.nedges;    i++) E[i] = newBoolVar();
+        for (int i=0; i<g.nvertices; i++) Q[i] = newBoolVar();
+        for (int i=0; i<g.nedges;    i++) C[i] = newBoolVar();
 
         // -------------------------------------------------------------------
         // Connecting the graph
@@ -125,11 +125,6 @@ public:
                 clause.push( Q[v].getLit(EVEN) );
                 sat.addClause(clause);
             }
-            vec<Lit> clause;
-            clause.push( g.owners[v]==EVEN?lit_False:lit_True );
-            clause.push( C[v].getLit(!EVEN) );
-            clause.push( Q[v].getLit(EVEN) );
-            sat.addClause(clause);
         }
 
         // If v is ODD and exists one ODD edge, from v the play is ODD
@@ -141,11 +136,6 @@ public:
                 clause.push( Q[v].getLit(ODD) );
                 sat.addClause(clause);
             }
-            vec<Lit> clause;
-            clause.push( g.owners[v]==ODD?lit_False:lit_True );
-            clause.push( C[v].getLit(!ODD) );
-            clause.push( Q[v].getLit(ODD) );
-            sat.addClause(clause);
         }
 
         // If v is EVEN and all edges are ODD, from v the play is ODD
@@ -172,21 +162,40 @@ public:
             sat.addClause(clause);
         }
 
-        // for (int v=0; v<g.nvertices; v++) {
-        //     {
-        //         vec<Lit> clause;
-        //         clause.push( V[v].getLit(true) );
-        //         clause.push( Q[v].getLit(true) );
-        //         clause.push( Q[g.start].getLit(false) );
-        //         sat.addClause(clause);
+        for (int v=0; v<g.nvertices; v++) if (g.owners[v] == EVEN) {
+            vec<Lit> clause;
+            for (auto& e : g.vedges[v]) {
+                clause.push( C[e].getLit(!ODD) );
+            }
+            clause.push( Q[v].getLit(ODD));
+            sat.addClause(clause);
+        }
+
+        for (int v=0; v<g.nvertices; v++) if (g.owners[v] == ODD) {
+            vec<Lit> clause;
+            for (auto& e : g.vedges[v]) {
+                clause.push( C[e].getLit(!EVEN) );
+            }
+            clause.push( Q[v].getLit(EVEN));
+            sat.addClause(clause);
+        }
+
+        // for (int v=0; v<g.nvertices; v++) if (g.owners[v] == EVEN) {
+        //     vec<Lit> clause;
+        //     for (auto& e : g.vedges[v]) {
+        //         clause.push( Q[v].getLit(!EVEN) );
+        //         clause.push( C[e].getLit(ODD) );
         //     }
-        //     {
-        //         vec<Lit> clause;
-        //         clause.push( V[v].getLit(true) );
-        //         clause.push( Q[v].getLit(false) );
-        //         clause.push( Q[g.start].getLit(true) );
-        //         sat.addClause(clause);    
+        //     sat.addClause(clause);        
+        // }
+
+        // for (int v=0; v<g.nvertices; v++) if (g.owners[v] == ODD) {
+        //     vec<Lit> clause;
+        //     for (auto& e : g.vedges[v]) {
+        //         clause.push( Q[v].getLit(!ODD) );
+        //         clause.push( C[e].getLit(EVEN) );
         //     }
+        //     sat.addClause(clause);        
         // }
 
         // -------------------------------------------------------------------
@@ -202,11 +211,11 @@ public:
         vec<Branching*> bv(static_cast<unsigned int>(g.nvertices));
         vec<Branching*> be(static_cast<unsigned int>(g.nedges));
         vec<Branching*> bq(static_cast<unsigned int>(g.nvertices));
-        vec<Branching*> bc(static_cast<unsigned int>(g.nvertices));
+        vec<Branching*> bc(static_cast<unsigned int>(g.nedges));
         for (int i = g.nvertices; (i--) != 0;) bv[i] = &V[i];
         for (int i = g.nedges;    (i--) != 0;) be[i] = &E[i];
         for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
-        for (int i = g.nvertices; (i--) != 0;) bc[i] = &C[i];
+        for (int i = g.nedges;    (i--) != 0;) bc[i] = &C[i];
         
         branch(bv, VAR_INORDER, VAL_MIN);
         branch(be, VAR_INORDER, VAL_MIN);
@@ -273,7 +282,7 @@ int main(int argc, char *argv[])
 {
     launchdebugchuffed();
     launchdebugstd();
-    Game g(DZN, "data/game-other.dzn",0,MIN);
+    Game g(DZN, "data/game-jurd-2-1.dzn",0,MIN);
 
     HRAModel* model = new HRAModel(g);
 

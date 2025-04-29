@@ -27,7 +27,7 @@ public:
         for (int i=0; i<g.nvertices; i++)   V[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.nedges; i++)      E[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.nvertices; i++)   Q[i].attach(this, 1 , EVENT_F );
-        for (int i=0; i<g.nvertices; i++)   C[i].attach(this, 1 , EVENT_F );
+        for (int i=0; i<g.nedges; i++)      C[i].attach(this, 1 , EVENT_F );
     }
     //-----------------------------------------------------------------------
     int findVertex(int vertex,vec<int>& path) {
@@ -83,13 +83,15 @@ public:
             lits.push();
             clausify(pathV,V,lits,0);
             Clause* reason = Reason_new(lits);
-            if (g.owners[vertex]==best && !Q[vertex].isFixed()) {
-                if (! Q[vertex].setVal( best%2 ,reason)) {
-                    return CF_CONFLICT;
+            if (g.owners[vertex]==best) {
+                if (!Q[vertex].isFixed()) {
+                    if (! Q[vertex].setVal( best%2 ,reason)) {
+                        return CF_CONFLICT;
+                    }
                 }
             }
-            else if (!C[vertex].isFixed()) {
-                    if (! C[vertex].setVal( best%2 ,reason)) {
+            else if (!C[pathE[index]].isFixed()) {
+                    if (! C[pathE[index]].setVal( best%2 ,reason)) {
                     return CF_CONFLICT;
                 }
             }

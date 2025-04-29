@@ -57,12 +57,13 @@ constraint
 % Qualifying vertices on the type of play that can force
 
 array[vertices] of var bool : Q;
+array[vertices] of var bool : C;
 
 % If v is EVEN and exists one EVEN edge, from v the play is EVEN
 constraint
     forall(v in vertices)(
         (   owners[v] = even /\
-            exists(w in vertices,e in edges where sources[e]=v /\ targets[e]=w)(Q[w]=even)
+            (exists(w in vertices,e in edges where sources[e]=v /\ targets[e]=w)(Q[w]=even) \/ C[v]=even)
         ) -> Q[v] = even
     );
 
@@ -70,7 +71,7 @@ constraint
 constraint
     forall(v in vertices)(
         (   owners[v] = odd /\
-            exists(w in vertices,e in edges where sources[e]=v /\ targets[e]=w)(Q[w]=odd)
+            (exists(w in vertices,e in edges where sources[e]=v /\ targets[e]=w)(Q[w]=odd) \/ C[v]=odd)
         ) -> Q[v] = odd
     );
 
@@ -91,11 +92,11 @@ constraint
         ) -> Q[v] = even
     );
 
-% Vertices not activated do not have qualifying play
-constraint
-    forall(v in vertices)(
-        not V[v] -> (Q[v]=Q[start])
-    );
+% % Vertices not activated do not have qualifying play
+% constraint
+%     forall(v in vertices)(
+%         not V[v] -> (Q[v]=Q[start])
+%     );
 
 predicate qualify(  array [int] of int		: owners,
                     array [int] of int		: colors,
@@ -104,10 +105,11 @@ predicate qualify(  array [int] of int		: owners,
                     array [int] of var bool	: V,
                     array [int] of var bool	: E,
                     array [int] of var bool	: Q,
+                    array [int] of var bool	: C,
                     int				 		: start );
 
 constraint
-    qualify(owners,colors,sources,targets,V,E,Q,start);
+    qualify(owners,colors,sources,targets,V,E,Q,C,start);
 
 % -------------------------------------------------------------------
 
@@ -129,5 +131,6 @@ function string : toStr(array [int] of var bool	: X) =
 output [
     "V: " ++ toStr(V) ++ "\n" ++ 
     "E: " ++ toStr(E) ++ "\n" ++ 
-    "Q: " ++ show([bool2int(q) | q in Q]) ++ "\n"
+    "Q: " ++ show([bool2int(q) | q in Q]) ++ "\n" ++
+    "C: " ++ show([bool2int(c) | c in C]) ++ "\n"
 ];
