@@ -41,7 +41,7 @@ public:
         // -------------------------------------------------------------------
         // Connecting the graph
 
-        // Activating first vertex
+        // 1. Activating first vertex
         vec<Lit> clause;
         clause.push(V[g.start].getLit(true));
         sat.addClause(clause);
@@ -56,8 +56,7 @@ public:
         //     sat.addClause(clause);
         // }
 
-        // For every vertice needs to every outgoing edge activated
-        // \bigwedge v \in V ( \mathcal{V}_v \rightarrow  \exists e \in E \mathcal{E}_e)
+        // 2. For every vertice needs to every outgoing edge activated
         for (int v=0; v<g.nvertices; v++) {
             for (auto& e : g.vedges[v]) {
                 vec<Lit> clause;
@@ -67,7 +66,7 @@ public:
             }
         }
 
-        // For every activated edge, the target vertex must be activated
+        // 3. For every activated edge, the target vertex must be activated
         for (int e=0; e<g.nedges; e++) {
             vec<Lit> clause;
             clause.push( E[e].getLit(false) );
@@ -75,17 +74,17 @@ public:
             sat.addClause(clause);
         }
 
-        // For every vertice, one incoming edge must be activated
-        for (int w=0; w<g.nvertices; w++) if (w != g.start) {
-            vec<Lit> clause;
-            clause.push( V[w].getLit(false) );
-            for (int e=0; e<g.nedges; e++) if (g.targets[e] == w) {
-                clause.push( E[e].getLit(true) );
-            }
-            sat.addClause(clause);
-        }
+        // 4. For every vertice, one incoming edge must be activated
+        // for (int w=0; w<g.nvertices; w++) if (w != g.start) {
+        //     vec<Lit> clause;
+        //     clause.push( V[w].getLit(false) );
+        //     for (int e=0; e<g.nedges; e++) if (g.targets[e] == w) {
+        //         clause.push( E[e].getLit(true) );
+        //     }
+        //     sat.addClause(clause);
+        // }
 
-        // Every unreachable vertex must be avoided.
+        // 4. Every unreachable vertex must be avoided.
         vec<vec<int>> _in, _out, _en;
         for (int v=0; v<g.owners.size(); v++) {
             _in.push();
@@ -104,15 +103,15 @@ public:
             _en[e].push(g.sources[e]);
             _en[e].push(g.targets[e]);
         }
-        // new DReachabilityPropagator(g.start, V, E, _in, _out, _en);
+        new DReachabilityPropagator(g.start, V, E, _in, _out, _en);
 
         // for every edge, the source vertex must be activated
-        for (int e=0; e<g.nedges; e++) {
-            vec<Lit> clause;
-            clause.push( E[e].getLit(false) );
-            clause.push( V[g.sources[e]].getLit(true) );
-            sat.addClause(clause);
-        }
+        // for (int e=0; e<g.nedges; e++) {
+        //     vec<Lit> clause;
+        //     clause.push( E[e].getLit(false) );
+        //     clause.push( V[g.sources[e]].getLit(true) );
+        //     sat.addClause(clause);
+        // }
 
         // -------------------------------------------------------------------
         // Qualifying vertices on the type of play that can force
