@@ -12,6 +12,7 @@ private:
     vec<BoolView> V;
     vec<BoolView> E;
     vec<BoolView> Q;
+    vec<BoolView> L;
     vec<BoolView> C;
 
     const int   CF_DONE     = 1;
@@ -21,12 +22,13 @@ public:
     //-----------------------------------------------------------------------
     Qualify(Game& g, 
             vec<BoolView>& V,vec<BoolView>& E,
-            vec<BoolView>& Q,vec<BoolView>& C)
-    :   g(g), V(V), E(E), Q(Q), C(C)
+            vec<BoolView>& Q,vec<BoolView>& L,vec<BoolView>& C)
+    :   g(g), V(V), E(E), Q(Q), L(L), C(C)
     {
         for (int i=0; i<g.nvertices; i++)   V[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.nedges; i++)      E[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.nvertices; i++)   Q[i].attach(this, 1 , EVENT_F );
+        for (int i=0; i<g.nedges; i++)      L[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.nedges; i++)      C[i].attach(this, 1 , EVENT_F );
     }
     //-----------------------------------------------------------------------
@@ -83,17 +85,18 @@ public:
             lits.push();
             clausify(pathV,V,lits,0);
             Clause* reason = Reason_new(lits);
-            if (g.owners[vertex]==best) {
-                if (!Q[vertex].isFixed()) {
-                    if (! Q[vertex].setVal( best%2 ,reason)) {
+            if (!C[lastEdge].isFixed() && !C[lastEdge].setVal( true ,reason)) {
+                return CF_CONFLICT;
+            }
+            for (int e=0; e<pathE.size(); e++) {
+                if (pathE[e] != lastEdge) {
+                    if ( !C[pathE[e]].isFixed() && !C[pathE[e]].setVal( false ,reason)) {
                         return CF_CONFLICT;
                     }
                 }
             }
-            else if (!C[pathE[index]].isFixed()) {
-                    if (! C[pathE[index]].setVal( best%2 ,reason)) {
-                    return CF_CONFLICT;
-                }
+            if (!L[lastEdge].isFixed() && !L[lastEdge].setVal( best%2 ,reason)) {
+                return CF_CONFLICT;
             }
         }
         else {
