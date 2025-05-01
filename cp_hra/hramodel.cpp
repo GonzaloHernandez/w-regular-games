@@ -95,19 +95,19 @@ public:
         for (int v=0; v<g.nvertices; v++) {
             for (auto& e : g.vedges[v]) {
                 vec<Lit> clause;
-                clause.push( L[e].getLit( !g.colors[v] ) );
-                clause.push( Q[v].getLit( g.colors[v] ) );
+                clause.push( L[e].getLit( !g.owners[v] ) );
+                clause.push( Q[v].getLit( g.owners[v] ) );
                 sat.addClause(clause);
             }
         }
 
-        // If v losses if every outgoing edge is not the same color as v
+        // v losses if every outgoing edge is not the same color as v
         for (int v=0; v<g.nvertices; v++) {
             vec<Lit> clause;
             for (auto& e : g.vedges[v]) { int w = g.targets[e];
-                clause.push( L[e].getLit( g.colors[v]) );
+                clause.push( L[e].getLit( g.owners[v]) );
             }
-            clause.push( Q[v].getLit( !g.colors[v]) );
+            clause.push( Q[v].getLit( !g.owners[v]) );
             sat.addClause(clause);
         }
 

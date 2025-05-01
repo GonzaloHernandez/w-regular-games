@@ -257,7 +257,7 @@ bool parseOptions(int argc, char *argv[]) {
 
 int main(int argc, char *argv[])
 {
-    launchdebugwatchs();
+    launchdebugstd();
     if (!parseOptions(argc, argv)) exit(1);
     Game* game = nullptr;
 
