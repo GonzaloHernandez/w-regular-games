@@ -36,27 +36,23 @@ int bestcolor(Game& g, int index,std::vector<int>& path){
 //-----------------------------------------------------------------------------------------------------
 
 
-signed char getPlayBasic(Game& g, int p, std::vector<int> path, int current) {
+signed char getPlayBasic(Game& g, std::vector<int> path, int current) {
     int index = findVertex(current,path);
     if (index >= 0) {
         int best = bestcolor(g,index,path);
         return best%2;
     }
     else {
-        if (g.owners[current] == p) {
-            for(auto& e : g.vedges[current]) {
-                std::vector <int> newpath = path;
-                newpath.push_back(current);
-                auto next = getPlayBasic(g, p, newpath, g.targets[e]);
-                if (next == p) {
-                    return p;
-                }
+        int p = g.owners[current];
+        for(auto& e : g.vedges[current]) {
+            std::vector <int> newpath = path;
+            newpath.push_back(current);
+            auto next = getPlayBasic(g, newpath, g.targets[e]);
+            if (next == p) {
+                return p;
             }
-            return 1-p;
         }
-        else {
-            return getPlayBasic(g, 1-p , path, current);
-        }
+        return 1-p;
     }
 }
 
@@ -99,7 +95,7 @@ signed char getPlayBasic(Game& g, int p, std::vector<int> path, int current) {
 
 //-----------------------------------------------------------------------------------------------------
 
-signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std::vector<int>& memo) {
+signed char getPlayMemo(Game& g, std::vector<int> path, int current, std::vector<int>& memo) {
     int index = findVertex(current,path);
     if (index >= 0) {
         int best = bestcolor(g,index,path);
@@ -119,7 +115,7 @@ signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std:
 
             std::vector <int> newpath = path;
             newpath.push_back(current);
-            auto next = getPlayMemo(g, np, newpath, g.targets[e], memo);
+            auto next = getPlayMemo(g, newpath, g.targets[e], memo);
             if (next == np) {
                 memo[current] = np;
                 return np; // using this edge current can force np 
@@ -178,5 +174,5 @@ signed char getPlay(Game& g, int p, int start) {
     std::vector<int> memo(g.nvertices, -1);
     // std::vector<signed char> parities(g.nvertices,-1);
 
-    return getPlayMemo(g, p, path, start, memo);
+    return getPlayBasic(g, path, start);
 }
