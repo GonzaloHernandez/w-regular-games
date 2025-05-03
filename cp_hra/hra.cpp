@@ -1,5 +1,8 @@
 #include "hra.h"
 
+#define loop first
+#define best second
+
 //-----------------------------------------------------------------------------------------------------
 
 int findVertex(int vertex,std::vector<int>& path) {
@@ -23,10 +26,7 @@ int findVertexReverse(int vertex,std::vector<int>& path) {
 int bestcolor(Game& g, int index,std::vector<int>& path){
     int m = g.colors[path[index]];
     for (int i=index+1; i<path.size(); i++) {
-        if (g.reward==MIN && g.colors[path[i]] < m) {
-            m = g.colors[path[i]];
-        }
-        else if (g.reward==MAX && g.colors[path[i]] > m) {
+        if ((g.reward==MIN && g.colors[path[i]] < m) || (g.reward==MAX && g.colors[path[i]] > m)) {
             m = g.colors[path[i]];
         }
     }
@@ -34,7 +34,6 @@ int bestcolor(Game& g, int index,std::vector<int>& path){
 }
 
 //-----------------------------------------------------------------------------------------------------
-
 
 signed char getPlayBasic(Game& g, std::vector<int> path, int current) {
     int index = findVertex(current,path);
@@ -95,34 +94,51 @@ signed char getPlayBasic(Game& g, std::vector<int> path, int current) {
 
 //-----------------------------------------------------------------------------------------------------
 
-signed char getPlayMemo(Game& g, std::vector<int> path, int current, std::vector<int>& memo) {
-    int index = findVertex(current,path);
+signed char getPlayMemo(Game& g, std::vector<int> path, int v, int d, 
+                        std::vector<std::pair<int,int>>& memoV,
+                        std::vector<std::pair<int,int>>& memoE ) 
+{
+    int index = findVertex(v,path);
     if (index >= 0) {
         int best = bestcolor(g,index,path);
+        memoE[d].loop   = v;
+        memoE[d].best   = best;
         return best%2;
     }
     else {
-        int np = g.owners[current];
-        for(auto& e : g.vedges[current]) {
-            if (memo[g.targets[e]] == np) {
-                memo[current] = np;
-                return np; // using this edge current can force np (already memoized)
+        for(auto& e : g.vedges[v]) {
+            int w = g.targets[e];
+            if (memoE[e].loop < 0) {
+                std::vector <int> newpath = path;
+                newpath.push_back(v);
+                auto parity = getPlayMemo(g, newpath, w, e, memoV, memoE);
+                memoV[v] = memoE[e]; 
+                if (parity == g.owners[v]) {
+                    return parity;
+                }
+                continue;
+            }
+            int index = findVertex(memoE[e].loop,path);
+            if (index < 0) {
+                memoV[v] = memoE[e];
+                if (memoE[e].best%2 == g.owners[v]) {
+                    return memoV[v].best%2;
+                }
+                continue;
             }
 
-            if (memo[g.targets[e]] == 1-np) {
-                continue; // skip this edge
+            int best = bestcolor(g,index,path);
+            if (!((g.reward==MIN && best < memoE[e].best) || (g.reward==MAX && best > memoE[e].best))) {
+                best = memoE[e].best;
             }
 
-            std::vector <int> newpath = path;
-            newpath.push_back(current);
-            auto next = getPlayMemo(g, newpath, g.targets[e], memo);
-            if (next == np) {
-                memo[current] = np;
-                return np; // using this edge current can force np 
+            memoV[v].loop   = memoE[e].loop;
+            memoV[v].best   = best;
+            if (best%2 == g.owners[v]) {
+                return best%2;
             }
         }
-        memo[current] = 1-np;
-        return 1-np;
+        return 1-g.owners[v];
     }
 }
 
@@ -171,8 +187,8 @@ signed char getPlayMemo(Game& g, std::vector<int> path, int current, std::vector
 
 signed char getPlay(Game& g, int p, int start) {
     std::vector<int> path;
-    std::vector<int> memo(g.nvertices, -1);
-    // std::vector<signed char> parities(g.nvertices,-1);
+    std::vector<std::pair<int,int>> memoV(g.nvertices,   {-1,-1});
+    std::vector<std::pair<int,int>> memoE(g.nedges,      {-1,-1});
 
-    return getPlayBasic(g, path, start);
+    return getPlayMemo(g, path, start, -1, memoV, memoE);
 }
