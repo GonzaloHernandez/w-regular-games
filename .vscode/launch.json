@@ -35,20 +35,20 @@
             "program": "${workspaceFolder}/build/ex2",
             "args": [   
                 // "--gm", "${env:HOME}/gm/randomgame(5000,_10,_1,_20)id=0.gm",
-                "--dzn", "${workspaceFolder}/data/game-rand.dzn",
+                "--dzn", "${workspaceFolder}/data/game-jurd-2-1.dzn",
                 // "--jurd","2","1",
                 // "--gm","build/rand01.gm",
-                "--start","1",
+                "--start","0",
                 // "--verbose"
                 // "--proof",
-                "--reward-max",
+                // "--reward-max",
                 // "--export-gm","/home/chalo/dbg.gm",
                 "--print","0",
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "externalConsole": false,
-            "MIMode": "lldb",  // lldb for osx / gdb for linux
+            "MIMode": "gdb",  // lldb for osx / gdb for linux
             "setupCommands": [
                 {
                     "description": "Enable pretty-printing for gdb",

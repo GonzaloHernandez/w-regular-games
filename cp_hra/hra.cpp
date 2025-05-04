@@ -106,39 +106,43 @@ splay getPlayMemo( Game& g, std::vector<int> path, int v, int d, std::vector<spl
         return splay{v,best};
     }
     else {
+        splay play;
         for(auto& e : g.vedges[v]) {
             int w = g.targets[e];
+
             if (!memo[w].touched()) {
                 std::vector <int> newpath = path;
                 newpath.push_back(v);
-                auto play = getPlayMemo(g, newpath, w, e, memo);
-                memo[v] = play;
+                play = getPlayMemo(g, newpath, w, e, memo);
                 if (play.parity() == g.owners[v]) {
+                    memo[v] = play;
                     return play;
                 }
                 continue;
             }
 
-            int index = findVertex(memo[e].loop,path);
+            int index = findVertexReverse(memo[w].loop,path);
             if (index < 0) {
-                memo[v] = memo[w];
-                if (memo[w].parity() == g.owners[v]) {
-                    return memo[v];
+                play = memo[w];
+                if (play.parity() == g.owners[v]) {
+                    memo[v] = play;
+                    return play;
                 }
                 continue;
             }
 
-            int b = bestcolor(g,index,path);
-            if (!((g.reward==MIN && b < memo[w].best) || (g.reward==MAX && b > memo[w].best))) {
-                b = memo[w].best;
+            int best = bestcolor(g,index,path);
+            if (!((g.reward==MIN && best < memo[w].best) || (g.reward==MAX && best > memo[w].best))) {
+                best = memo[w].best;
             }
-            memo[v].loop   = memo[w].loop;
-            memo[v].best   = b;
-            if (memo[v].parity() == g.owners[v]) {
-                return memo[v];
+            play = {memo[w].loop,best};
+            if (play.parity() == g.owners[v]) {
+                memo[v] = play;
+                return play;
             }
+            
         }
-        return memo[v];
+        return play;
     }
 }
 
