@@ -1,7 +1,11 @@
 #include "hra.h"
 
-#define loop first
-#define best second
+struct splay {
+    int loop;
+    int best;
+    bool parity()   { return best%2; }
+    bool touched()  { return loop>=0; }
+};
 
 //-----------------------------------------------------------------------------------------------------
 
@@ -94,51 +98,47 @@ signed char getPlayBasic(Game& g, std::vector<int> path, int current) {
 
 //-----------------------------------------------------------------------------------------------------
 
-signed char getPlayMemo(Game& g, std::vector<int> path, int v, int d, 
-                        std::vector<std::pair<int,int>>& memoV,
-                        std::vector<std::pair<int,int>>& memoE ) 
+splay getPlayMemo( Game& g, std::vector<int> path, int v, int d, std::vector<splay>& memo) 
 {
     int index = findVertex(v,path);
     if (index >= 0) {
         int best = bestcolor(g,index,path);
-        memoE[d].loop   = v;
-        memoE[d].best   = best;
-        return best%2;
+        return splay{v,best};
     }
     else {
         for(auto& e : g.vedges[v]) {
             int w = g.targets[e];
-            if (memoE[e].loop < 0) {
+            if (!memo[w].touched()) {
                 std::vector <int> newpath = path;
                 newpath.push_back(v);
-                auto parity = getPlayMemo(g, newpath, w, e, memoV, memoE);
-                memoV[v] = memoE[e]; 
-                if (parity == g.owners[v]) {
-                    return parity;
+                auto play = getPlayMemo(g, newpath, w, e, memo);
+                memo[v] = play;
+                if (play.parity() == g.owners[v]) {
+                    return play;
                 }
                 continue;
             }
-            int index = findVertex(memoE[e].loop,path);
+
+            int index = findVertex(memo[e].loop,path);
             if (index < 0) {
-                memoV[v] = memoE[e];
-                if (memoE[e].best%2 == g.owners[v]) {
-                    return memoV[v].best%2;
+                memo[v] = memo[w];
+                if (memo[w].parity() == g.owners[v]) {
+                    return memo[v];
                 }
                 continue;
             }
 
-            int best = bestcolor(g,index,path);
-            if (!((g.reward==MIN && best < memoE[e].best) || (g.reward==MAX && best > memoE[e].best))) {
-                best = memoE[e].best;
+            int b = bestcolor(g,index,path);
+            if (!((g.reward==MIN && b < memo[w].best) || (g.reward==MAX && b > memo[w].best))) {
+                b = memo[w].best;
             }
-
-            memoV[v].loop   = memoE[e].loop;
-            memoV[v].best   = best;
-            if (best%2 == g.owners[v]) {
-                return best%2;
+            memo[v].loop   = memo[w].loop;
+            memo[v].best   = b;
+            if (memo[v].parity() == g.owners[v]) {
+                return memo[v];
             }
         }
-        return 1-g.owners[v];
+        return memo[v];
     }
 }
 
@@ -187,8 +187,8 @@ signed char getPlayMemo(Game& g, std::vector<int> path, int v, int d,
 
 signed char getPlay(Game& g, int p, int start) {
     std::vector<int> path;
-    std::vector<std::pair<int,int>> memoV(g.nvertices,   {-1,-1});
-    std::vector<std::pair<int,int>> memoE(g.nedges,      {-1,-1});
+    std::vector<splay> memo(g.nvertices, {-1,-1});
 
-    return getPlayMemo(g, path, start, -1, memoV, memoE);
+    splay play = getPlayMemo(g, path, start, -1, memo);
+    return play.parity();
 }
