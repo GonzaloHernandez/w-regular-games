@@ -27,7 +27,7 @@ int findVertexReverse(int vertex,std::vector<int>& path) {
 
 //-----------------------------------------------------------------------------------------------------
 
-int bestcolor(Game& g, int index,std::vector<int>& path){
+int bestcolor(Game& g, int index,const std::vector<int>& path){
     int m = g.colors[path[index]];
     for (int i=index+1; i<path.size(); i++) {
         if ((g.reward==MIN && g.colors[path[i]] < m) || (g.reward==MAX && g.colors[path[i]] > m)) {
@@ -98,6 +98,15 @@ signed char getPlayBasic(Game& g, std::vector<int> path, int current) {
 
 //-----------------------------------------------------------------------------------------------------
 
+// Overload + operator: vector + int → vector with int appended
+std::vector<int> operator+(const std::vector<int>& v, int x) {
+    std::vector<int> result = v;
+    result.push_back(x);
+    return result;
+}
+
+//-----------------------------------------------------------------------------------------------------
+
 splay getPlayMemo( Game& g, std::vector<int> path, int v, int d, std::vector<splay>& memo) 
 {
     int index = findVertex(v,path);
@@ -109,11 +118,9 @@ splay getPlayMemo( Game& g, std::vector<int> path, int v, int d, std::vector<spl
         splay play;
         for(auto& e : g.vedges[v]) {
             int w = g.targets[e];
-
+            
             if (!memo[w].touched()) {
-                std::vector <int> newpath = path;
-                newpath.push_back(v);
-                play = getPlayMemo(g, newpath, w, e, memo);
+                play = getPlayMemo(g, path+v, w, e, memo);
                 if (play.parity() == g.owners[v]) {
                     memo[v] = play;
                     return play;
@@ -131,7 +138,7 @@ splay getPlayMemo( Game& g, std::vector<int> path, int v, int d, std::vector<spl
                 continue;
             }
 
-            int best = bestcolor(g,index,path);
+            int best = bestcolor(g,index,path+v);
             if (!((g.reward==MIN && best < memo[w].best) || (g.reward==MAX && best > memo[w].best))) {
                 best = memo[w].best;
             }
@@ -140,7 +147,6 @@ splay getPlayMemo( Game& g, std::vector<int> path, int v, int d, std::vector<spl
                 memo[v] = play;
                 return play;
             }
-            
         }
         return play;
     }
