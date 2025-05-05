@@ -18,7 +18,7 @@ int findVertex(int vertex,std::vector<int>& path) {
 
 //-----------------------------------------------------------------------------------------------------
 
-int findVertexReverse(int vertex,std::vector<int>& path) {
+int findVertexReverse(int vertex,const std::vector<int>& path) {
     for (int i=path.size()-1; i>=0; i--) {
         if (path[i] == vertex) return i;
     }
@@ -107,7 +107,7 @@ std::vector<int> operator+(const std::vector<int>& v, int x) {
 
 //-----------------------------------------------------------------------------------------------------
 
-splay getPlayMemo( Game& g, std::vector<int> path, int v, int d, std::vector<splay>& memo) 
+splay getPlayMemo( Game& g, std::vector<int> path, int v, std::vector<splay>& memo) 
 {
     int index = findVertex(v,path);
     if (index >= 0) {
@@ -120,19 +120,21 @@ splay getPlayMemo( Game& g, std::vector<int> path, int v, int d, std::vector<spl
             int w = g.targets[e];
             
             if (!memo[w].touched()) {
-                play = getPlayMemo(g, path+v, w, e, memo);
+                play = getPlayMemo(g, path+v, w, memo);
                 if (play.parity() == g.owners[v]) {
-                    memo[v] = play;
+                    if (g.colors[v] == play.best) memo[v] = play;
+                    for (int i=0; i<g.nvertices; i++) if (memo[i].loop == v) memo[i] = play;
                     return play;
                 }
                 continue;
             }
 
-            int index = findVertexReverse(memo[w].loop,path);
+            int index = findVertexReverse(memo[w].loop,path+v);
             if (index < 0) {
                 play = memo[w];
                 if (play.parity() == g.owners[v]) {
                     memo[v] = play;
+                    for (int i=0; i<g.nvertices; i++) if (memo[i].loop == v) memo[i] = play;
                     return play;
                 }
                 continue;
@@ -144,11 +146,14 @@ splay getPlayMemo( Game& g, std::vector<int> path, int v, int d, std::vector<spl
             }
             play = {memo[w].loop,best};
             if (play.parity() == g.owners[v]) {
-                memo[v] = play;
+                if (g.colors[v] == play.best) memo[v] = play;
+                for (int i=0; i<g.nvertices; i++) if (memo[i].loop == v) memo[i] = play;
                 return play;
             }
         }
-        return play;
+        if (g.colors[v] == play.best) memo[v] = play;
+        for (int i=0; i<g.nvertices; i++) if (memo[i].loop == v) memo[i] = play;
+        return play; //return the last play when vertex v is dominated
     }
 }
 
@@ -195,10 +200,14 @@ splay getPlayMemo( Game& g, std::vector<int> path, int v, int d, std::vector<spl
 
 //-----------------------------------------------------------------------------------------------------
 
-signed char getPlay(Game& g, int p, int start) {
+signed char getPlay(Game& g, int p, int start, bool basic) {
+    if (basic) {
+        return getPlayBasic(g, {}, start);
+    }
+
     std::vector<int> path;
     std::vector<splay> memo(g.nvertices, {-1,-1});
 
-    splay play = getPlayMemo(g, path, start, -1, memo);
+    splay play = getPlayMemo(g, path, start, memo);
     return play.parity();
 }

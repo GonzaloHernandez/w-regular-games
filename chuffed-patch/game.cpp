@@ -138,7 +138,7 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
             while (getline(file, line)) {
                 if (line.find("parity") != std::string::npos) {
                     lastvertex = stoi(line.substr(line.find(" ")));
-                    verts.reserve(lastvertex+1);
+                    verts.resize(lastvertex+1);
                 } else {
                     std::vector<int>    vinfo,vedges;
                     std::string         comment;

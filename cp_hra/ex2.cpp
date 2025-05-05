@@ -15,12 +15,12 @@ struct options {
     int rand_d1         = 2;
     int rand_d2         = 2;
     int game_parity     = 0; // looking for 0=EVEN or 1=ODD
-    reward_type         game_reward             = MIN; 
+    reward_type         game_reward             = MAX; 
     std::vector<int>    game_starts             = {0};
     std::string         game_filename           = "";
     std::string         game_export_filename    = "";
     int                 game_export_type        = 0; // 0=not export 2=DZN 3=GM
-    int                 game_proof              = 0; // 0=no 1=yes 2=matrixbased
+    int                 game_proof              = 0; // 0=no 1=basic 2=matrixbased 3=hra-matrixbased
 } options;
 
 //--------------------------------------------------------------------------------------
@@ -222,10 +222,13 @@ bool parseOptions(int argc, char *argv[]) {
             options.game_export_filename = argv[i];                
         }
         else if (strcmp(argv[i],"--proof")==0) {
-            options.game_proof = 1;
+            options.game_proof = 3;
         }
         else if (strcmp(argv[i],"--matrix-based")==0) {
             options.game_proof = 2;
+        }
+        else if (strcmp(argv[i],"--basic")==0) {
+            options.game_proof = 1;
         }
         else if (strcmp(argv[i],"--help")==0) {
             std::cout << "Usage: " << argv[0] << " [options]\n";
@@ -303,47 +306,14 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------------------------------------------
 
-    while (!options.game_export_type && !options.game_proof) {
-        start = std::chrono::high_resolution_clock::now();
-
-        auto play = getPlay(*game, options.game_parity, options.game_starts[0]);
-
-        end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> totaltime = end - start;
-
-        if (options.game_print > 0) {
-            std::cout << "Preparation time: " << preptime.count() << std::endl;
-        }
-        
-        switch (options.game_print) {
-            case 0:
-                std::cout   << options.game_starts[0] << ": "
-                            << (play==EVEN?"EVEN":"ODD") 
-                            << std::endl;
-                break;
-            case 1: case 2:
-                std::cout   << options.game_starts[0] << ": "
-                            << (play==EVEN?"EVEN":"ODD") << " "
-                            << totaltime.count() 
-                            << std::endl; 
-                break;
-            default:
-                break;
-        }
-
-        options.game_starts.erase(options.game_starts.begin());
-        if (options.game_starts.size() == 0) break;
-        game->setStart(options.game_starts[0]);
-    }
-
-    //----------------------------------------------------------------------------------
-
-    if (options.game_proof==1) { //using matrix-based to proof HRA
+    if (options.game_proof==3) { //using matrix-based to proof HRA
         // game->reward = MAX;
         if (options.game_type != GM) {
 
         }
-        Graph zlk(options.game_filename.c_str());
+        // Graph zlk(options.game_filename.c_str());
+        Graph zlk(*game);
+
         auto res = zlk.Solve();
         std::cout << "Testing EVEN (" << res.first.size() <<  ") Faults: ";
         int counter=0;
@@ -373,11 +343,12 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------------------------------------------
 
-    if (options.game_proof==2) { //matrix-based
+    if (options.game_proof==2) { //matrix-based solution
 
         start = std::chrono::high_resolution_clock::now();
 
-        Graph zlk(options.game_filename.c_str());
+        // Graph zlk(options.game_filename.c_str());
+        Graph zlk(*game);
 
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> preptime = end - start;
@@ -419,6 +390,40 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------------------------------------------
 
+    while (options.game_proof<2 && !options.game_export_type) {
+        start = std::chrono::high_resolution_clock::now();
+
+        auto play = getPlay(*game, options.game_parity, options.game_starts[0], options.game_proof==1);
+
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> totaltime = end - start;
+
+        if (options.game_print > 0) {
+            std::cout << "Preparation time: " << preptime.count() << std::endl;
+        }
+        
+        switch (options.game_print) {
+            case 0:
+                std::cout   << options.game_starts[0] << ": "
+                            << (play==EVEN?"EVEN":"ODD") 
+                            << std::endl;
+                break;
+            case 1: case 2:
+                std::cout   << options.game_starts[0] << ": "
+                            << (play==EVEN?"EVEN":"ODD") << " "
+                            << totaltime.count() 
+                            << std::endl; 
+                break;
+            default:
+                break;
+        }
+
+        options.game_starts.erase(options.game_starts.begin());
+        if (options.game_starts.size() == 0) break;
+        game->setStart(options.game_starts[0]);
+    }
+
+    //----------------------------------------------------------------------------------
 
     delete game;
 

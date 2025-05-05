@@ -233,6 +233,22 @@ Graph::Graph(const char * fname)
     }
 }
 
+Graph::Graph(Game& g)
+{
+    n_nodes_ = g.nvertices;
+    nodes_ = std::make_unique<Node[]>(n_nodes_);
+    for (size_t i = 0ull; i < n_nodes_; i++)
+    {
+        nodes_[i] = { i, (size_t)g.colors[i],(uint8_t)g.owners[i], std::vector<size_t>(), std::vector<size_t>() };
+    }
+
+    for (size_t i = 0ull; i < g.nedges; i++)
+    {
+        nodes_[g.sources[i]].outbound.push_back(g.targets[i]);
+        nodes_[g.targets[i]].inbound.push_back(g.sources[i]);
+    }
+}
+
 std::pair<std::vector<size_t>, std::vector<size_t>> Graph::Solve()
 {
     // Create a bool[] of all false because nothing has been excluded yet

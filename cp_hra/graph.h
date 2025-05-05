@@ -7,6 +7,10 @@
 #include <vector>
 #include <cstdint>
 
+#ifndef game_h 
+#include "../chuffed-patch/game.h"
+#endif
+
 struct Node
 {
     size_t index;
@@ -31,6 +35,7 @@ protected:
 
 public:
     Graph(const char* fname);
+    Graph(Game& g);
 
     size_t n_nodes() { return n_nodes_; }
 

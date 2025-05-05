@@ -17,6 +17,6 @@
 // signed char getPlayBasic(Game& g, int p, std::vector<int> path, int current);
 // signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std::vector<int>& memo);
 
-signed char getPlay(Game& g, int p, int start);
+signed char getPlay(Game& g, int p, int start, bool basic=false);
 
 #endif // HRA_H
