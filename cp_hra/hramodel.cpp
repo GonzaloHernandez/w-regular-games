@@ -23,8 +23,6 @@ private:
     vec<BoolView>   V;
     vec<BoolView>   E;
     vec<BoolView>   Q;
-    vec<BoolView>   L;
-    vec<BoolView>   C;
 
 public:
 
@@ -32,14 +30,10 @@ public:
         V.growTo(g.nvertices);
         E.growTo(g.nedges);
         Q.growTo(g.nvertices);
-        L.growTo(g.nedges);
-        C.growTo(g.nedges);
 
         for (int i=0; i<g.nvertices; i++) V[i] = newBoolVar();
         for (int i=0; i<g.nedges;    i++) E[i] = newBoolVar();
         for (int i=0; i<g.nvertices; i++) Q[i] = newBoolVar();
-        for (int i=0; i<g.nedges;    i++) L[i] = newBoolVar();
-        for (int i=0; i<g.nedges;    i++) C[i] = newBoolVar();
 
         // -------------------------------------------------------------------
         // Connecting the graph
@@ -93,9 +87,9 @@ public:
 
         // v wins if some outgoing edge is the same color as v
         for (int v=0; v<g.nvertices; v++) {
-            for (auto& e : g.vedges[v]) {
+            for (auto& e : g.vedges[v]) { int w = g.targets[e];
                 vec<Lit> clause;
-                clause.push( L[e].getLit( !g.owners[v] ) );
+                clause.push( Q[w].getLit( !g.owners[v] ) );
                 clause.push( Q[v].getLit( g.owners[v] ) );
                 sat.addClause(clause);
             }
@@ -105,31 +99,15 @@ public:
         for (int v=0; v<g.nvertices; v++) {
             vec<Lit> clause;
             for (auto& e : g.vedges[v]) { int w = g.targets[e];
-                clause.push( L[e].getLit( g.owners[v]) );
+                clause.push( Q[w].getLit( g.owners[v]) );
             }
             clause.push( Q[v].getLit( !g.owners[v]) );
             sat.addClause(clause);
         }
 
-        for (int e=0; e<g.nedges; e++) { int v = g.targets[e];
-            {
-                vec<Lit> clause;
-                clause.push( C[e].getLit(true) );
-                clause.push( L[e].getLit(false) );
-                clause.push( Q[v].getLit(true) );
-                sat.addClause(clause);
-            }{
-                vec<Lit> clause;
-                clause.push( C[e].getLit(true) );
-                clause.push( L[e].getLit(true) );
-                clause.push( Q[v].getLit(false) );
-                sat.addClause(clause);
-            }
-        }
-
         // -------------------------------------------------------------------
 
-        new Qualify(g,V,E,Q,L,C);
+        new Qualify(g,V,E,Q);
 
         // -------------------------------------------------------------------
 
@@ -145,19 +123,13 @@ public:
         for (int i = g.nvertices; (i--) != 0;) bv[i] = &V[i];
         for (int i = g.nedges;    (i--) != 0;) be[i] = &E[i];
         for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
-        for (int i = g.nedges;    (i--) != 0;) bl[i] = &L[i];
-        for (int i = g.nedges;    (i--) != 0;) bc[i] = &C[i];
         
         branch(bv, VAR_INORDER, VAL_MIN);
         branch(be, VAR_INORDER, VAL_MIN);
         branch(bq, VAR_INORDER, VAL_MIN);
-        branch(bl, VAR_INORDER, VAL_MIN);
-        branch(bc, VAR_INORDER, VAL_MIN);
         output_vars(bv);
         output_vars(be);
         output_vars(bq);
-        output_vars(bl);
-        output_vars(bc);
     }
 
     //----------------------------------------------------------------
@@ -202,16 +174,6 @@ public:
         for (int i=0; i<Q.size(); i++) {
             out << (!i?"":",") << Q[i].getVal();
         }
-        out << "]\nC=[";
-        first = true;
-        for (int i=0; i<L.size(); i++) {
-            out << (!i?"":",") << L[i].getVal();
-        }
-        out << "]\nL=[";
-        first = true;
-        for (int i=0; i<L.size(); i++) {
-            out << (!i?"":",") << L[i].getVal();
-        }
         out << "]";
     }
 };
@@ -220,7 +182,7 @@ int main(int argc, char *argv[])
 {
     launchdebugchuffed();
     launchdebugstd();
-    Game g(DZN, "data/game-other.dzn",0,MIN);
+    Game g(DZN, "data/game-other.dzn",0,MAX);
 
     HRAModel* model = new HRAModel(g);
 

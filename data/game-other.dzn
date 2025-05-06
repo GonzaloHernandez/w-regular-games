@@ -1,6 +1,6 @@
-nvertices = 3;
-owners    = [1,1,0];
-colors    = [1,2,1];
-nedges    = 4;
-sources   = [1,1,2,3];
-targets   = [2,3,3,1];
+nvertices = 4;
+owners    = [0,0,1,0];
+colors    = [1,0,1,1];
+nedges    = 6;
+sources   = [1,1,2,2,3,4];
+targets   = [2,3,3,4,3,2];
