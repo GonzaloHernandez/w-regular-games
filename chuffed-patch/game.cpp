@@ -179,106 +179,104 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
 //----------------------------------------------------------------------------------
 // Jurdzinski game
 
-Game::Game(int levels, int blocks, int start, reward_type rew) 
+Game::Game(int type, std::vector<int> vals, int start, reward_type rew) 
 :   start(start), reward(rew)  
 {
-    nvertices   = ((blocks*3)+1)*(levels-1) + ((blocks*2)+1);
-    nedges      = (blocks*6)*(levels-1) + (blocks*4) + (blocks*2*(levels-1));
+    if (type == JURD) {
+        int levels  = vals[0];
+        int blocks  = vals[1];    
+        nvertices   = ((blocks*3)+1)*(levels-1) + ((blocks*2)+1);
+        nedges      = (blocks*6)*(levels-1) + (blocks*4) + (blocks*2*(levels-1));
 
-    assert(start >= 0 && start < nvertices);
+        assert(start >= 0 && start < nvertices);
 
-    int es = 1;
-    int os = 0;
-    for (int l=1; l<levels; l++) {
-        os = ((blocks*3)+1)*(levels-1)+1;
-        for (int b=0; b<blocks; b++) {
+        int es = 1;
+        int os = 0;
+        for (int l=1; l<levels; l++) {
+            os = ((blocks*3)+1)*(levels-1)+1;
+            for (int b=0; b<blocks; b++) {
+                owners.push_back(1);
+                owners.push_back(0);
+                owners.push_back(0);
+                colors.push_back(l*2);
+                colors.push_back(l*2-1);
+                colors.push_back(l*2);
+
+                sources.push_back(es);   targets.push_back(es+1);
+                sources.push_back(es);   targets.push_back(es+2);
+                sources.push_back(es+1); targets.push_back(es+2);
+                sources.push_back(es+2); targets.push_back(es);
+
+                sources.push_back(es+2); targets.push_back(es+3);
+                sources.push_back(es+3); targets.push_back(es+2);
+
+                sources.push_back(es+2); targets.push_back(os+1);
+                sources.push_back(os+1); targets.push_back(es+2);
+
+                es += 3;
+                os += 2;
+            }
             owners.push_back(1);
+            colors.push_back(l*2);
+            es += 1;
+        }
+        int l = levels;
+        for (int b=0; b<blocks; b++) {
             owners.push_back(0);
-            owners.push_back(0);
+            owners.push_back(1);
+
             colors.push_back(l*2);
             colors.push_back(l*2-1);
-            colors.push_back(l*2);
 
             sources.push_back(es);   targets.push_back(es+1);
-            sources.push_back(es);   targets.push_back(es+2);
+            sources.push_back(es+1); targets.push_back(es);
             sources.push_back(es+1); targets.push_back(es+2);
-            sources.push_back(es+2); targets.push_back(es);
-
-            sources.push_back(es+2); targets.push_back(es+3);
-            sources.push_back(es+3); targets.push_back(es+2);
-
-            sources.push_back(es+2); targets.push_back(os+1);
-            sources.push_back(os+1); targets.push_back(es+2);
-
-            es += 3;
-            os += 2;
+            sources.push_back(es+2); targets.push_back(es+1);
+            
+            es += 2;
         }
-        owners.push_back(1);
-        colors.push_back(l*2);
-        es += 1;
-    }
-    int l = levels;
-    for (int b=0; b<blocks; b++) {
         owners.push_back(0);
-        owners.push_back(1);
-
         colors.push_back(l*2);
-        colors.push_back(l*2-1);
 
-        sources.push_back(es);   targets.push_back(es+1);
-        sources.push_back(es+1); targets.push_back(es);
-        sources.push_back(es+1); targets.push_back(es+2);
-        sources.push_back(es+2); targets.push_back(es+1);
-        
-        es += 2;
+        fixStartingZero();
+        vedges.resize(nvertices);
+        for(int i=0; i<nedges; i++) {
+            vedges[sources[i]].push_back(i);
+        }
     }
-    owners.push_back(0);
-    colors.push_back(l*2);
-
-    fixStartingZero();
-    vedges.resize(nvertices);
-    for(int i=0; i<nedges; i++) {
-        vedges[sources[i]].push_back(i);
-    }
-}
-
-//----------------------------------------------------------------------------------
-// Random game
-
-Game::Game(int ns, int ps, int d1, int d2, int start, reward_type rew) 
-:   start(start), reward(rew)  
-{
-    nvertices   = ns;
-    nedges      = 0;
-
-    assert(start >= 0 && start < nvertices);
-
-    std::random_device rd;
-    std::mt19937 g(rd());
-
-    owners.resize(ns/2,0);
-    owners.resize(ns,1);
-    std::shuffle(owners.begin(), owners.end(), g);  // Unsort (shuffle) the vector
-
-    std::uniform_int_distribution<> rndcolors(0, ps);
-
-    for(int i=0; i<nvertices; i++) {
-        colors.push_back(rndcolors(g));
-    }
-
-    vedges.resize(nvertices);
-    for(int v=0; v<nvertices; v++) {
-        std::vector<int> ws;
-        for (int i=0; i < nvertices; i++) { ws.push_back(i); }
-        std::shuffle(ws.begin(), ws.end(), g);
-
-        std::uniform_int_distribution<> rndnedges(d1, d2);
-        int es = rndnedges(g);
-        for (int i=0; i<es; i++) {
-            sources.push_back(v);
-            targets.push_back(ws[i]);
-            vedges[v].push_back(nedges);
-            nedges++;
+    else if (type == RAND) {
+        nvertices   = vals[0];
+        nedges      = 0;
+    
+        assert(start >= 0 && start < nvertices);
+    
+        std::random_device rd;
+        std::mt19937 g(rd());
+    
+        owners.resize(nvertices/2,0);
+        owners.resize(nvertices,1);
+        std::shuffle(owners.begin(), owners.end(), g);  // Unsort (shuffle) the vector
+    
+        std::uniform_int_distribution<> rndcolors(0, vals[1]);
+    
+        for(int i=0; i<nvertices; i++) {
+            colors.push_back(rndcolors(g));
+        }
+    
+        vedges.resize(nvertices);
+        for(int v=0; v<nvertices; v++) {
+            std::vector<int> ws;
+            for (int i=0; i < nvertices; i++) { ws.push_back(i); }
+            std::shuffle(ws.begin(), ws.end(), g);
+    
+            std::uniform_int_distribution<> rndnedges(vals[2], vals[3]);
+            int es = rndnedges(g);
+            for (int i=0; i<es; i++) {
+                sources.push_back(v);
+                targets.push_back(ws[i]);
+                vedges[v].push_back(nedges);
+                nedges++;
+            }
         }
     }
 }

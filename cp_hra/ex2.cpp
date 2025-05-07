@@ -2,30 +2,27 @@
 #include "hra.h"
 #include "graph.h"
 #include "debugstd.h"
+#include "hramodel.cpp"
 
 //--------------------------------------------------------------------------------------
 
 struct options {
     int game_print      = 0; 
     int game_type       = 0; // enum game_type{DEF,JURD,DZN,GM,RAND}
-    int jurd_levels     = 2;
-    int jurd_blocks     = 1;
-    int rand_ns         = 2;
-    int rand_ps         = 2;
-    int rand_d1         = 2;
-    int rand_d2         = 2;
-    int game_parity     = 0; // looking for 0=EVEN or 1=ODD
-    reward_type         game_reward             = MAX; 
-    std::vector<int>    game_starts             = {0};
-    std::string         game_filename           = "";
-    std::string         game_export_filename    = "";
-    int                 game_export_type        = 0; // 0=not export 2=DZN 3=GM
-    int                 game_proof              = 0; // 0=no 1=basic 2=matrixbased 3=hra-matrixbased
+    std::vector<int>    jurd            = {2,1};
+    std::vector<int>    rand            = {2,2,2,2};
+    reward_type         reward          = MAX; 
+    std::vector<int>    starts          = {0};
+    std::string         game_filename   = "";
+    std::string         export_filename = "";
+    int                 export_type     = 0; // 0=not export 2=DZN 3=GM
+    int                 solver          = 1; // 1=HRA-Basic 2=HRA-Memo 3=Matrix 4=CP-HRA
+    int                 proof           = 0; // 0=no 1=yes
 } options;
 
 //--------------------------------------------------------------------------------------
 
-bool parseOptions(int argc, char *argv[]) {
+bool parseMyOptions(int argc, char *argv[]) {
     for (int i=1; i<argc; i++) {
         if (strcmp(argv[i],"--jurd")==0) {
             options.game_type = JURD;
@@ -45,7 +42,7 @@ bool parseOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Jurdzinski level no numeric\n";
                 return false;
             }
-            options.jurd_levels = levels;
+            options.jurd[0] = levels;
 
             i++;
             if (i>=argc || argv[i][0] == '-') {
@@ -61,7 +58,7 @@ bool parseOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Jurdzinski blocks no numeric\n";
                 return false;
             }
-            options.jurd_blocks = blocks;
+            options.jurd[1] = blocks;
         }
         else if (strcmp(argv[i],"--rand")==0) {
             options.game_type = RAND;
@@ -81,7 +78,7 @@ bool parseOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Number of vertices no numeric\n";
                 return false;
             }
-            options.rand_ns = ns;
+            options.rand[0] = ns;
 
             i++;
             if (i>=argc || argv[i][0] == '-') {
@@ -97,7 +94,7 @@ bool parseOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Amount of priorities no numeric\n";
                 return false;
             }
-            options.rand_ps = ps;
+            options.rand[1] = ps;
 
             i++;
             if (i>=argc || argv[i][0] == '-') {
@@ -113,7 +110,7 @@ bool parseOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Min amount of edges  no numeric\n";
                 return false;
             }
-            options.rand_d1 = d1;
+            options.rand[2] = d1;
 
             i++;
             if (i>=argc || argv[i][0] == '-') {
@@ -129,7 +126,7 @@ bool parseOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Max amount of edges  no numeric\n";
                 return false;
             }
-            options.rand_d2 = d2;
+            options.rand[3] = d2;
         }
         else if (strcmp(argv[i],"--dzn")==0) {
             options.game_type = DZN;
@@ -156,7 +153,7 @@ bool parseOptions(int argc, char *argv[]) {
                 return false;                    
             }
 
-            options.game_starts.clear();
+            options.starts.clear();
             std::string s = argv[i];
             std::stringstream ss(s);
             std::string item;
@@ -169,7 +166,7 @@ bool parseOptions(int argc, char *argv[]) {
                     return false;
                 }
 
-                options.game_starts.push_back(std::stoi(item));
+                options.starts.push_back(std::stoi(item));
             }
         }
         else if (strcmp(argv[i],"--print")==0) {
@@ -191,17 +188,11 @@ bool parseOptions(int argc, char *argv[]) {
             }
             options.game_print = print;
         }
-        else if (strcmp(argv[i],"--parity-even")==0) {
-            options.game_parity = EVEN;
+        else if (strcmp(argv[i],"--max")==0) {
+            options.reward = MAX;
         }
-        else if (strcmp(argv[i],"--parity-odd")==0) {
-            options.game_parity = ODD;
-        }
-        else if (strcmp(argv[i],"--reward-max")==0) {
-            options.game_reward = MAX;
-        }
-        else if (strcmp(argv[i],"--reward-min")==0) {
-            options.game_reward = MIN;
+        else if (strcmp(argv[i],"--min")==0) {
+            options.reward = MIN;
         }
         else if (strcmp(argv[i],"--export-dzn")==0) {
             i++;
@@ -209,8 +200,8 @@ bool parseOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Target DZN file name missing\n";
                 return false;                    
             }
-            options.game_export_type = DZN;
-            options.game_export_filename = argv[i];                
+            options.export_type = DZN;
+            options.export_filename = argv[i];                
         }
         else if (strcmp(argv[i],"--export-gm")==0) {
             i++;
@@ -218,17 +209,23 @@ bool parseOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Target GM file name missing\n";
                 return false;                    
             }
-            options.game_export_type = GM;
-            options.game_export_filename = argv[i];                
+            options.export_type = GM;
+            options.export_filename = argv[i];                
         }
-        else if (strcmp(argv[i],"--proof")==0) {
-            options.game_proof = 3;
+        else if (strcmp(argv[i],"--hra-basic")==0) {
+            options.solver = 1;
+        }
+        else if (strcmp(argv[i],"--hra-memo")==0) {
+            options.solver = 2;
         }
         else if (strcmp(argv[i],"--matrix-based")==0) {
-            options.game_proof = 2;
+            options.solver = 3;
         }
-        else if (strcmp(argv[i],"--basic")==0) {
-            options.game_proof = 1;
+        else if (strcmp(argv[i],"--cp-hra")==0) {
+            options.solver = 4;
+        }
+        else if (strcmp(argv[i],"--proof")==0) {
+            options.proof = 1;
         }
         else if (strcmp(argv[i],"--help")==0) {
             std::cout << "Usage: " << argv[0] << " [options]\n";
@@ -239,13 +236,15 @@ bool parseOptions(int argc, char *argv[]) {
             std::cout << "  --rand <ns> <ps> <d1> <d2> : Random game\n";
             std::cout << "  --start <vertex>           : Starting vertex\n";
             std::cout << "  --print <type>             : Print game (0=Parity, 1=Parity+Time, 2=Verbose)\n";
-            std::cout << "  --parity-even              : Search for play EVEN\n";
-            std::cout << "  --parity-odd               : Search for play ODD\n";
-            std::cout << "  --reward-max               : Seek to maximize the color\n";
-            std::cout << "  --reward-min               : Seek to minimize the color\n";
+            std::cout << "  --max                      : Seek to maximize the color\n";
+            std::cout << "  --min                      : Seek to minimize the color\n";
             std::cout << "  --export-dzn <filename>    : Export game to DZN format (not solve)\n";
             std::cout << "  --export-gm <filename>     : Export game to GM format (not solve)\n";
-            std::cout << "  --proof                    : Compare results of HRA using Matrix-based\n";
+            std::cout << "  --hra-basic                : Solve using HRA-Basic\n";
+            std::cout << "  --hra-memo                 : Solve using HRA-MEMO\n";
+            std::cout << "  --matrix-based             : Solve using Matrix-Based\n";
+            std::cout << "  --cp-hra                   : Solve using CP-HRA\n";
+            std::cout << "  --proof                    : Compare results using Matrix-based\n";
             return false;
         }
         else {
@@ -261,7 +260,7 @@ bool parseOptions(int argc, char *argv[]) {
 int main(int argc, char *argv[])
 {
     launchdebugstd();
-    if (!parseOptions(argc, argv)) exit(1);
+    if (!parseMyOptions(argc, argv)) exit(1);
     Game* game = nullptr;
 
     //----------------------------------------------------------------------------------
@@ -270,21 +269,16 @@ int main(int argc, char *argv[])
 
     switch (options.game_type) {
         case 1: // jurd
-            game = new Game(options.jurd_levels, options.jurd_blocks, 
-                            options.game_starts[0], options.game_reward);
+            game = new Game(JURD, options.jurd, options.starts[0], options.reward);
             break;
         case 2: // dzn
-            game = new Game(DZN, options.game_filename,
-                            options.game_starts[0], options.game_reward);
+            game = new Game(DZN, options.game_filename, options.starts[0], options.reward);
             break;
         case 3: // gm
-            game = new Game(GM, options.game_filename,
-                            options.game_starts[0], options.game_reward);
+            game = new Game(GM, options.game_filename, options.starts[0], options.reward);
             break;
         case 4: // random
-            game = new Game(options.rand_ns, options.rand_ps,
-                            options.rand_d1, options.rand_d2,
-                            options.game_starts[0], options.game_reward);
+            game = new Game(RAND, options.rand, options.starts[0], options.reward);
             break;
         default:
             game = new Game({0,1},{3,2},{0,1},{1,0},EVEN,MIN);
@@ -297,53 +291,86 @@ int main(int argc, char *argv[])
         game->printGame();
     }
 
-    if (options.game_export_type == DZN) {
-        game->exportFile(DZN, options.game_export_filename);
+    if (options.export_type == DZN && options.game_type != DZN) {
+        game->exportFile(DZN, options.export_filename);
     }
-    else if (options.game_export_type == GM) {
-        game->exportFile(GM, options.game_export_filename);
+    else if (options.export_type == GM && options.game_type != GM) {
+        game->exportFile(GM, options.export_filename);
     }
 
     //----------------------------------------------------------------------------------
 
-    if (options.game_proof==3) { //using matrix-based to proof HRA
-        // game->reward = MAX;
-        if (options.game_type != GM) {
+    // if (options.proof) { //using matrix-based to proof HRA
+    //     // game->reward = MAX;
+    //     if (options.game_type != GM) {
 
-        }
-        // Graph zlk(options.game_filename.c_str());
-        Graph zlk(*game);
+    //     }
+    //     // Graph zlk(options.game_filename.c_str());
+    //     Graph zlk(*game);
 
-        auto res = zlk.Solve();
-        std::cout << "Testing EVEN (" << res.first.size() <<  ") Faults: ";
-        int counter=0;
-        for (auto& r : res.first) {
-            if (r>=game->nvertices) {
-                std::cout << r << "*, ";
-                counter++;
-                continue;
+    //     auto res = zlk.Solve();
+    //     std::cout << "Testing EVEN (" << res.first.size() <<  ") Faults: ";
+    //     int counter=0;
+    //     for (auto& r : res.first) {
+    //         if (r>=game->nvertices) {
+    //             std::cout << r << "*, ";
+    //             counter++;
+    //             continue;
+    //         }
+    //         game->start = r;
+    //         auto play = getPlay(*game,EVEN,game->start);
+    //         if (play != EVEN)   std::cout << r << ",";
+    //         else                counter++;
+    //     }
+    //     std::cout << "  \n" << counter << "/" << res.first.size() << " ok"<< std::endl;
+
+    //     std::cout << "Testing ODD (" << res.second.size() <<  ") Faults: ";
+    //     counter=0;
+    //     for (auto& r : res.second) {
+    //         game->start = r;
+    //         auto play = getPlay(*game,EVEN,game->start);
+    //         if (play != ODD)   std::cout << r << ",";
+    //         else                counter++;
+    //     }
+    //     std::cout << "  \n" << counter << "/" << res.second.size() << " ok" << std::endl;
+    // }
+
+    //----------------------------------------------------------------------------------
+
+    if (options.solver==1 || options.solver==2) { // HRA (Basic or MEMO)
+        for(auto& v0 : options.starts) {
+            start = std::chrono::high_resolution_clock::now();
+
+            auto play = getPlay(*game, 0, v0, options.solver==1);
+
+            end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> totaltime = end - start;
+
+            if (options.game_print > 0) {
+                std::cout << "Preparation time: " << preptime.count() << std::endl;
             }
-            game->start = r;
-            auto play = getPlay(*game,EVEN,game->start);
-            if (play != EVEN)   std::cout << r << ",";
-            else                counter++;
+            
+            switch (options.game_print) {
+                case 0:
+                    std::cout   << options.starts[0] << ": "
+                                << (play==EVEN?"EVEN":"ODD") 
+                                << std::endl;
+                    break;
+                case 1: case 2:
+                    std::cout   << options.starts[0] << ": "
+                                << (play==EVEN?"EVEN":"ODD") << " "
+                                << totaltime.count() 
+                                << std::endl; 
+                    break;
+                default:
+                    break;
+            }
         }
-        std::cout << "  \n" << counter << "/" << res.first.size() << " ok"<< std::endl;
-
-        std::cout << "Testing ODD (" << res.second.size() <<  ") Faults: ";
-        counter=0;
-        for (auto& r : res.second) {
-            game->start = r;
-            auto play = getPlay(*game,EVEN,game->start);
-            if (play != ODD)   std::cout << r << ",";
-            else                counter++;
-        }
-        std::cout << "  \n" << counter << "/" << res.second.size() << " ok" << std::endl;
     }
-
+    
     //----------------------------------------------------------------------------------
 
-    if (options.game_proof==2) { //matrix-based solution
+    else if (options.solver==3) { //matrix-based solution
 
         start = std::chrono::high_resolution_clock::now();
 
@@ -364,7 +391,7 @@ int main(int argc, char *argv[])
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> totaltime = end - start;
 
-        std::cout   << options.game_starts[0] << ": ";
+        std::cout   << options.starts[0] << ": ";
         if (std::find(res.first.begin(), res.first.end(), game->start) != res.first.end()) {
             std::cout << "EVEN " ;
         } else {
@@ -390,11 +417,12 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------------------------------------------
 
-    while (options.game_proof<2 && !options.game_export_type) {
+    else if (options.solver==4) { //CP-HRA
+        HRAModel* model = new HRAModel(*game);
+        // so.print_sol = false;
+        so.nof_solutions = 0;
         start = std::chrono::high_resolution_clock::now();
-
-        auto play = getPlay(*game, options.game_parity, options.game_starts[0], options.game_proof==1);
-
+        engine.solve(model);
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> totaltime = end - start;
 
@@ -404,13 +432,13 @@ int main(int argc, char *argv[])
         
         switch (options.game_print) {
             case 0:
-                std::cout   << options.game_starts[0] << ": "
-                            << (play==EVEN?"EVEN":"ODD") 
+                std::cout   << options.starts[0] << ": "
+                            << (model->getVal(options.starts[0])?"EVEN":"ODD") 
                             << std::endl;
                 break;
             case 1: case 2:
-                std::cout   << options.game_starts[0] << ": "
-                            << (play==EVEN?"EVEN":"ODD") << " "
+                std::cout   << options.starts[0] << ": "
+                            << (model->getVal(options.starts[0])?"EVEN":"ODD") << " "
                             << totaltime.count() 
                             << std::endl; 
                 break;
@@ -418,9 +446,6 @@ int main(int argc, char *argv[])
                 break;
         }
 
-        options.game_starts.erase(options.game_starts.begin());
-        if (options.game_starts.size() == 0) break;
-        game->setStart(options.game_starts[0]);
     }
 
     //----------------------------------------------------------------------------------

@@ -49,8 +49,8 @@ public:
             std::vector<int> sou,std::vector<int> tar, 
             int startv, reward_type rew=MIN);
     Game(int type, std::string filename, int start, reward_type rew=MIN);
-    Game(int levels, int blocks, int start, reward_type rew=MIN);
-    Game(int n, int p, int d1, int d2, int start, reward_type rew=MIN);
+    Game(int type, std::vector<int> vals, int start, reward_type rew=MIN);
+
     void setStart(int startv);
     void setReward(reward_type rew);
     void exportFile(int type, std::string filename);

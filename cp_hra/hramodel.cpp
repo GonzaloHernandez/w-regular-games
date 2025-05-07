@@ -7,7 +7,8 @@
 #include "chuffed/core/propagator.h"
 
 #include "chuffed/globals/dconnected.h"
-#include "../chuffed-patch/qualify.cpp"
+#include "../chuffed-patch/qualifynodeviations.cpp"
+#include "../chuffed-patch/qualifywithdeviations.cpp"
 
 #ifndef debugchuffed_h
 #include "debugchuffed.h"
@@ -107,7 +108,8 @@ public:
 
         // -------------------------------------------------------------------
 
-        new Qualify(g,V,E,Q);
+        new QualifyNoDeviations(g,V,E,Q);
+        new QualifyWithDeviations(g,V,E,Q);
 
         // -------------------------------------------------------------------
 
@@ -176,19 +178,26 @@ public:
         }
         out << "]";
     }
+
+    //----------------------------------------------------------------
+
+    bool getVal(int v) {
+        return Q[v].getVal();
+    }
+
 };
 
-int main(int argc, char *argv[])
-{
-    launchdebugchuffed();
-    launchdebugstd();
-    Game g(DZN, "data/game-other.dzn",0,MAX);
+// int main(int argc, char *argv[])
+// {
+//     launchdebugchuffed();
+//     launchdebugstd();
+//     Game g(DZN, "data/game-wikidzn",0,MAX);
 
-    HRAModel* model = new HRAModel(g);
+//     HRAModel* model = new HRAModel(g);
 
-    so.nof_solutions = 0;
-    engine.solve(model);
+//     so.nof_solutions = 0;
+//     engine.solve(model);
 
-    // delete model;
-    return 0;
-}
+//     // delete model;
+//     return 0;
+// }

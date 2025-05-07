@@ -40,7 +40,10 @@
                 "${workspaceFolder}/cp_hra/graph.cpp",
                 "${workspaceFolder}/cp_hra/ex2.cpp",
                 "-o",
-                "${workspaceFolder}/build/ex2"
+                "${workspaceFolder}/build/ex2",
+                "-I${env:HOME}/.local/include",
+                "-L${env:HOME}/.local/lib",
+                "-lchuffed"
             ],
             "problemMatcher": [
                 "$gcc"
