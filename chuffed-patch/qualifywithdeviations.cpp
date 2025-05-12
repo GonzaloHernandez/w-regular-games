@@ -80,7 +80,7 @@ public:
         }
         else {
             int p = g.owners[v];
-            for(auto& e : g.vedges[v]) {
+            for(auto& e : g.outs[v]) {
                 int w = g.targets[e];
                 if (Q[w].isFalse()) {
                     if (Q[w].getVal() == p) {

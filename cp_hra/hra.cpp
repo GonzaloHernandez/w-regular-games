@@ -47,7 +47,7 @@ signed char getPlayBasic(Game& g, std::vector<int> path, int current) {
     }
     else {
         int p = g.owners[current];
-        for(auto& e : g.vedges[current]) {
+        for(auto& e : g.outs[current]) {
             std::vector <int> newpath = path;
             newpath.push_back(current);
             auto next = getPlayBasic(g, newpath, g.targets[e]);
@@ -69,7 +69,7 @@ signed char getPlayBasic(Game& g, std::vector<int> path, int current) {
 //     }
 //     else {
 //         if (g.owners[current] == p) {
-//             for(auto& e : g.vedges[current]) {
+//             for(auto& e : g.outs[current]) {
 //                 if (memo[g.targets[e]] == p) {
 //                     memo[current] = p;
 //                     return p; // with this edge current can force p (already memoized)
@@ -116,7 +116,7 @@ splay getPlayMemo( Game& g, std::vector<int> path, int v, std::vector<splay>& me
     }
     else {
         splay play;
-        for(auto& e : g.vedges[v]) {
+        for(auto& e : g.outs[v]) {
             int w = g.targets[e];
             
             if (!memo[w].touched()) {
@@ -173,8 +173,8 @@ splay getPlayMemo( Game& g, std::vector<int> path, int v, std::vector<splay>& me
 
 //     int np = g.owners[current];
     
-//     while (memo[current] < g.vedges[current].size()) {
-//         int e = g.vedges[current][memo[current]];
+//     while (memo[current] < g.outs[current].size()) {
+//         int e = g.outs[current][memo[current]];
 //         memo[current]++;
 
 //         if (parities[g.targets[e]] == np) {

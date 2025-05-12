@@ -46,7 +46,7 @@ public:
 
         // For every vertice needs to every outgoing edge activated
         for (int v=0; v<g.nvertices; v++) {
-            for (auto& e : g.vedges[v]) {
+            for (auto& e : g.outs[v]) {
                 vec<Lit> clause;
                 clause.push( V[v].getLit(false) );
                 clause.push( E[e].getLit(true) );
@@ -88,7 +88,7 @@ public:
 
         // v wins if some outgoing edge is the same color as v
         for (int v=0; v<g.nvertices; v++) {
-            for (auto& e : g.vedges[v]) { int w = g.targets[e];
+            for (auto& e : g.outs[v]) { int w = g.targets[e];
                 vec<Lit> clause;
                 clause.push( Q[w].getLit( !g.owners[v] ) );
                 clause.push( Q[v].getLit( g.owners[v] ) );
@@ -99,7 +99,7 @@ public:
         // v losses if every outgoing edge is not the same color as v
         for (int v=0; v<g.nvertices; v++) {
             vec<Lit> clause;
-            for (auto& e : g.vedges[v]) { int w = g.targets[e];
+            for (auto& e : g.outs[v]) { int w = g.targets[e];
                 clause.push( Q[w].getLit( g.owners[v]) );
             }
             clause.push( Q[v].getLit( !g.owners[v]) );
@@ -109,7 +109,7 @@ public:
         // -------------------------------------------------------------------
 
         new QualifyNoDeviations(g,V,E,Q);
-        new QualifyWithDeviations(g,V,E,Q);
+        // new QualifyWithDeviations(g,V,E,Q);
 
         // -------------------------------------------------------------------
 

@@ -81,7 +81,7 @@ public:
                 bool detour = false;
                 for (int i=index; i<pathV.size(); i++) {
                     int v_ = pathV[i];
-                    if (g.owners[v_]!=parity && g.vedges[v_].size()>1) {
+                    if (g.owners[v_]!=parity && g.outs[v_].size()>1) {
                         detour = true;
                         break;
                     }
@@ -99,7 +99,7 @@ public:
             }
         }
         else {
-            for (auto& e : g.vedges[v]) {
+            for (auto& e : g.outs[v]) {
                 if (E[e].isTrue()) {
                     int w = g.targets[e];
                     if (!Q[w].isFixed()) {

@@ -298,46 +298,63 @@ int main(int argc, char *argv[])
         game->exportFile(GM, options.export_filename);
     }
 
-    //----------------------------------------------------------------------------------
-
-    // if (options.proof) { //using matrix-based to proof HRA
-    //     // game->reward = MAX;
-    //     if (options.game_type != GM) {
-
-    //     }
-    //     // Graph zlk(options.game_filename.c_str());
-    //     Graph zlk(*game);
-
-    //     auto res = zlk.Solve();
-    //     std::cout << "Testing EVEN (" << res.first.size() <<  ") Faults: ";
-    //     int counter=0;
-    //     for (auto& r : res.first) {
-    //         if (r>=game->nvertices) {
-    //             std::cout << r << "*, ";
-    //             counter++;
-    //             continue;
-    //         }
-    //         game->start = r;
-    //         auto play = getPlay(*game,EVEN,game->start);
-    //         if (play != EVEN)   std::cout << r << ",";
-    //         else                counter++;
-    //     }
-    //     std::cout << "  \n" << counter << "/" << res.first.size() << " ok"<< std::endl;
-
-    //     std::cout << "Testing ODD (" << res.second.size() <<  ") Faults: ";
-    //     counter=0;
-    //     for (auto& r : res.second) {
-    //         game->start = r;
-    //         auto play = getPlay(*game,EVEN,game->start);
-    //         if (play != ODD)   std::cout << r << ",";
-    //         else                counter++;
-    //     }
-    //     std::cout << "  \n" << counter << "/" << res.second.size() << " ok" << std::endl;
-    // }
 
     //----------------------------------------------------------------------------------
 
-    if (options.solver==1 || options.solver==2) { // HRA (Basic or MEMO)
+    if (options.proof) { //using matrix-based to proof HRA
+        // game->reward = MAX;
+        // Graph zlk(options.game_filename.c_str());
+        if (options.reward == MIN) {
+            std::cout << "WARNING: Using MIN reward for proof is not available for now." << std::endl;
+        }
+        else if (options.solver == 4) {
+            std::cout << "WARNING: Using CP-HRA is not available for now." << std::endl;
+            
+        }
+        else {
+            Graph zlk(*game);
+
+            auto res = zlk.Solve();
+            std::cout << "Testing EVEN (" << res.first.size() <<  ") Faults: ";
+            int counter=0;
+            for (auto& r : res.first) {
+                if (r>=game->nvertices) {
+                    std::cout << r << "*, ";
+                    counter++;
+                    continue;
+                }
+                game->start = r;
+                if (options.solver<=2) {
+                    auto play = getPlay(*game,EVEN,game->start, options.solver==1);
+                    if (play != EVEN)   std::cout << r << ",";
+                    else                counter++;
+                }
+                else if(options.solver==4) {
+    
+                }
+            }
+            std::cout << "  \n" << counter << "/" << res.first.size() << " ok"<< std::endl;
+    
+            std::cout << "Testing ODD (" << res.second.size() <<  ") Faults: ";
+            counter=0;
+            for (auto& r : res.second) {
+                game->start = r;
+                if (options.solver<=2) {
+                    auto play = getPlay(*game,EVEN,game->start, options.solver==1);
+                    if (play != ODD)   std::cout << r << ",";
+                    else                counter++;
+                }
+                else if(options.solver==4) {
+    
+                }
+            }
+            std::cout << "  \n" << counter << "/" << res.second.size() << " ok" << std::endl;
+        }
+    }
+
+    //----------------------------------------------------------------------------------
+
+    else if (options.solver==1 || options.solver==2) { // HRA (Basic or MEMO)
         for(auto& v0 : options.starts) {
             start = std::chrono::high_resolution_clock::now();
 
@@ -419,7 +436,8 @@ int main(int argc, char *argv[])
 
     else if (options.solver==4) { //CP-HRA
         HRAModel* model = new HRAModel(*game);
-        // so.print_sol = false;
+
+        so.print_sol = (options.game_print >= 2);
         so.nof_solutions = 0;
         start = std::chrono::high_resolution_clock::now();
         engine.solve(model);
@@ -429,7 +447,7 @@ int main(int argc, char *argv[])
         if (options.game_print > 0) {
             std::cout << "Preparation time: " << preptime.count() << std::endl;
         }
-        
+
         switch (options.game_print) {
             case 0:
                 std::cout   << options.starts[0] << ": "

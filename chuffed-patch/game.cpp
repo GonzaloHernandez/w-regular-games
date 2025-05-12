@@ -38,7 +38,7 @@ void Game::parseline_dzn(const std::string& line,std::vector<int>& myvec) {
 //----------------------------------------------------------------------------------
 
 void Game::parseline_gm(const std::string& line,std::vector<int>& vinfo, 
-                        std::vector<int>& vedges, std::string& comment) 
+                        std::vector<int>& outs, std::string& comment) 
 {
     std::regex pattern(R"((\d+)\s+(\d+)\s+(\d+)\s+([\d,]+)(?:\s+\"([^"]+)\")?;?)");
     std::smatch matches;
@@ -54,7 +54,7 @@ void Game::parseline_gm(const std::string& line,std::vector<int>& vinfo,
         std::stringstream ss(matches[4]);
         std::string num;
         while (std::getline(ss, num, ',')) {
-            vedges.push_back(std::stoi(num));
+            outs.push_back(std::stoi(num));
         }
         comment = matches[5];
     }
@@ -75,7 +75,8 @@ Game::Game( std::vector<int> own,std::vector<int> col,
 
     assert(start >= 0 && start < nvertices);
 
-    vedges.resize(nvertices);
+    outs.resize(nvertices);
+    ins .resize(nvertices);
 
     for(int i=0; i<nvertices; i++) {
         owners[i]=own[i];
@@ -84,7 +85,8 @@ Game::Game( std::vector<int> own,std::vector<int> col,
     for(int i=0; i<nedges; i++) {
         sources[i]=sou[i];
         targets[i]=tar[i];
-        vedges[sources[i]].push_back(i);
+        outs[sources[i]].push_back(i);
+        ins [targets[i]].push_back(i);
     }
 }
 
@@ -124,9 +126,11 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
             assert(start >= 0 && start < nvertices);
 
             fixStartingZero();
-            vedges.resize(nvertices);
+            outs.resize(nvertices);
+            ins .resize(nvertices);
             for(int i=0; i<nedges; i++) {
-                vedges[sources[i]].push_back(i);
+                outs[sources[i]].push_back(i);
+                ins [targets[i]].push_back(i);
             }
             break;
 
@@ -140,12 +144,12 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
                     lastvertex = stoi(line.substr(line.find(" ")));
                     verts.resize(lastvertex+1);
                 } else {
-                    std::vector<int>    vinfo,vedges;
+                    std::vector<int>    vinfo,outs;
                     std::string         comment;
-                    parseline_gm(line,vinfo,vedges,comment);
+                    parseline_gm(line,vinfo,outs,comment);
                     verts[vinfo[0]] = counter;
-                    vedges.insert(vedges.begin(),vinfo[0]);
-                    tedges.push_back(vedges);
+                    outs.insert(outs.begin(),vinfo[0]); // check
+                    tedges.push_back(outs);
                     owners.push_back(vinfo[2]);
                     colors.push_back(vinfo[1]);
                     counter++;
@@ -157,14 +161,16 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
 
             assert(start >= 0 && start < nvertices);
 
-            vedges.resize(nvertices);
+            outs.resize(nvertices);
+            ins .resize(nvertices);
 
             nedges = 0;
             for(int s=0; s<nvertices; s++) {
                 for(int t=1; t<tedges[s].size(); t++) {
                     sources.push_back(verts[tedges[s][0]]);
                     targets.push_back(verts[tedges[s][t]]);
-                    vedges[verts[tedges[s][0]]].push_back(nedges);
+                    outs[verts[tedges[s][0]]].push_back(nedges);
+                    ins [verts[tedges[s][t]]].push_back(nedges);
                     nedges++;
                 }
             }
@@ -239,9 +245,11 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
         colors.push_back(l*2);
 
         fixStartingZero();
-        vedges.resize(nvertices);
+        outs.resize(nvertices);
+        ins .resize(nvertices);
         for(int i=0; i<nedges; i++) {
-            vedges[sources[i]].push_back(i);
+            outs[sources[i]].push_back(i);
+            ins [targets[i]].push_back(i);
         }
     }
     else if (type == RAND) {
@@ -263,7 +271,8 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
             colors.push_back(rndcolors(g));
         }
     
-        vedges.resize(nvertices);
+        outs.resize(nvertices);
+        ins .resize(nvertices);
         for(int v=0; v<nvertices; v++) {
             std::vector<int> ws;
             for (int i=0; i < nvertices; i++) { ws.push_back(i); }
@@ -274,7 +283,8 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
             for (int i=0; i<es; i++) {
                 sources.push_back(v);
                 targets.push_back(ws[i]);
-                vedges[v].push_back(nedges);
+                outs[v].push_back(nedges);
+                ins[ws[i]].push_back(nedges);
                 nedges++;
             }
         }
@@ -322,8 +332,8 @@ void Game::exportFile(int type, std::string filename) {
         file << "parity " << nvertices << ";" << std::endl;
         for (int v=0; v<nvertices; v++) {
             file << v << " " << colors[v] << " " << owners[v] << " ";
-            for (int e=0; e<vedges[v].size(); e++) {
-                file << (e?",":"") << targets[vedges[v][e]];
+            for (int e=0; e<outs[v].size(); e++) {
+                file << (e?",":"") << targets[outs[v][e]];
             }
             file << ";" << std::endl;
         }

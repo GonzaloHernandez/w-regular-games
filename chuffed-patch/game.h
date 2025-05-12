@@ -28,7 +28,8 @@ public:
     std::vector<int>    colors;
     std::vector<int>    sources;
     std::vector<int>    targets;
-    std::vector<std::vector<int>>   vedges;
+    std::vector<std::vector<int>>   outs;
+    std::vector<std::vector<int>>   ins;
     int nvertices;
     int nedges;
     int start;
@@ -39,7 +40,7 @@ public:
     void fixStartingZero();
     void parseline_dzn(const std::string& line,std::vector<int>& myvec);
     void parseline_gm(  const std::string& line,std::vector<int>& vinfo, 
-                        std::vector<int>& vedges, std::string& comment);
+                        std::vector<int>& outs, std::string& comment);
 
     //----------------------------------------------------------------------------------
 
