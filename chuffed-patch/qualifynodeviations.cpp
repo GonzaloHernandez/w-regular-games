@@ -119,7 +119,9 @@ public:
         for(int v=0; v<g.nvertices; v++) {
             if (!Q[v].isFixed()) {
                 vec<int> pathV;
-                if (checker(pathV, v) == CF_CONFLICT) return false;
+                int status = checker(pathV, v);
+                if (status == CF_CONFLICT)  return false;
+                if (status == CF_QUALIFIED) return true;
             }
         }
 
