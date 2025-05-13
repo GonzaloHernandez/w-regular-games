@@ -19,9 +19,11 @@ private:
 
 public:
     //-----------------------------------------------------------------------
-    QualifyNoDeviations(Game& g, vec<BoolView>& Q)
-    :   g(g), Q(Q)
+    QualifyNoDeviations(Game& g, vec<BoolView>& V, vec<BoolView>& E, vec<BoolView>& Q)
+    :   g(g), V(V), E(E), Q(Q)
     {
+        for (int i=0; i<g.nvertices; i++)   V[i].attach(this, 1 , EVENT_F );
+        for (int i=0; i<g.nedges; i++)      E[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.nvertices; i++)   Q[i].attach(this, 1 , EVENT_F );
     }
     //-----------------------------------------------------------------------
@@ -85,14 +87,11 @@ public:
                     }
                 }
                 if (!detour) {
+                    vec<Lit> lits;
+                    lits.push();
+                    clausify(pathV,V,lits,0);
+                    Clause* reason = Reason_new(lits);
                     if (!Q[v].isFixed()) {
-                        vec<Lit> lits;
-                        lits.push();
-                        // for (int i=0; i<g.outs[v].size(); i++) {
-                        //     int w = g.targets[g.outs[v][i]];
-                        //     lits.push(Q[w].getLit(parity));
-                        // }
-                        Clause* reason = Reason_new(lits);
                         if (!Q[v].setVal( parity ,reason)) return CF_CONFLICT;
                         return CF_QUALIFIED;
                     }
@@ -101,13 +100,15 @@ public:
         }
         else {
             for (auto& e : g.outs[v]) {
-                int w = g.targets[e];
-                if (!Q[w].isFixed()) {
-                    vec<int> newpathV(pathV);
-                    newpathV.push(v);
-                    int status = checker(newpathV, w);
-                    if (status != CF_DONE)
-                        return status;
+                if (E[e].isTrue()) {
+                    int w = g.targets[e];
+                    if (!Q[w].isFixed()) {
+                        vec<int> newpathV(pathV);
+                        newpathV.push(v);
+                        int status = checker(newpathV, w);
+                        if (status != CF_DONE)
+                            return status;
+                    }
                 }
             }
             

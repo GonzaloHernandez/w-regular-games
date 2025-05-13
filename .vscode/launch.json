@@ -36,16 +36,17 @@
             "args": [   
                 // "--gm", "${env:HOME}/gm/randomgame(5000,_10,_1,_20)id=0.gm",
                 // "--gm", "${workspaceFolder}/build/rand.gm",
-                "--dzn", "${workspaceFolder}/data/game-wiki.dzn",
+                "--dzn", "${workspaceFolder}/data/game-jurd-2-1.dzn",
                 // "--jurd","2","1",
                 // "--gm","build/rand01.gm",
                 "--start","0",
                 // "--verbose"
                 // "--proof",
-                // "--reward-min",
+                "--min",
                 // "--export-gm","/home/chalo/dbg.gm",
-                // "--print","0",
-                // "--matrix-based"
+                "--print","2",
+                // "--matrix-based",
+                "--cp-hra",
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

@@ -21,14 +21,67 @@
 class HRAModel : public Problem {
 private:
     Game&   g;
+    vec<BoolView>   V;
+    vec<BoolView>   E;
     vec<BoolView>   Q;
 
 public:
 
     HRAModel(Game&g) : g(g) {
+        V.growTo(g.nvertices);
+        E.growTo(g.nedges);
         Q.growTo(g.nvertices);
 
+        for (int i=0; i<g.nvertices; i++) V[i] = newBoolVar();
+        for (int i=0; i<g.nedges;    i++) E[i] = newBoolVar();
         for (int i=0; i<g.nvertices; i++) Q[i] = newBoolVar();
+
+        // -------------------------------------------------------------------
+        // Connecting the graph
+
+        // Activating first vertex
+        vec<Lit> clause;
+        clause.push(V[g.start].getLit(true));
+        sat.addClause(clause);
+
+        // For every vertice needs to every outgoing edge activated
+        for (int v=0; v<g.nvertices; v++) {
+            for (auto& e : g.outs[v]) {
+                vec<Lit> clause;
+                clause.push( V[v].getLit(false) );
+                clause.push( E[e].getLit(true) );
+                sat.addClause(clause);
+            }
+        }
+
+        // For every activated edge, the target vertex must be activated
+        for (int e=0; e<g.nedges; e++) {
+            vec<Lit> clause;
+            clause.push( E[e].getLit(false) );
+            clause.push( V[g.targets[e]].getLit(true) );
+            sat.addClause(clause);
+        }
+
+        // Every unreachable vertex must be avoided.
+        vec<vec<int>> _in, _out, _en;
+        for (int v=0; v<g.owners.size(); v++) {
+            _in.push();
+            _out.push();
+            for (int e=0; e<g.targets.size(); e++) {
+                if (g.targets[e]==v) {
+                    _in[v].push(e);
+                }
+                if (g.sources[e]==v) {
+                    _out[v].push(e);
+                }
+            }
+        }
+        for (int e=0; e<g.targets.size(); e++) {
+            _en.push();
+            _en[e].push(g.sources[e]);
+            _en[e].push(g.targets[e]);
+        }
+        new DReachabilityPropagator(g.start, V, E, _in, _out, _en);
 
         // -------------------------------------------------------------------
         // Qualifying vertices on the type of play that can force
@@ -55,7 +108,7 @@ public:
 
         // -------------------------------------------------------------------
 
-        new QualifyNoDeviations(g,Q);
+        new QualifyNoDeviations(g,V,E,Q);
         // new QualifyWithDeviations(g,V,E,Q);
 
         // -------------------------------------------------------------------
@@ -64,10 +117,20 @@ public:
 
         // -------------------------------------------------------------------
 
+        vec<Branching*> bv(static_cast<unsigned int>(g.nvertices));
+        vec<Branching*> be(static_cast<unsigned int>(g.nedges));
         vec<Branching*> bq(static_cast<unsigned int>(g.nvertices));
+        vec<Branching*> bl(static_cast<unsigned int>(g.nedges));
+        vec<Branching*> bc(static_cast<unsigned int>(g.nedges));
+        for (int i = g.nvertices; (i--) != 0;) bv[i] = &V[i];
+        for (int i = g.nedges;    (i--) != 0;) be[i] = &E[i];
         for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
         
+        branch(bv, VAR_INORDER, VAL_MIN);
+        branch(be, VAR_INORDER, VAL_MIN);
         branch(bq, VAR_INORDER, VAL_MIN);
+        output_vars(bv);
+        output_vars(be);
         output_vars(bq);
     }
 
@@ -92,8 +155,23 @@ public:
     //----------------------------------------------------------------
     
     void print(std::ostream& out)   override {
+        out << "V=[";
         bool first = true;
-        out << "Q=[";
+        for (int i=0; i<V.size(); i++) {
+            if (V[i].isTrue()) {
+                if (first) first=false; else out << ",";
+                out << i;
+            }
+        }
+        out << "]\nE=[";
+        first = true;
+        for (int i=0; i<E.size(); i++) {
+            if (E[i].isTrue()) {
+                if (first) first=false; else out << ",";
+                out << i;
+            }
+        }
+        out << "]\nQ=[";
         first = true;
         for (int i=0; i<Q.size(); i++) {
             out << (!i?"":",") << Q[i].getVal();

@@ -260,6 +260,7 @@ bool parseMyOptions(int argc, char *argv[]) {
 int main(int argc, char *argv[])
 {
     launchdebugstd();
+    launchdebugchuffed();
     if (!parseMyOptions(argc, argv)) exit(1);
     Game* game = nullptr;
 
