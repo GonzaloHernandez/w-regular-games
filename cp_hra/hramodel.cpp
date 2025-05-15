@@ -8,7 +8,8 @@
 
 #include "chuffed/globals/dconnected.h"
 #include "../chuffed-patch/qualifynodeviations.cpp"
-#include "../chuffed-patch/qualifywithdeviations.cpp"
+// #include "../chuffed-patch/qualifywithdeviations.cpp"
+#include "../chuffed-patch/coattractor.cpp"
 
 #ifndef debugchuffed_h
 #include "debugchuffed.h"
@@ -55,7 +56,8 @@ public:
 
         // -------------------------------------------------------------------
 
-        new QualifyNoDeviations(g,Q);
+        // new QualifyNoDeviations(g,Q);
+        new CoAttractor(g,Q);
         // new QualifyWithDeviations(g,V,E,Q);
 
         // -------------------------------------------------------------------

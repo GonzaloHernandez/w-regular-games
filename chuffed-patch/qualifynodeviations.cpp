@@ -9,8 +9,6 @@
 class QualifyNoDeviations : public Propagator {
 private:
     Game& g;
-    vec<BoolView> V;
-    vec<BoolView> E;
     vec<BoolView> Q;
 
     const int   CF_DONE         = 1;
@@ -22,6 +20,7 @@ public:
     QualifyNoDeviations(Game& g, vec<BoolView>& Q)
     :   g(g), Q(Q)
     {
+        priority = 1;
         for (int i=0; i<g.nvertices; i++)   Q[i].attach(this, 1 , EVENT_F );
     }
     //-----------------------------------------------------------------------

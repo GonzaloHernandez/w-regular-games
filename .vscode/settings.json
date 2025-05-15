@@ -97,6 +97,7 @@
         "strstream": "cpp",
         "csetjmp": "cpp",
         "csignal": "cpp",
-        "shared_mutex": "cpp"
+        "shared_mutex": "cpp",
+        "*.inc": "cpp"
     }
 }

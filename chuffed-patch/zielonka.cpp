@@ -6,7 +6,7 @@
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
 
-class CoAttractor : public Propagator {
+class Zielonka : public Propagator {
 private:
     Game& g;
     vec<BoolView> V;
@@ -19,7 +19,7 @@ private:
 
 public:
     //-----------------------------------------------------------------------
-    CoAttractor(Game& g, vec<BoolView>& Q)
+    Zielonka(Game& g, vec<BoolView>& Q)
     :   g(g), Q(Q)
     {
         priority = 5;
@@ -115,38 +115,26 @@ public:
         return U;
     }
     //-----------------------------------------------------------------------
-    std::array<std::vector<int>,3> search(std::vector<bool>& removed) {
+    std::array<std::vector<int>,2> search(std::vector<bool>& removed) {
         std::vector<int> U = getBestVertices(removed);
         if (U.size() == 0) {
-            return { std::vector<int>(), std::vector<int>(), {CF_DONE} };
+            return { std::vector<int>(), std::vector<int>() };
         }
         int player = g.colors[U[0]] % 2;
         std::vector<bool> removed1 = removed;
         auto A = attractor(player, U, removed1);
         auto win1 = search(removed1); 
-        if (win1[2][0] != CF_DONE) return win1;
-        if (!win1[1-player].size()) {           
-            for(auto& v : A) {
-                vec<Lit> lits;
-                lits.push();
-                Clause* reason = Reason_new(lits);
-                if (Q[v].isFixed() && Q[v].getVal() == player) {
-                    continue;
-                }
-                if (!Q[v].setVal( player ,reason)) {
-                    return { std::vector<int>(), std::vector<int>(), {CF_CONFLICT} };
-                }
-            }
-            return { std::vector<int>(), std::vector<int>(), {CF_QUALIFIED} };
+        if (!win1[1-player].size()) {
+            win1[player].reserve(win1[player].size() + A.size());
+            win1[player].insert(win1[player].end(), A.begin(), A.end());
+            return win1;
         }
         else {
             std::vector<bool> removed2 = removed;
             auto B = attractor(1-player, win1[1-player], removed2);
             auto win2 = search(removed2);
-            if (win2[2][0] != CF_DONE) return win2;
             win2[1-player].reserve(win2[1-player].size() + B.size());
             win2[1-player].insert(win2[1-player].end(), B.begin(), B.end());
-            win2[2] = {CF_DONE};
             return win2;
         }
     }
@@ -155,14 +143,10 @@ public:
     bool propagate() override {
 
         std::vector<bool> removed(g.nvertices, false);
-        // for (int v=0; v<g.nvertices; v++) {
-        //     if (Q[v].isFixed()) removed[v] = true;
-        // }
-        auto win1 = search(removed);
-        if (win1[2][0] == CF_CONFLICT) {
-            return false;
+        for (int v=0; v<g.nvertices; v++) {
+            if (Q[v].isFixed()) removed[v] = true;
         }
-        
+        auto win1 = search(removed);
         return true;
     }
     //-----------------------------------------------------------------------
