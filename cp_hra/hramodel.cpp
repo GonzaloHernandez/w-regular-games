@@ -10,6 +10,7 @@
 #include "../chuffed-patch/qualifynodeviations.cpp"
 // #include "../chuffed-patch/qualifywithdeviations.cpp"
 #include "../chuffed-patch/coattractor.cpp"
+#include "coattractorbranching.cpp"
 
 #ifndef debugchuffed_h
 #include "debugchuffed.h"
@@ -57,7 +58,7 @@ public:
         // -------------------------------------------------------------------
 
         // new QualifyNoDeviations(g,Q);
-        new CoAttractor(g,Q);
+        // new CoAttractor(g,Q);
         // new QualifyWithDeviations(g,V,E,Q);
 
         // -------------------------------------------------------------------
@@ -68,8 +69,9 @@ public:
 
         vec<Branching*> bq(static_cast<unsigned int>(g.nvertices));
         for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
-        
-        branch(bq, VAR_INORDER, VAL_MIN);
+
+        engine.branching->add(new CoAttractorBranching(g,Q));
+        // branch(bq, VAR_INORDER, VAL_MIN);
         output_vars(bq);
     }
 

@@ -39,6 +39,7 @@
                 "${workspaceFolder}/cp_hra/hra.cpp",
                 "${workspaceFolder}/cp_hra/graph.cpp",
                 "${workspaceFolder}/cp_hra/ex2.cpp",
+                // "${workspaceFolder}/cp_hra/coattractorbranching.cpp",
                 "-o",
                 "${workspaceFolder}/build/ex2",
                 "-I${env:HOME}/.local/include",
