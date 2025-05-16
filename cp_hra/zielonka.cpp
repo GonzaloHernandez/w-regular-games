@@ -14,7 +14,7 @@ public:
     Zielonka(Game& g) : g(g) {
     }
     //-----------------------------------------------------------------------
-    std::vector<int> getBestVertices(std::vector<bool>& removed) {
+    std::vector<int> getBestVertices(bool* removed) {
         std::vector<int> bestVertices;
         bool found = false;
         int bestColor;
@@ -35,7 +35,7 @@ public:
                 bestColor = g.colors[i];
                 bestVertices.clear();
                 bestVertices.push_back(i);
-                }
+            }
             else if (g.reward==MAX && g.colors[i] > bestColor) {
                 bestColor = g.colors[i];
                 bestVertices.clear();
@@ -45,10 +45,12 @@ public:
         return bestVertices;
     }
     //-----------------------------------------------------------------------
-    std::vector<int> attractor(int player, std::vector<int>U, std::vector<bool>& removed) {
-        std::vector<int> d(g.nvertices,0);
-        for(auto& w : U) d[w] = 1;
-        for(int i=0; i<U.size(); i++) {
+    void attractor(int player, std::vector<int>&U, bool* removed) {
+        std::unique_ptr<int[]> d = std::make_unique<int[]>(g.nvertices);
+        std::fill_n(d.get(), g.nvertices, 0ull);
+
+        for(auto& w : U) d[w] = 1ull;
+        for(int i=0ull; i<U.size(); i++) {
             int w = U[i];
             for(auto& e : g.ins[w]) {
                 int v = g.sources[e];
@@ -60,7 +62,7 @@ public:
                         d[v] = 1;
                     }
                     else {
-                        int outbound = 0;
+                        int outbound = 0ull;
                         for(auto& e_ : g.outs[v]) {
                             if (!removed[g.targets[e_]]) outbound++;
                         }
@@ -69,7 +71,7 @@ public:
                     }
                 }
                 else if (!ally && d[v] > 1) {
-                    d[v] -= 1;
+                    d[v] -= 1ull;
                     if (d[v] == 1) U.push_back(v);
                 }
             }
@@ -77,27 +79,30 @@ public:
         for (auto& w : U) {
             removed[w] = true;
         }
-        return U;
     }
     //-----------------------------------------------------------------------
-    std::array<std::vector<int>,2> search(std::vector<bool>& removed) {
-        std::vector<int> U = getBestVertices(removed);
-        if (U.size() == 0) {
+    std::array<std::vector<int>,2> search(bool* removed) {
+        std::vector<int> A = getBestVertices(removed);
+        if (A.size() == 0) {
             return { std::vector<int>(), std::vector<int>() };
         }
-        int player = g.colors[U[0]] % 2;
-        std::vector<bool> removed1 = removed;
-        auto A = attractor(player, U, removed1);
-        auto win1 = search(removed1); 
+        int player = g.colors[A[0]] % 2;
+        std::unique_ptr<bool[]> removed1 = std::make_unique<bool[]>(g.nvertices);
+        std::copy_n(removed, g.nvertices, removed1.get());
+
+        attractor(player, A, removed1.get());
+        auto win1 = search(removed1.get()); 
         if (!win1[1-player].size()) {
             win1[player].reserve(win1[player].size() + A.size());
             win1[player].insert(win1[player].end(), A.begin(), A.end());
             return win1;
         }
         else {
-            std::vector<bool> removed2 = removed;
-            auto B = attractor(1-player, win1[1-player], removed2);
-            auto win2 = search(removed2);
+            std::unique_ptr<bool[]> removed2 = std::make_unique<bool[]>(g.nvertices);
+            std::copy_n(removed, g.nvertices, removed2.get());
+            std::vector<int> B(win1[1-player]);
+            attractor(1-player, B, removed2.get());
+            auto win2 = search(removed2.get());
             win2[1-player].reserve(win2[1-player].size() + B.size());
             win2[1-player].insert(win2[1-player].end(), B.begin(), B.end());
             return win2;
@@ -105,7 +110,8 @@ public:
     }
     //-----------------------------------------------------------------------
     std::array<std::vector<int>,2> solve() {
-        std::vector<bool> removed(g.nvertices, false);
-        return search(removed);
+        std::unique_ptr<bool[]> removed = std::make_unique<bool[]>(g.nvertices);
+        std::fill_n(removed.get(), g.nvertices, false);
+        return search(removed.get());
     }
 };

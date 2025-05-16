@@ -6,10 +6,6 @@
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
 
-#include "chuffed/globals/dconnected.h"
-#include "../chuffed-patch/qualifynodeviations.cpp"
-// #include "../chuffed-patch/qualifywithdeviations.cpp"
-#include "../chuffed-patch/coattractor.cpp"
 #include "coattractorbranching.cpp"
 
 #ifndef debugchuffed_h
@@ -22,12 +18,14 @@
 
 class HRAModel : public Problem {
 private:
-    Game&   g;
-    vec<BoolView>   Q;
+    Game&                   g;
+    vec<BoolView>           Q;
+    std::unique_ptr<bool[]> vals;
+    bool                    proof;
 
 public:
 
-    HRAModel(Game&g) : g(g) {
+    HRAModel(Game&g, bool proof=false) : g(g), vals(std::make_unique<bool[]>(g.nvertices)), proof(proof) {
         Q.growTo(g.nvertices);
 
         for (int i=0; i<g.nvertices; i++) Q[i] = newBoolVar();
@@ -57,22 +55,7 @@ public:
 
         // -------------------------------------------------------------------
 
-        // new QualifyNoDeviations(g,Q);
-        // new CoAttractor(g,Q);
-        // new QualifyWithDeviations(g,V,E,Q);
-
-        // -------------------------------------------------------------------
-
-        // fix(Q,{},{0,1,2,3,4});
-
-        // -------------------------------------------------------------------
-
-        // vec<Branching*> bq(static_cast<unsigned int>(g.nvertices));
-        // for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
-
         engine.branching->add(new CoAttractorBranching(g,Q));
-        // branch(bq, VAR_INORDER, VAL_MIN);
-        // output_vars(bq);
     }
 
     //----------------------------------------------------------------
@@ -96,20 +79,27 @@ public:
     //----------------------------------------------------------------
     
     void print(std::ostream& out)   override {
-        bool first = true;
-        out << "Q=[";
-        first = true;
-        for (int i=0; i<Q.size(); i++) {
-            out << (!i?"":",") << Q[i].getVal();
+        if (proof) {
+            for (int i=0; i<Q.size(); i++) {
+                vals[i] = Q[i].getVal();
+            }
         }
-        out << "]";
+        else {
+            bool first = true;
+            out << "Q=[";
+            first = true;
+            for (int i=0; i<Q.size(); i++) {
+                out << (!i?"":",") << Q[i].getVal();
+                vals[i] = Q[i].getVal();
+            }
+            out << "]";
+        }
     }
 
     //----------------------------------------------------------------
 
     bool getVal(int v) {
-        // return Q[v].getVal();
-        return true;
+        return vals[v];
     }
 
 };

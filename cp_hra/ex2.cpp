@@ -8,7 +8,10 @@
 //--------------------------------------------------------------------------------------
 
 struct options {
-    int game_print      = 0; 
+    bool print_time        = false; 
+    bool print_game        = false; 
+    bool print_solution    = false; 
+    bool print_verbose     = false; 
     int game_type       = 0; // enum game_type{DEF,JURD,DZN,GM,RAND}
     std::vector<int>    jurd            = {2,1};
     std::vector<int>    rand            = {2,2,2,2};
@@ -194,19 +197,19 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--hra-memo")==0)       { options.solver = 2; }
         else if (strcmp(argv[i],"--matrix-based")==0)   { options.solver = 3; }
         else if (strcmp(argv[i],"--zra")==0)            { options.solver = 4; }
-        else if (strcmp(argv[i],"--cp-hra")==0)         { options.solver = 5; }
+        else if (strcmp(argv[i],"--cp")==0)             { options.solver = 5; }
         else if (strcmp(argv[i],"--proof")==0)          { options.proof = 1; }
-        else if (strcmp(argv[i],"--print-time")==0)     { options.game_print = 1; }
-        else if (strcmp(argv[i],"--print-game")==0)     { options.game_print = 2; }
-        else if (strcmp(argv[i],"--print-solution")==0) { options.game_print = 3; }
-        else if (strcmp(argv[i],"--verbose")==0)        { options.game_print = 4; }
+        else if (strcmp(argv[i],"--print-time")==0)     { options.print_time     = true; }
+        else if (strcmp(argv[i],"--print-game")==0)     { options.print_game     = true; }
+        else if (strcmp(argv[i],"--print-solution")==0) { options.print_solution = true; }
+        else if (strcmp(argv[i],"--verbose")==0)        { options.print_verbose  = true; }
 
         else if (strcmp(argv[i],"--help")==0) {
             std::cout << "Usage: " << argv[0] << " [options]\n";
             std::cout << "Options:\n";
-            std::cout << "  --jurd <levels> <blocks>   : Jurdzinski game with <levels> levels and <blocks> blocks\n";
             std::cout << "  --dzn <filename>           : DZN file name\n";
             std::cout << "  --gm <filename>            : GM file name\n";
+            std::cout << "  --jurd <levels> <blocks>   : Jurdzinski game\n";
             std::cout << "  --rand <ns> <ps> <d1> <d2> : Random game\n";
             std::cout << "  --start <vertex>           : Starting vertex\n";
             std::cout << "  --print-time               : Print time)\n";
@@ -220,8 +223,8 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --hra-basic                : Solve using HRA-Basic\n";
             std::cout << "  --hra-memo                 : Solve using HRA-MEMO\n";
             std::cout << "  --matrix-based             : Solve using Matrix-Based\n";
-            std::cout << "  --cp-hra                   : Solve using CP-HRA\n";
-            std::cout << "  --proof                    : Compare results using Matrix-based\n";
+            std::cout << "  --cp                       : Solve using CP (new method)\n";
+            std::cout << "  --proof                    : Compare results using Zielonka\n";
             return false;
         }
         else {
@@ -265,12 +268,12 @@ int main(int argc, char *argv[])
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> launchinggame = end - start;
 
-    if (options.game_print == 2) {
+    if (options.print_game || options.print_verbose) {
         game->printGame();
     }
 
-    if (options.game_print == 1) {
-        std::cout << "Launching game time: " << launchinggame.count() << std::endl;
+    if (options.print_time || options.print_verbose) {
+        std::cout << "Game creation time : " << launchinggame.count() << std::endl;
     }
 
     if (options.export_type == DZN && options.game_type != DZN) {
@@ -282,52 +285,69 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------------------------------------------
 
-    if (false && options.proof) { //using matrix-based to proof HRA
-        if (options.reward == MIN) {
-            std::cout << "WARNING: Using MIN reward for proof is not available for now." << std::endl;
-        }
-        else if (options.solver == 4) {
-            std::cout << "WARNING: Using CP-HRA is not available for now." << std::endl;            
-        }
-        else {
-            Graph zlk(*game);
+    if (options.proof) { //using Zielonka for proof
 
-            auto res = zlk.Solve();
-            std::cout << "Testing EVEN (" << res.first.size() <<  ") Faults: ";
-            int counter=0;
-            for (auto& r : res.first) {
-                if (r>=game->nvertices) {
-                    std::cout << r << "*, ";
-                    counter++;
-                    continue;
-                }
-                game->start = r;
-                if (options.solver<=2) {
-                    auto play = getPlay(*game,EVEN,game->start, options.solver==1);
-                    if (play != EVEN)   std::cout << r << ",";
-                    else                counter++;
-                }
-                else if(options.solver==4) {
-    
-                }
-            }
-            std::cout << "  \n" << counter << "/" << res.first.size() << " ok"<< std::endl;
-    
-            std::cout << "Testing ODD (" << res.second.size() <<  ") Faults: ";
-            counter=0;
-            for (auto& r : res.second) {
-                game->start = r;
-                if (options.solver<=2) {
-                    auto play = getPlay(*game,EVEN,game->start, options.solver==1);
-                    if (play != ODD)   std::cout << r << ",";
-                    else                counter++;
-                }
-                else if(options.solver==4) {
-    
-                }
-            }
-            std::cout << "  \n" << counter << "/" << res.second.size() << " ok" << std::endl;
+        start = std::chrono::high_resolution_clock::now();
+        Zielonka zlk(*game);
+
+        HRAModel* model = new HRAModel(*game,true);
+        so.print_sol = true;
+        so.nof_solutions = 0;
+
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> preptime = end - start;
+
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Preparation time   : " << preptime.count() << std::endl;
         }
+
+        start = std::chrono::high_resolution_clock::now();
+        auto win = zlk.solve();
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> totaltime1 = end - start;
+        
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Solving time (ZRA) : " << totaltime1.count() << std::endl;
+        }
+
+        start = std::chrono::high_resolution_clock::now();
+
+        std::streambuf* old_buf = std::cout.rdbuf();
+        std::ofstream null_stream("/dev/null");  // or "NUL" on Windows
+        std::cout.rdbuf(null_stream.rdbuf());
+
+        engine.solve(model);
+
+        std::cout.rdbuf(old_buf);
+
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> totaltime2 = end - start;
+
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Solving time (CP)  : " << totaltime2.count() << std::endl;
+        }
+
+        std::cout << "EVENs faults : ";
+        int counter=0;
+        for (auto& r : win[0]) {
+            if (model->getVal(r)!=EVEN) {
+                counter++;
+                std::cout << r << " ";
+            }
+        }
+        std::cout << " = " << counter << "/" << win[0].size() << std::endl;
+
+        std::cout << "ODDs Faults  : ";
+        counter=0;
+        for (auto& r : win[1]) {
+            if (model->getVal(r)!=ODD) {
+                counter++;
+                std::cout << r << " ";
+            }
+        }
+        std::cout << " = " << counter << "/" << win[1].size() << std::endl;
+
+        delete model;
     }
 
     //----------------------------------------------------------------------------------
@@ -344,7 +364,7 @@ int main(int argc, char *argv[])
             std::cout   << options.starts[0] << ": "
                         << (play==EVEN?"EVEN ":"ODD "); 
 
-            if (options.game_print == 1) {
+            if (options.print_time || options.print_verbose) {
                 std::cout   << totaltime.count();
             }
 
@@ -356,16 +376,20 @@ int main(int argc, char *argv[])
 
     else if (options.solver==3) { //matrix-based solution
 
+        if (options.reward == MIN) {
+            std::cout   << "WARNING: Using MIN reward for matrix-based is not available. "
+                        << "Switched to MAX." << std::endl;
+        }
+
         start = std::chrono::high_resolution_clock::now();
 
-        // Graph zlk(options.game_filename.c_str());
         Graph zlk(*game);
 
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> preptime = end - start;
 
-        if (options.game_print == 1) {
-            std::cout << "Preparation time: " << preptime.count() << std::endl;
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Preparation time   : " << preptime.count() << std::endl;
         }
 
         start = std::chrono::high_resolution_clock::now();
@@ -375,25 +399,29 @@ int main(int argc, char *argv[])
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> totaltime = end - start;
 
-        std::cout   << options.starts[0] << ": ";
-        if (std::find(res.first.begin(), res.first.end(), game->start) != res.first.end()) {
-            std::cout << "EVEN " ;
-        } else {
-            std::cout << "ODD " ; 
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Solving time       : " << totaltime.count() << std::endl;
         }
 
-        if (options.game_print == 1) {
-            std::cout << totaltime.count() << std::endl;
-        }
-
-        if (options.game_print >= 3) {
-            std::cout << "EVENs=(";
+        if (options.print_solution || options.print_verbose) {
+            std::cout << "EVEN (";
             for (auto& r : res.first) { std::cout << r << " "; }
             std::cout << ")" << std::endl;
 
-            std::cout << "ODDs=(";
+            std::cout << "ODD  (";
             for (auto& r : res.second) {std::cout << r << " "; }
             std::cout << ")" << std::endl;
+        }
+
+        for(auto& v0 : options.starts) {
+
+            std::cout   << v0 << ": ";
+            auto it = std::find(res.first.begin(), res.first.end(), game->start);
+            if (it != res.first.end()) {
+                std::cout << "EVEN " ;
+            } else {
+                std::cout << "ODD " ; 
+            }
         }
 
         std::cout << std::endl;
@@ -402,14 +430,27 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
 
     else if (options.solver==4) { //ZRA
+        start = std::chrono::high_resolution_clock::now();
+
         Zielonka zlk(*game);
+        
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> preptime = end - start;
+
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Preparation time   : " << preptime.count() << std::endl;
+        }
 
         start = std::chrono::high_resolution_clock::now();
         auto win = zlk.solve();
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> totaltime = end - start;
 
-        if (options.game_print == 3) {
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Solving time       : " << totaltime.count() << std::endl;
+        }
+
+        if (options.print_solution || options.print_verbose) {
             std::cout << "EVEN " << win[0] << std::endl;
             std::cout << "ODD  " << win[1] << std::endl;
         }
@@ -424,10 +465,6 @@ int main(int argc, char *argv[])
                 std::cout << "ODD ";
             }
 
-            if (options.game_print == 1) {
-                std::cout   << totaltime.count();
-            }
-
             std::cout << std::endl;            
         }
     }
@@ -435,24 +472,45 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
 
     else if (options.solver==5) { //CP-HRA
-        HRAModel* model = new HRAModel(*game);
-
-        so.print_sol = (options.game_print == 3);
-        so.nof_solutions = 0;
         start = std::chrono::high_resolution_clock::now();
-        engine.solve(model);
+        HRAModel* model = new HRAModel(*game);
+        // so.print_sol = (options.print_solution || options.print_verbose);
+        so.nof_solutions = 0;
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> preptime = end - start;
+
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Preparation time   : " << preptime.count() << std::endl;
+        }
+
+        start = std::chrono::high_resolution_clock::now();
+
+        if (!options.print_solution && !options.print_verbose) {
+            std::streambuf* old_buf = std::cout.rdbuf();
+            std::ofstream null_stream("/dev/null");
+            std::cout.rdbuf(null_stream.rdbuf());
+            engine.solve(model);
+            std::cout.rdbuf(old_buf);
+        }
+        else {
+            engine.solve(model);
+        }
+
+
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> totaltime = end - start;
 
-        std::cout   << options.starts[0] << ": "
-                    << (model->getVal(options.starts[0])?"EVEN ":"ODD ");
-
-        if (options.game_print == 1) {
-            std::cout   << totaltime.count();
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Solving time       : " << totaltime.count() << std::endl;
         }
 
-        std::cout << std::endl;
+        for(auto& v0 : options.starts) {
+            std::cout   << v0 << ": "
+                        << (model->getVal(v0)?"EVEN ":"ODD ")
+                        << std::endl;
+        }
 
+        delete model;
     }
 
     //----------------------------------------------------------------------------------
