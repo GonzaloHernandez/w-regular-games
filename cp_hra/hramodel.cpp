@@ -67,12 +67,12 @@ public:
 
         // -------------------------------------------------------------------
 
-        vec<Branching*> bq(static_cast<unsigned int>(g.nvertices));
-        for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
+        // vec<Branching*> bq(static_cast<unsigned int>(g.nvertices));
+        // for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
 
         engine.branching->add(new CoAttractorBranching(g,Q));
         // branch(bq, VAR_INORDER, VAL_MIN);
-        output_vars(bq);
+        // output_vars(bq);
     }
 
     //----------------------------------------------------------------
@@ -108,7 +108,8 @@ public:
     //----------------------------------------------------------------
 
     bool getVal(int v) {
-        return Q[v].getVal();
+        // return Q[v].getVal();
+        return true;
     }
 
 };

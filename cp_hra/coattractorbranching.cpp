@@ -3,6 +3,7 @@
 #endif
 
 #include "chuffed/branching/branching.h"
+#include "chuffed/core/propagator.h" // Ensure BoolView is defined
 
 class CoAttractorBranching : public Branching {
 private:
@@ -107,14 +108,14 @@ public:
 public:
     //-----------------------------------------------------------------------
     CoAttractorBranching(Game& g, vec<BoolView>& Q) : g(g), Q(Q){}
-
+    //-----------------------------------------------------------------------
     bool finished() override {
         for(int i=0; i<Q.size(); i++) {
-            if (!Q[i].isFixed()) return false;
+            if (!Q[i].finished()) return false;
         }
         return true;
     }
-
+    //-----------------------------------------------------------------------
     DecInfo* branch() override {
         std::vector<bool> removed(g.nvertices, false);
         for (int v=0; v<g.nvertices; v++) {
@@ -128,7 +129,7 @@ public:
         Q[var].setPreferredVal(val?PV_MAX:PV_MIN);
         return Q[var].branch();
     }
-
+    //-----------------------------------------------------------------------
     double getScore(VarBranch /*vb*/) override { 
         NEVER; 
     }

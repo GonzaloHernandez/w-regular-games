@@ -119,14 +119,6 @@ std::array<std::vector<size_t>, 2> Graph::Solve(bool * removed)
     std::copy_n(removed, n_nodes_, removed1.get());
 
     Attract(&attr, player, removed1.get());
-    if (false) {
-        printf("(1) %zu | ", attr.size());
-        for (size_t i = 0ull; i < attr.size(); i++)
-        {
-            printf("%zu ", attr[i]);
-        }
-        printf("\n");
-    }
     auto win1 = Solve(removed1.get());
     if (!win1[opponent].size())
     {
@@ -142,14 +134,6 @@ std::array<std::vector<size_t>, 2> Graph::Solve(bool * removed)
 
         std::vector<size_t> _attr(win1[opponent]);
         Attract(&_attr, opponent, removed2.get());
-        if (false) {
-            printf("(2) %zu | ", _attr.size());
-            for (size_t i = 0ull; i < _attr.size(); i++)
-            {
-                printf("%zu ", _attr[i]);
-            }
-            printf("\n");
-        }
         auto win2 = Solve(removed2.get());
 
         win2[opponent].reserve(win2[opponent].size() + _attr.size());

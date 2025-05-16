@@ -1,52 +1,17 @@
 #ifndef game_h
-#include "game.h"
+#include "../chuffed-patch/game.h"
 #endif
 
 #include "iostream"
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
 
-class Zielonka : public Propagator {
+class Zielonka {
 private:
     Game& g;
-    vec<BoolView> V;
-    vec<BoolView> E;
-    vec<BoolView> Q;
-
-    const int   CF_DONE         = 1;
-    const int   CF_CONFLICT     = 2;
-    const int   CF_QUALIFIED    = 3;
-
 public:
     //-----------------------------------------------------------------------
-    Zielonka(Game& g, vec<BoolView>& Q)
-    :   g(g), Q(Q)
-    {
-        priority = 5;
-        for (int i=0; i<g.nvertices; i++)   Q[i].attach(this, 1 , EVENT_F );
-    }
-    //-----------------------------------------------------------------------
-    int findVertex(int vertex,vec<int>& path) {
-        for (int i=0; i<path.size(); i++) {
-            if (path[i] == vertex) return i;
-        }
-        return -1;
-    }
-    //-----------------------------------------------------------------------
-    void clausify(vec<int>& path, vec<BoolView> &B, vec<Lit>& lits,int from) {
-        for (int i=from; i<path.size()-1; i++) {
-            lits.push(B[path[i]].getValLit());
-        }
-    }
-    //-----------------------------------------------------------------------
-    void clausify_except(   vec<int>& path, vec<BoolView> &B, vec<Lit>& lits,
-                            int from,int lastEdge) 
-    {
-        for (int i=from; i<path.size(); i++) {
-            if (path[i] != lastEdge) {
-                lits.push(B[path[i]].getValLit());
-            }
-        }
+    Zielonka(Game& g) : g(g) {
     }
     //-----------------------------------------------------------------------
     std::vector<int> getBestVertices(std::vector<bool>& removed) {
@@ -138,24 +103,9 @@ public:
             return win2;
         }
     }
-
     //-----------------------------------------------------------------------
-    bool propagate() override {
-
+    std::array<std::vector<int>,2> solve() {
         std::vector<bool> removed(g.nvertices, false);
-        for (int v=0; v<g.nvertices; v++) {
-            if (Q[v].isFixed()) removed[v] = true;
-        }
-        auto win1 = search(removed);
-        return true;
+        return search(removed);
     }
-    //-----------------------------------------------------------------------
-    void wakeup(int i, int) override {
-        pushInQueue();
-    }
-    //-----------------------------------------------------------------------
-    void clearPropState() override {
-        in_queue = false;
-    }
-    //-----------------------------------------------------------------------
 };
