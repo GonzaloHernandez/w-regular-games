@@ -36,7 +36,7 @@
             "args": [   
                 // "--gm", "${env:HOME}/gm/randomgame(5000,_10,_1,_20)id=0.gm",
                 // "--gm", "${workspaceFolder}/build/rand.gm",
-                "--dzn", "${workspaceFolder}/data/game-other.dzn",
+                "--dzn", "${workspaceFolder}/data/game-rand5b.dzn",
                 // "--jurd","50","10","--min",
                 // "--gm","build/rand01.gm",
                 // "--start","0",
@@ -46,7 +46,8 @@
                 // "--verbose"
                 // "--print-solution",
                 // "--matrix-based",
-                "--cp",
+                // "--cp",
+                "--zra",
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

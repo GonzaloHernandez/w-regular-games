@@ -79,6 +79,25 @@ public:
         }
     }
     //-----------------------------------------------------------------------
+    std::pair<std::vector<int>,int> trimGraph(bool* removed,int preplayer=-1) {
+
+        std::vector<int> A = getBestVertices(removed);
+        if (A.size() == 0) return {{},-1};
+
+        int player = g.colors[A[0]] % 2;
+        if (preplayer != -1 && player != preplayer) {
+            return {A,player};
+        }
+        std::unique_ptr<bool[]> removed_ = std::make_unique<bool[]>(g.nvertices);
+        std::copy_n(removed, g.nvertices, removed_.get());
+
+        attractor(player, A, removed_.get());
+        auto [s,p] = trimGraph(removed_.get(),player);
+        if (p == -1) return {A,player};
+
+        return {s,p};
+    }
+    //-----------------------------------------------------------------------
     std::array<std::vector<int>,3> search(bool* removed) {
         std::vector<int> A = getBestVertices(removed);
         if (A.size() == 0) {
@@ -95,6 +114,7 @@ public:
             return { std::vector<int>(), std::vector<int>(), {CF_FOUND,A[0],player}};
         }
         else {
+            assert("Become exponential" && false);
             std::unique_ptr<bool[]> removed2 = std::make_unique<bool[]>(g.nvertices);
             std::copy_n(removed, g.nvertices, removed2.get());
             std::vector<int> B(win1[1-player]);
@@ -129,13 +149,17 @@ public:
         for (int v=0; v<g.nvertices; v++) {
             if (Q[v].isFixed()) removed[v] = true;
         }
-        auto win = search(removed.get());
-        assert(win[2][0]==CF_FOUND);
-        int var = win[2][1];
-        int val = win[2][2];
+        // auto win = search(removed.get());
+        // assert(win[2][0]==CF_FOUND);
+        // int var = win[2][1];
+        // int val = win[2][2];
 
-        Q[var].setPreferredVal(val?PV_MAX:PV_MIN);
-        return Q[var].branch();
+        // Q[var].setPreferredVal(val?PV_MAX:PV_MIN);
+        // return Q[var].branch();
+
+        auto [s,p] = trimGraph(removed.get());
+        Q[s[0]].setPreferredVal(p?PV_MAX:PV_MIN);
+        return Q[s[0]].branch();
     }
     //-----------------------------------------------------------------------
     double getScore(VarBranch /*vb*/) override { 

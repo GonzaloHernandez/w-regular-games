@@ -31,7 +31,7 @@
             "label": "C/C++: build HRA",
             "command": "/usr/bin/g++",
             "args": [
-                "-std=c++14",
+                "-std=c++17",
                 "-fdiagnostics-color=always",
                 "-g",
                 "-O0",
