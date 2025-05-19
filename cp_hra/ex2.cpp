@@ -21,7 +21,7 @@ struct options {
     std::string         export_filename = "";
     int                 export_type     = 0; // 0=not export 2=DZN 3=GM
     int                 solver          = 1; // 1=HRA-Basic 2=HRA-Memo 3=Matrix 4=ZRA 5=CP-HRA
-    int                 proof           = 0; // 0=no 1=yes
+    int                 proof           = 0; // 0=no 1=yes 2=eager
 } options;
 
 //--------------------------------------------------------------------------------------
@@ -199,6 +199,7 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--zra")==0)            { options.solver = 4; }
         else if (strcmp(argv[i],"--cp")==0)             { options.solver = 5; }
         else if (strcmp(argv[i],"--proof")==0)          { options.proof = 1; }
+        else if (strcmp(argv[i],"--proof-eager")==0)    { options.proof = 2; }
         else if (strcmp(argv[i],"--print-time")==0)     { options.print_time     = true; }
         else if (strcmp(argv[i],"--print-game")==0)     { options.print_game     = true; }
         else if (strcmp(argv[i],"--print-solution")==0) { options.print_solution = true; }
@@ -225,6 +226,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --matrix-based             : Solve using Matrix-Based\n";
             std::cout << "  --cp                       : Solve using CP (new method)\n";
             std::cout << "  --proof                    : Compare results using Zielonka\n";
+            std::cout << "  --proof-eager              : Looking for counterexample\n";
             return false;
         }
         else {
@@ -268,25 +270,24 @@ int main(int argc, char *argv[])
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> launchinggame = end - start;
 
-    if (options.print_game || options.print_verbose) {
+    if ((options.print_game || options.print_verbose) && options.proof<2) {
         game->printGame();
     }
 
-    if (options.print_time || options.print_verbose) {
+    if ((options.print_time || options.print_verbose) && options.proof<2) {
         std::cout << "Game creation time : " << launchinggame.count() << std::endl;
     }
 
-    if (options.export_type == DZN && options.game_type != DZN) {
+    if (options.export_type == DZN && options.game_type != DZN && options.proof<2) {
         game->exportFile(DZN, options.export_filename);
     }
-    else if (options.export_type == GM && options.game_type != GM) {
+    else if (options.export_type == GM && options.game_type != GM && options.proof<2) {
         game->exportFile(GM, options.export_filename);
     }
 
     //----------------------------------------------------------------------------------
 
-    if (options.proof) { //using Zielonka for proof
-
+    if (options.proof==1) { //using Zielonka for proof
         start = std::chrono::high_resolution_clock::now();
         Zielonka zlk(*game);
 
@@ -348,6 +349,58 @@ int main(int argc, char *argv[])
         std::cout << " = " << counter << "/" << win[1].size() << std::endl;
 
         delete model;
+    }
+    
+    //----------------------------------------------------------------------------------
+
+    else if (options.proof==2) { //Looking for counterexample using Zielonka
+
+        if (options.game_type == RAND) {
+            Zielonka zlk(*game);
+
+            HRAModel* model = new HRAModel(*game,true);
+            so.print_sol = true;
+            so.nof_solutions = 0;
+
+            auto win = zlk.solve();
+
+            std::streambuf* old_buf = std::cout.rdbuf();
+            std::ofstream null_stream("/dev/null");  // or "NUL" on Windows
+            std::cout.rdbuf(null_stream.rdbuf());
+
+            engine.solve(model);
+
+            std::cout.rdbuf(old_buf);
+
+            int counter1=0;
+            for (auto& r : win[0]) {
+                if (model->getVal(r)!=EVEN) counter1++;
+            }
+
+            int counter2=0;
+            for (auto& r : win[1]) {
+                if (model->getVal(r)!=ODD) counter2++;
+            }
+
+            delete model;
+
+            if (counter1>0 || counter2>0) {
+                std::cout << "Counter example found:" << std::endl;
+                if (options.export_type == DZN) {
+                    game->exportFile(DZN, options.export_filename);
+                }
+                else if (options.export_type == GM) {
+                    game->exportFile(GM, options.export_filename);
+                }
+
+                if (options.print_game || options.print_verbose) {
+                    game->printGame();
+                }
+            }
+            else {
+                std::cout << ".";
+            }
+        }
     }
 
     //----------------------------------------------------------------------------------

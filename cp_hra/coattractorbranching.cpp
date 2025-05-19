@@ -85,9 +85,6 @@ public:
         if (A.size() == 0) return {{},-1};
 
         int player = g.colors[A[0]] % 2;
-        if (preplayer != -1 && player != preplayer) {
-            return {A,player};
-        }
         std::unique_ptr<bool[]> removed_ = std::make_unique<bool[]>(g.nvertices);
         std::copy_n(removed, g.nvertices, removed_.get());
 
