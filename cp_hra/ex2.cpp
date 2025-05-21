@@ -198,6 +198,7 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--matrix-based")==0)   { options.solver = 3; }
         else if (strcmp(argv[i],"--zra")==0)            { options.solver = 4; }
         else if (strcmp(argv[i],"--cp")==0)             { options.solver = 5; }
+        else if (strcmp(argv[i],"--test")==0)           { options.solver = 0; }
         else if (strcmp(argv[i],"--proof")==0)          { options.proof = 1; }
         else if (strcmp(argv[i],"--proof-eager")==0)    { options.proof = 2; }
         else if (strcmp(argv[i],"--print-time")==0)     { options.print_time     = true; }
@@ -287,7 +288,13 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------------------------------------------
 
-    if (options.proof==1) { //using Zielonka for proof
+    if (options.solver==0) {
+        // For testing purpposes
+    }
+
+    //----------------------------------------------------------------------------------
+
+    else if (options.proof==1) { //using Zielonka for proof
         start = std::chrono::high_resolution_clock::now();
         Zielonka zlk(*game);
 
@@ -559,7 +566,7 @@ int main(int argc, char *argv[])
 
         for(auto& v0 : options.starts) {
             std::cout   << v0 << ": "
-                        << (model->getVal(v0)?"EVEN ":"ODD ")
+                        << (model->getVal(v0)==EVEN?"EVEN ":"ODD ")
                         << std::endl;
         }
 

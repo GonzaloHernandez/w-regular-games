@@ -81,7 +81,7 @@ public:
         }
     }
     //-----------------------------------------------------------------------
-    std::array<std::vector<int>,2> search(bool* removed) {
+    std::array<std::vector<int>,2> search(bool* removed,int level=0) {
         std::vector<int> A = getBestVertices(removed);
         if (A.size() == 0) {
             return { std::vector<int>(), std::vector<int>() };
@@ -91,7 +91,7 @@ public:
         std::copy_n(removed, g.nvertices, removed1.get());
 
         attractor(player, A, removed1.get());
-        auto win1 = search(removed1.get()); 
+        auto win1 = search(removed1.get(),level+1); 
         if (!win1[1-player].size()) {
             win1[player].reserve(win1[player].size() + A.size());
             win1[player].insert(win1[player].end(), A.begin(), A.end());
@@ -102,7 +102,7 @@ public:
             std::copy_n(removed, g.nvertices, removed2.get());
             std::vector<int> B(win1[1-player]);
             attractor(1-player, B, removed2.get());
-            auto win2 = search(removed2.get());
+            auto win2 = search(removed2.get(),level+1);
             win2[1-player].reserve(win2[1-player].size() + B.size());
             win2[1-player].insert(win2[1-player].end(), B.begin(), B.end());
             return win2;

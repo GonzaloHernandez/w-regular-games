@@ -7,6 +7,7 @@
 #include "chuffed/core/propagator.h"
 
 #include "coattractorbranching.cpp"
+#include "../chuffed-patch/qualifynodeviations.cpp"
 
 #ifndef debugchuffed_h
 #include "debugchuffed.h"
@@ -53,10 +54,32 @@ public:
             sat.addClause(clause);
         }
 
+        // vertices with only one outgoing edge
+        // for (int e=0; e<g.nedges; e++) {
+        //     if (g.sources[e] == g.targets[e]) {
+        //         int v = g.sources[e];
+        //         if (g.owners[v] == g.colors[v] || g.outs[v].size() == 1) {
+        //             vec<Lit> clause;
+        //             clause.push( Q[v].getLit( g.colors[v]) );
+        //             sat.addClause(clause);
+        //         }
+        //     } 
+        // }
+
+        // -------------------------------------------------------------------
+
+        // new QualifyNoDeviations(g, Q);
+
         // -------------------------------------------------------------------
 
         engine.branching->add(new CoAttractorBranching(g,Q));
+        
+        // vec<Branching*> bq(static_cast<unsigned int>(g.nvertices));
+        // for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
+        // branch(bq, VAR_INORDER, VAL_MIN);
+        // output_vars(bq);
     }
+
 
     //----------------------------------------------------------------
 
@@ -79,12 +102,10 @@ public:
     //----------------------------------------------------------------
     
     void print(std::ostream& out)   override {
-        if (proof) {
-            for (int i=0; i<Q.size(); i++) {
-                vals[i] = Q[i].getVal();
-            }
+        for (int i=0; i<Q.size(); i++) {
+            vals[i] = Q[i].getVal();
         }
-        else {
+        if (!proof) {
             bool first = true;
             out << "Q=[";
             first = true;
@@ -99,6 +120,7 @@ public:
     //----------------------------------------------------------------
 
     bool getVal(int v) {
+        assert(v<g.nvertices);
         return vals[v];
     }
 

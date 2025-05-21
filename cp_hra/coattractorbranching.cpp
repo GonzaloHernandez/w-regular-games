@@ -14,12 +14,14 @@ public:
     vec<BoolView> Q;
 
     //-----------------------------------------------------------------------
-    std::vector<int> getBestVertices(bool* removed) {
+    std::vector<int> getBestVertices(bool* removed, int player=-1) {
         std::vector<int> bestVertices;
         bool found = false;
         int bestColor;
         for (int i=0; i<g.nvertices; i++) {
             if (removed[i]) continue;
+
+            if (player!=-1 && g.colors[i]%2!=player) continue;
 
             if (!found) {
                 bestColor = g.colors[i];
@@ -80,8 +82,12 @@ public:
     }
     //-----------------------------------------------------------------------
     std::pair<std::vector<int>,int> trimGraph(bool* removed,int preplayer=-1) {
+        std::vector<int> A;
+        if (preplayer==-1) 
+            A = getBestVertices(removed);
+        else
+            A = getBestVertices(removed,1-preplayer);
 
-        std::vector<int> A = getBestVertices(removed);
         if (A.size() == 0) return {{},-1};
 
         int player = g.colors[A[0]] % 2;
@@ -91,7 +97,6 @@ public:
         attractor(player, A, removed_.get());
         auto [s,p] = trimGraph(removed_.get(),player);
         if (p == -1) return {A,player};
-
         return {s,p};
     }
     //-----------------------------------------------------------------------
