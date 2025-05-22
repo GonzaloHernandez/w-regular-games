@@ -55,29 +55,29 @@ public:
         }
 
         // vertices with only one outgoing edge
-        // for (int e=0; e<g.nedges; e++) {
-        //     if (g.sources[e] == g.targets[e]) {
-        //         int v = g.sources[e];
-        //         if (g.owners[v] == g.colors[v] || g.outs[v].size() == 1) {
-        //             vec<Lit> clause;
-        //             clause.push( Q[v].getLit( g.colors[v]) );
-        //             sat.addClause(clause);
-        //         }
-        //     } 
-        // }
+        for (int e=0; e<g.nedges; e++) {
+            if (g.sources[e] == g.targets[e]) {
+                int v = g.sources[e];
+                if (g.owners[v] == g.colors[v] || g.outs[v].size() == 1) {
+                    vec<Lit> clause;
+                    clause.push( Q[v].getLit( g.colors[v]) );
+                    sat.addClause(clause);
+                }
+            } 
+        }
 
         // -------------------------------------------------------------------
 
-        // new QualifyNoDeviations(g, Q);
+        new QualifyNoDeviations(g, Q);
 
         // -------------------------------------------------------------------
 
-        engine.branching->add(new CoAttractorBranching(g,Q));
+        // engine.branching->add(new CoAttractorBranching(g,Q));
         
-        // vec<Branching*> bq(static_cast<unsigned int>(g.nvertices));
-        // for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
-        // branch(bq, VAR_INORDER, VAL_MIN);
-        // output_vars(bq);
+        vec<Branching*> bq(static_cast<unsigned int>(g.nvertices));
+        for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
+        branch(bq, VAR_INORDER, VAL_MIN);
+        output_vars(bq);
     }
 
 
