@@ -39,17 +39,26 @@ int bestcolor(Game& g, int index,const std::vector<int>& path){
 
 //-----------------------------------------------------------------------------------------------------
 
-signed char getPlayBasic(Game& g, std::vector<int> path, int current) {
-    int index = findVertex(current,path);
+// Overload + operator: vector + int → vector with int appended
+std::vector<int> operator+(const std::vector<int>& v, int x) {
+    std::vector<int> result = v;
+    result.push_back(x);
+    return result;
+}
+
+//-----------------------------------------------------------------------------------------------------
+
+signed char getPlayBasic(Game& g, std::vector<int> path, int v) {
+    int index = findVertex(v,path);
     if (index >= 0) {
         int best = bestcolor(g,index,path);
         return best%2;
     }
     else {
-        int p = g.owners[current];
-        for(auto& e : g.outs[current]) {
+        int p = g.owners[v];
+        for(auto& e : g.outs[v]) {
             std::vector <int> newpath = path;
-            newpath.push_back(current);
+            newpath.push_back(v);
             auto next = getPlayBasic(g, newpath, g.targets[e]);
             if (next == p) {
                 return p;
@@ -61,142 +70,38 @@ signed char getPlayBasic(Game& g, std::vector<int> path, int current) {
 
 //-----------------------------------------------------------------------------------------------------
 
-// signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std::vector<int>& memo) {
-//     int index = findVertex(current,path);
-//     if (index >= 0) {
-//         int best = bestcolor(g,index,path);
-//         return best%2;
-//     }
-//     else {
-//         if (g.owners[current] == p) {
-//             for(auto& e : g.outs[current]) {
-//                 if (memo[g.targets[e]] == p) {
-//                     memo[current] = p;
-//                     return p; // with this edge current can force p (already memoized)
-//                 }
-
-//                 if (memo[g.targets[e]] == 1-p) {
-//                     continue; // skip this edge
-//                 }
-
-//                 std::vector <int> newpath = path;
-//                 newpath.push_back(current);
-//                 auto next = getPlayMemo(g, p, newpath, g.targets[e], memo);
-//                 if (next == p) {
-//                     memo[current] = p;
-//                     return p; // with this edge current can force p
-//                 }
-//             }
-//             memo[current] = 1-p;
-//             return 1-p;
-//         }
-//         else {
-//             return getPlayMemo(g, 1-p , path, current, memo);
-//         }
-//     }
-// }
-
-//-----------------------------------------------------------------------------------------------------
-
-// Overload + operator: vector + int → vector with int appended
-std::vector<int> operator+(const std::vector<int>& v, int x) {
-    std::vector<int> result = v;
-    result.push_back(x);
-    return result;
-}
-
-//-----------------------------------------------------------------------------------------------------
-
-splay getPlayMemo( Game& g, std::vector<int> path, int v, std::vector<splay>& memo) 
+// signed char getPlayMemo(Game& g, std::vector<int> path, int v, signed char* memo) 
+signed char getPlayMemo(Game& g, std::vector<int> path, int v, std::vector<int>& memo) 
 {
     int index = findVertex(v,path);
     if (index >= 0) {
         int best = bestcolor(g,index,path);
-        return splay{v,best};
+        memo[v] = 8;
+        return best%2;
     }
     else {
-        splay play;
+        int p = g.owners[v];
         for(auto& e : g.outs[v]) {
             int w = g.targets[e];
-            
-            if (!memo[w].touched()) {
-                play = getPlayMemo(g, path+v, w, memo);
-                if (play.parity() == g.owners[v]) {
-                    if (g.colors[v] == play.best) memo[v] = play;
-                    for (int i=0; i<g.nvertices; i++) if (memo[i].loop == v) memo[i] = play;
-                    return play;
+            if (memo[w]<5) {
+                auto next = memo[w];
+                if (next == p) {
+                    if (memo[v]==8) memo[v] = p;
+                    return p;
                 }
-                continue;
             }
-
-            int index = findVertexReverse(memo[w].loop,path+v);
-            if (index < 0) {
-                play = memo[w];
-                if (play.parity() == g.owners[v]) {
-                    memo[v] = play;
-                    for (int i=0; i<g.nvertices; i++) if (memo[i].loop == v) memo[i] = play;
-                    return play;
+            else {
+                auto next = getPlayMemo(g, path+v, g.targets[e],memo);
+                if (next == p) {
+                    if (memo[v]==8) memo[v] = p;
+                    return p;
                 }
-                continue;
-            }
-
-            int best = bestcolor(g,index,path+v);
-            if (!((g.reward==MIN && best < memo[w].best) || (g.reward==MAX && best > memo[w].best))) {
-                best = memo[w].best;
-            }
-            play = {memo[w].loop,best};
-            if (play.parity() == g.owners[v]) {
-                if (g.colors[v] == play.best) memo[v] = play;
-                for (int i=0; i<g.nvertices; i++) if (memo[i].loop == v) memo[i] = play;
-                return play;
             }
         }
-        if (g.colors[v] == play.best) memo[v] = play;
-        for (int i=0; i<g.nvertices; i++) if (memo[i].loop == v) memo[i] = play;
-        return play; //return the last play when vertex v is dominated
+        if (memo[v]==8) memo[v] = 1-p;
+        return 1-p;
     }
 }
-
-//-----------------------------------------------------------------------------------------------------
-
-// signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, 
-//                         std::vector<int>& memo,std::vector<signed char>& parities) 
-// {
-//     int index = findVertexReverse(current,path);
-//     if (index >= 0) {
-//         int best = bestcolor(g,index,path);
-//         if (best%2 == g.owners[current]) 
-//             return best%2;
-//         else 
-//             path.resize(index);
-//     }
-
-//     int np = g.owners[current];
-    
-//     while (memo[current] < g.outs[current].size()) {
-//         int e = g.outs[current][memo[current]];
-//         memo[current]++;
-
-//         if (parities[g.targets[e]] == np) {
-//             parities[current] = np;
-//             return np; // using this edge current can force np (already memoized)
-//         }
-
-//         if (parities[g.targets[e]] == 1-np) {
-//             continue; // skip this edge
-//         }
-
-//         std::vector <int> newpath = path;
-//         newpath.push_back(current);
-//         auto nextp = getPlayMemo(g, np, newpath, g.targets[e], memo, parities);
-//         if (nextp == np) {
-//             parities[current] = nextp;
-//             return nextp; // using this edge current can force np 
-//         }
-//     }
-//     parities[current] = 1-np;
-//     return 1-np;
-// }
 
 //-----------------------------------------------------------------------------------------------------
 
@@ -205,9 +110,12 @@ signed char getPlay(Game& g, int p, int start, bool basic) {
         return getPlayBasic(g, {}, start);
     }
 
-    std::vector<int> path;
-    std::vector<splay> memo(g.nvertices, {-1,-1});
+    // std::unique_ptr<signed char[]> memo = std::make_unique<signed char[]>(g.nvertices);
+    // std::fill_n(memo.get(), g.nvertices, 9);
+    // auto play = getPlayMemo(g, {}, start, memo.get());
 
-    splay play = getPlayMemo(g, path, start, memo);
-    return play.parity();
+    std::vector<int> memo(g.nvertices,9);
+    auto play = getPlayMemo(g, {}, start, memo);
+
+    return play;
 }

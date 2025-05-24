@@ -294,7 +294,7 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------------------------------------------
 
-    else if (options.proof==1) { //using Zielonka for proof
+    else if (options.proof==1 && options.solver==5) { //using Zielonka for proof cp
         start = std::chrono::high_resolution_clock::now();
         Zielonka zlk(*game);
 
@@ -360,7 +360,56 @@ int main(int argc, char *argv[])
     
     //----------------------------------------------------------------------------------
 
-    else if (options.proof==2) { //Looking for counterexample using Zielonka
+    //using Zielonka for proof hra
+    else if (options.proof==1 && (options.solver==1 || options.solver==2)) { 
+        start = std::chrono::high_resolution_clock::now();
+        Zielonka zlk(*game);
+
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> preptime = end - start;
+
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Preparation time   : " << preptime.count() << std::endl;
+        }
+
+        start = std::chrono::high_resolution_clock::now();
+
+        auto win = zlk.solve();
+
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> totaltime1 = end - start;
+        
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Solving time (ZRA) : " << totaltime1.count() << std::endl;
+        }
+
+        std::cout << "EVENs faults : ";
+        int counter=0;
+        for (auto& v : win[0]) {
+            auto play = getPlay(*game, 0, v, options.solver==1);
+            if (play!=EVEN) {
+                counter++;
+                std::cout << v << " ";
+            }
+        }
+        std::cout << " = " << counter << "/" << win[0].size() << std::endl;
+
+        std::cout << "ODDs faults : ";
+        counter=0;
+        for (auto& v : win[1]) {
+            auto play = getPlay(*game, 0, v, options.solver==1);
+            if (play!=ODD) {
+                counter++;
+                std::cout << v << " ";
+            }
+        }
+        std::cout << " = " << counter << "/" << win[1].size() << std::endl;
+    }
+    
+    //----------------------------------------------------------------------------------
+
+    //Looking for counterexample using Zielonka
+    else if (options.proof==2 && options.solver==5) { 
 
         if (options.game_type == RAND) {
             Zielonka zlk(*game);
@@ -411,6 +460,43 @@ int main(int argc, char *argv[])
     }
 
     //----------------------------------------------------------------------------------
+    
+    //Looking for counterexample using Zielonka and hra
+    else if (options.proof==2 && (options.solver==1 || options.solver==2)) { 
+
+        if (options.game_type == RAND) {
+            Zielonka zlk(*game);
+            auto win = zlk.solve();
+            int counter1=0;
+            for (auto& v : win[0]) {
+                if (getPlay(*game, 0, v, options.solver==1) != EVEN) counter1++;
+            }
+
+            int counter2=0;
+            for (auto& v : win[1]) {
+                if (getPlay(*game, 0, v, options.solver==1) != ODD) counter2++;
+            }
+
+            if (counter1>0 || counter2>0) {
+                std::cout << "Counter example found:" << std::endl;
+                if (options.export_type == DZN) {
+                    game->exportFile(DZN, options.export_filename);
+                }
+                else if (options.export_type == GM) {
+                    game->exportFile(GM, options.export_filename);
+                }
+
+                if (options.print_game || options.print_verbose) {
+                    game->printGame();
+                }
+            }
+            else {
+                std::cout << ".";
+            }
+        }
+    }
+
+    //----------------------------------------------------------------------------------
 
     else if (options.solver==1 || options.solver==2) { // HRA (Basic or MEMO)
         for(auto& v0 : options.starts) {
@@ -421,7 +507,7 @@ int main(int argc, char *argv[])
             end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> totaltime = end - start;
 
-            std::cout   << options.starts[0] << ": "
+            std::cout   << v0 << ": "
                         << (play==EVEN?"EVEN ":"ODD "); 
 
             if (options.print_time || options.print_verbose) {

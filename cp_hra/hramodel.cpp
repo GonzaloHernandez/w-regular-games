@@ -6,7 +6,7 @@
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
 
-#include "coattractorbranching.cpp"
+#include "hrabranching.cpp"
 #include "../chuffed-patch/qualifynodeviations.cpp"
 
 #ifndef debugchuffed_h
@@ -60,7 +60,7 @@ public:
                 int v = g.sources[e];
                 if (g.owners[v] == g.colors[v] || g.outs[v].size() == 1) {
                     vec<Lit> clause;
-                    clause.push( Q[v].getLit( g.colors[v]) );
+                    clause.push( Q[v].getLit( g.colors[v]%2 ) );
                     sat.addClause(clause);
                 }
             } 
@@ -72,12 +72,12 @@ public:
 
         // -------------------------------------------------------------------
 
-        // engine.branching->add(new CoAttractorBranching(g,Q));
+        engine.branching->add(new HRABranching(g,Q));
         
-        vec<Branching*> bq(static_cast<unsigned int>(g.nvertices));
-        for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
-        branch(bq, VAR_INORDER, VAL_MIN);
-        output_vars(bq);
+        // vec<Branching*> bq(static_cast<unsigned int>(g.nvertices));
+        // for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
+        // branch(bq, VAR_INORDER, VAL_MIN);
+        // output_vars(bq);
     }
 
 
