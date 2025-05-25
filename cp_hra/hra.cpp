@@ -75,31 +75,59 @@ signed char getPlayMemo(Game& g, std::vector<int> path, int v, std::vector<int>&
 {
     int index = findVertex(v,path);
     if (index >= 0) {
-        int best = bestcolor(g,index,path);
-        memo[v] = 8;
-        return best%2;
+        int p = bestcolor(g,index,path)%2;
+        if (p == g.owners[v]) {
+            memo[v] = p;
+            return p;
+        }
+        else {
+            memo[v] = p+2;
+            return p+2;
+        }
     }
     else {
         int p = g.owners[v];
+        bool uncertainty = false;
         for(auto& e : g.outs[v]) {
             int w = g.targets[e];
-            if (memo[w]<5) {
-                auto next = memo[w];
-                if (next == p) {
-                    if (memo[v]==8) memo[v] = p;
-                    return p;
+            if (memo[w] == p) {
+                memo[v] = p;
+                return p;
+            }
+            else if ((memo[w]==2 || memo[w]==3) && (memo[v]==2 || memo[v]==3)) {
+                if (memo[w]%2 == p) {
+                    memo[v] = p;
+                    return p;                    
+                }
+                else {
+                    uncertainty = true;
                 }
             }
             else {
                 auto next = getPlayMemo(g, path+v, g.targets[e],memo);
                 if (next == p) {
-                    if (memo[v]==8) memo[v] = p;
+                    memo[v] = p;
                     return p;
+                }
+                else if ((next==2 || next==3) && (memo[v]==2 || memo[v]==3)) {
+                    if (next%2 == p) {
+                        memo[v] = p;
+                        return p;                    
+                    }
+                    else {
+                        uncertainty = true;
+                    }
                 }
             }
         }
-        if (memo[v]==8) memo[v] = 1-p;
-        return 1-p;
+        if ((memo[v]==2 || memo[v]==3) && !uncertainty) {
+            memo[v] = 1-p;
+            return 1-p;
+        }
+        else {
+            memo[v] = (1-p)+2;
+            return (1-p)+2;
+        }
     }
 }
 
@@ -114,8 +142,8 @@ signed char getPlay(Game& g, int p, int start, bool basic) {
     // std::fill_n(memo.get(), g.nvertices, 9);
     // auto play = getPlayMemo(g, {}, start, memo.get());
 
-    std::vector<int> memo(g.nvertices,9);
+    std::vector<int> memo(g.nvertices,9);   
     auto play = getPlayMemo(g, {}, start, memo);
 
-    return play;
+    return play%2;
 }

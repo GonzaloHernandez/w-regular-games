@@ -44,7 +44,8 @@
                 "${workspaceFolder}/build/ex2",
                 "-I${env:HOME}/.local/include",
                 "-L${env:HOME}/.local/lib",
-                "-lchuffed"
+                "-lchuffed",
+                "-v"
             ],
             "problemMatcher": [
                 "$gcc"
