@@ -45,7 +45,6 @@
                 "-I${env:HOME}/.local/include",
                 "-L${env:HOME}/.local/lib",
                 "-lchuffed",
-                "-v"
             ],
             "problemMatcher": [
                 "$gcc"

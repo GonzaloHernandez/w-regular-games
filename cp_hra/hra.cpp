@@ -71,69 +71,38 @@ signed char getPlayBasic(Game& g, std::vector<int> path, int v) {
 //-----------------------------------------------------------------------------------------------------
 
 // signed char getPlayMemo(Game& g, std::vector<int> path, int v, signed char* memo) 
-signed char getPlayMemo(Game& g, std::vector<int> path, int v, std::vector<int>& memo) 
-{
+signed char getPlayMemo(Game& g, std::vector<int> path, int v, std::vector<int>& memo) {
     int index = findVertex(v,path);
     if (index >= 0) {
-        int p = bestcolor(g,index,path)%2;
-        if (p == g.owners[v]) {
-            memo[v] = p;
-            return p;
+        int best = bestcolor(g,index,path);
+        if (best%2 == g.owners[v]) {
+            memo[v] = best%2+2;
         }
-        else {
-            memo[v] = p+2;
-            return p+2;
-        }
+        return best%2;
     }
     else {
         int p = g.owners[v];
-        bool uncertainty = false;
         for(auto& e : g.outs[v]) {
             int w = g.targets[e];
-            if (memo[w] == p) {
-                memo[v] = p;
-                return p;
-            }
-            else if ((memo[w]==2 || memo[w]==3) && (memo[v]==2 || memo[v]==3)) {
-                if (memo[w]%2 == p) {
-                    memo[v] = p;
-                    return p;                    
-                }
-                else {
-                    uncertainty = true;
-                }
+            signed char next;
+            if (memo[w] < 2) {
+                next = memo[w];
             }
             else {
-                auto next = getPlayMemo(g, path+v, g.targets[e],memo);
-                if (next == p) {
-                    memo[v] = p;
-                    return p;
-                }
-                else if ((next==2 || next==3) && (memo[v]==2 || memo[v]==3)) {
-                    if (next%2 == p) {
-                        memo[v] = p;
-                        return p;                    
-                    }
-                    else {
-                        uncertainty = true;
-                    }
-                }
+                next = getPlayMemo(g, path+v, w, memo);
+            }
+            if (next == p) {
+                if (memo[v]%2==p) memo[v]=p;
+                return p;
             }
         }
-        if ((memo[v]==2 || memo[v]==3) && !uncertainty) {
-            memo[v] = 1-p;
-            return 1-p;
-        }
-        else {
-            memo[v] = (1-p)+2;
-            return (1-p)+2;
-        }
+        return 1-p;
     }
 }
 
 //-----------------------------------------------------------------------------------------------------
 
-signed char getPlay(Game& g, int p, int start, bool basic) {
+signed char getPlay(Game& g, int start, bool basic) {
     if (basic) {
         return getPlayBasic(g, {}, start);
     }

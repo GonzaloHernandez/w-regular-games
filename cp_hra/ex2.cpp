@@ -386,7 +386,7 @@ int main(int argc, char *argv[])
         std::cout << "EVENs faults : ";
         int counter=0;
         for (auto& v : win[0]) {
-            auto play = getPlay(*game, 0, v, options.solver==1);
+            auto play = getPlay(*game, v, options.solver==1);
             if (play!=EVEN) {
                 counter++;
                 std::cout << v << " ";
@@ -397,7 +397,7 @@ int main(int argc, char *argv[])
         std::cout << "ODDs faults : ";
         counter=0;
         for (auto& v : win[1]) {
-            auto play = getPlay(*game, 0, v, options.solver==1);
+            auto play = getPlay(*game, v, options.solver==1);
             if (play!=ODD) {
                 counter++;
                 std::cout << v << " ";
@@ -469,12 +469,12 @@ int main(int argc, char *argv[])
             auto win = zlk.solve();
             int counter1=0;
             for (auto& v : win[0]) {
-                if (getPlay(*game, 0, v, options.solver==1) != EVEN) counter1++;
+                if (getPlay(*game, v, options.solver==1) != EVEN) counter1++;
             }
 
             int counter2=0;
             for (auto& v : win[1]) {
-                if (getPlay(*game, 0, v, options.solver==1) != ODD) counter2++;
+                if (getPlay(*game, v, options.solver==1) != ODD) counter2++;
             }
 
             if (counter1>0 || counter2>0) {
@@ -499,15 +499,15 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
 
     else if (options.solver==1 || options.solver==2) { // HRA (Basic or MEMO)
-        for(auto& v0 : options.starts) {
+        for(auto& v : options.starts) {
             start = std::chrono::high_resolution_clock::now();
 
-            auto play = getPlay(*game, 0, v0, options.solver==1);
+            auto play = getPlay(*game, v, options.solver==1);
 
             end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> totaltime = end - start;
 
-            std::cout   << v0 << ": "
+            std::cout   << v << ": "
                         << (play==EVEN?"EVEN ":"ODD "); 
 
             if (options.print_time || options.print_verbose) {
@@ -568,9 +568,9 @@ int main(int argc, char *argv[])
             } else {
                 std::cout << "ODD " ; 
             }
+            std::cout << std::endl;
         }
 
-        std::cout << std::endl;
     }
 
     //----------------------------------------------------------------------------------
