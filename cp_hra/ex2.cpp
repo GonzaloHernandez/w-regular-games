@@ -4,6 +4,7 @@
 #include "debugstd.h"
 #include "hramodel.cpp"
 #include "zielonka.cpp"
+#include "tarjan.cpp"
 
 //--------------------------------------------------------------------------------------
 
@@ -20,7 +21,7 @@ struct options {
     std::string         game_filename   = "";
     std::string         export_filename = "";
     int                 export_type     = 0; // 0=not export 2=DZN 3=GM
-    int                 solver          = 1; // 1=HRA-Basic 2=HRA-Memo 3=Matrix 4=ZRA 5=CP-HRA
+    int                 solver          = 1; // 1=HRA-Basic 2=HRA-Memo 3=Matrix 4=ZRA 5=CP-HRA 6=SCC
     int                 proof           = 0; // 0=no 1=yes 2=eager
 } options;
 
@@ -193,12 +194,13 @@ bool parseMyOptions(int argc, char *argv[]) {
         }
         else if (strcmp(argv[i],"--max")==0)            { options.reward = MAX; }
         else if (strcmp(argv[i],"--min")==0)            { options.reward = MIN; }
+        else if (strcmp(argv[i],"--test")==0)           { options.solver = 0; }
         else if (strcmp(argv[i],"--hra-basic")==0)      { options.solver = 1; }
         else if (strcmp(argv[i],"--hra-memo")==0)       { options.solver = 2; }
         else if (strcmp(argv[i],"--matrix-based")==0)   { options.solver = 3; }
         else if (strcmp(argv[i],"--zra")==0)            { options.solver = 4; }
         else if (strcmp(argv[i],"--cp")==0)             { options.solver = 5; }
-        else if (strcmp(argv[i],"--test")==0)           { options.solver = 0; }
+        else if (strcmp(argv[i],"--scc")==0)            { options.solver = 6; }
         else if (strcmp(argv[i],"--proof")==0)          { options.proof = 1; }
         else if (strcmp(argv[i],"--proof-eager")==0)    { options.proof = 2; }
         else if (strcmp(argv[i],"--print-time")==0)     { options.print_time     = true; }
@@ -226,6 +228,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --hra-memo                 : Solve using HRA-MEMO\n";
             std::cout << "  --matrix-based             : Solve using Matrix-Based\n";
             std::cout << "  --cp                       : Solve using CP (new method)\n";
+            std::cout << "  --scc                      : Search for Strongly Connected Components\n";
             std::cout << "  --proof                    : Compare results using Zielonka\n";
             std::cout << "  --proof-eager              : Looking for counterexample\n";
             return false;
@@ -657,6 +660,16 @@ int main(int argc, char *argv[])
         }
 
         delete model;
+    }
+
+    //----------------------------------------------------------------------------------
+
+    else if (options.solver==6) { //SCC
+        TarjanSCC tscc(*game);
+        auto sccs = tscc.solve();
+        for (auto& scc : sccs) {
+            std::cout << scc << std::endl;            
+        }
     }
 
     //----------------------------------------------------------------------------------
