@@ -35,12 +35,12 @@
             "program": "${workspaceFolder}/build/ex2",
             "args": [   
                 // "--gm", "${env:HOME}/gm/randomgame(5000,_10,_1,_20)id=0.gm",
-                // "--gm", "${workspaceFolder}/build/rand.gm",
-                "--dzn", "${workspaceFolder}/data/other.dzn",
+                // "--gm", "${workspaceFolder}/data/nrand.gm",
+                // "--dzn", "${workspaceFolder}/data/other.dzn",
                 // "--jurd","50","10","--min",
-                // "--rand","5","3","1","3",
+                "--rand","5","3","1","3",
                 // "--gm","build/rand01.gm",
-                // "--start","4",
+                // "--start","1",
                 // "--proof",
                 // "--proof-eager",
                 // "--min",
@@ -49,8 +49,8 @@
                 // "--print-solution",
                 // "--matrix-based",
                 // "--cp",
-                // "--hra-memo"
-                "--zra",
+                "--hra-memo"
+                // "--zra",
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

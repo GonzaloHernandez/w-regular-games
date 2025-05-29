@@ -71,25 +71,30 @@ signed char getPlayBasic(Game& g, std::vector<int> path, int v) {
 //-----------------------------------------------------------------------------------------------------
 
 // signed char getPlayMemo(Game& g, std::vector<int> path, int v, signed char* memo) 
-splay getPlayMemo(Game& g, std::vector<int> path, int v, std::vector<int>& memo) {
-    int index = findVertex(v,path);
+signed char getPlayMemo(Game& g, std::vector<int> pathV, std::vector<int> pathE, int v, std::vector<int>& memo) {
+    int index = findVertex(v,pathV);
     if (index >= 0) {
-        int best = bestcolor(g,index,path);
-        return {v,best%2};
+        int best = bestcolor(g,index,pathV);
+        memo[pathE[index]] = 8;
+        return best%2;
     }
     else {
         int p = g.owners[v];
-        splay next;
         for(auto& e : g.outs[v]) {
             int w = g.targets[e];
-            next = getPlayMemo(g, path+v, w, memo);
-            
-            if (next.parity() == p) {
-                if (next.loop == v) memo[v] = p;
-                return next;
+            signed char next;
+            if (memo[e] < 8) {
+                next = memo[e];
+            }
+            else {
+                next = getPlayMemo(g, pathV+v, pathE+e, w, memo);
+            }
+            if (memo[e]==8) memo[e]=next;
+            if (next == p) {
+                return p;
             }
         }
-        return next;
+        return 1-p;
     }
 }
 
@@ -104,8 +109,8 @@ signed char getPlay(Game& g, int start, bool basic) {
     // std::fill_n(memo.get(), g.nvertices, 9);
     // auto play = getPlayMemo(g, {}, start, memo.get());
 
-    std::vector<int> memo(g.nvertices,9);   
-    auto play = getPlayMemo(g, {}, start, memo);
+    std::vector<int> memo(g.nedges,9);   
+    auto play = getPlayMemo(g, {}, {}, start, memo);
 
-    return play.parity();
+    return play;
 }
