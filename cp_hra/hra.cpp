@@ -3,13 +3,22 @@
 struct splay {
     int loop;
     int best;
-    bool parity()   { return best%2; }
+    int parity;
     bool touched()  { return loop>=0; }
 };
 
 //-----------------------------------------------------------------------------------------------------
 
-int findVertex(int vertex,std::vector<int>& path) {
+// Overload + operator: vector + int → vector with int appended
+std::vector<int> operator+(const std::vector<int>& v, int x) {
+    std::vector<int> result = v;
+    result.push_back(x);
+    return result;
+}
+
+//-----------------------------------------------------------------------------------------------------
+
+int findVertex(int vertex,const std::vector<int>& path) {
     for (int i=0; i<path.size(); i++) {
         if (path[i] == vertex) return i;
     }
@@ -39,15 +48,6 @@ int bestcolor(Game& g, int index,const std::vector<int>& path){
 
 //-----------------------------------------------------------------------------------------------------
 
-// Overload + operator: vector + int → vector with int appended
-std::vector<int> operator+(const std::vector<int>& v, int x) {
-    std::vector<int> result = v;
-    result.push_back(x);
-    return result;
-}
-
-//-----------------------------------------------------------------------------------------------------
-
 signed char getPlayBasic(Game& g, std::vector<int> path, int v) {
     int index = findVertex(v,path);
     if (index >= 0) {
@@ -71,31 +71,49 @@ signed char getPlayBasic(Game& g, std::vector<int> path, int v) {
 //-----------------------------------------------------------------------------------------------------
 
 // signed char getPlayMemo(Game& g, std::vector<int> path, int v, signed char* memo) 
-signed char getPlayMemo(Game& g, std::vector<int> pathV, std::vector<int> pathE, int v, std::vector<int>& memo) {
-    int index = findVertex(v,pathV);
-    if (index >= 0) {
-        int best = bestcolor(g,index,pathV);
-        memo[pathE[index]] = 8;
-        return best%2;
-    }
-    else {
-        int p = g.owners[v];
-        for(auto& e : g.outs[v]) {
-            int w = g.targets[e];
-            signed char next;
-            if (memo[e] < 8) {
-                next = memo[e];
+splay getPlayMemo(Game& g, std::vector<int> path, int v, 
+                        std::vector<splay>& memo) 
+{
+    splay next;
+    int p = g.owners[v];
+    for(auto& e : g.outs[v]) {
+        int w = g.targets[e];
+
+        int best;
+        int index = findVertex(w,path+v);
+        if (index >= 0) {
+            best = bestcolor(g,index,path+v);
+            next = {w, g.colors[v], best%2};
+        }
+        else if (memo[e].touched()) {
+            int index = findVertex(memo[e].loop,path+v);
+            if (index >= 0) {
+                best = memo[e].best;
             }
             else {
-                next = getPlayMemo(g, pathV+v, pathE+e, w, memo);
-            }
-            if (memo[e]==8) memo[e]=next;
-            if (next == p) {
-                return p;
+                next = getPlayMemo(g, path+v, w, memo);
             }
         }
-        return 1-p;
+        else {
+            next = getPlayMemo(g, path+v, w, memo);
+        }
+
+        if (next.loop != v) {
+            if ((g.reward==MIN && g.colors[w] < next.best) || 
+                (g.reward==MAX && g.colors[w] > next.best)) 
+            {
+                memo[e] = {next.loop, g.colors[w], next.parity};
+            }
+            else {
+                memo[e] = next;
+            }
+        }
+
+        if (next.parity == p) {
+            return next;
+        }
     }
+    return next;
 }
 
 //-----------------------------------------------------------------------------------------------------
@@ -109,8 +127,8 @@ signed char getPlay(Game& g, int start, bool basic) {
     // std::fill_n(memo.get(), g.nvertices, 9);
     // auto play = getPlayMemo(g, {}, start, memo.get());
 
-    std::vector<int> memo(g.nedges,9);   
-    auto play = getPlayMemo(g, {}, {}, start, memo);
+    std::vector<splay> memo(g.nedges,{-1,-1,-1});   
+    auto play = getPlayMemo(g, {}, start, memo);
 
-    return play;
+    return play.parity;
 }
