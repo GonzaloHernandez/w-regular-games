@@ -4,7 +4,7 @@ struct splay {
     int loop;
     int best;
     int parity;
-    bool touched()  { return loop>=0; }
+    bool touched()  { return best>=0; }
 };
 
 //-----------------------------------------------------------------------------------------------------
@@ -71,49 +71,74 @@ signed char getPlayBasic(Game& g, std::vector<int> path, int v) {
 //-----------------------------------------------------------------------------------------------------
 
 // signed char getPlayMemo(Game& g, std::vector<int> path, int v, signed char* memo) 
-splay getPlayMemo(Game& g, std::vector<int> path, int v, 
-                        std::vector<splay>& memo) 
+splay getPlayMemo(Game& g, std::vector<int> path, int v, std::vector<splay>& memo) 
 {
-    splay next;
-    int p = g.owners[v];
-    for(auto& e : g.outs[v]) {
-        int w = g.targets[e];
-
-        int best;
-        int index = findVertex(w,path+v);
-        if (index >= 0) {
-            best = bestcolor(g,index,path+v);
-            next = {w, g.colors[v], best%2};
-        }
-        else if (memo[e].touched()) {
-            int index = findVertex(memo[e].loop,path+v);
-            if (index >= 0) {
-                best = memo[e].best;
+    int index = findVertex(v,path);
+    if (index >= 0) {
+        int best = bestcolor(g,index,path);
+        return {v, -1, best%2};
+    }
+    else {
+        int p = g.owners[v];
+        splay next;
+        for(auto& e : g.outs[v]) {
+            int w = g.targets[e];
+            
+            // fordware
+            if (memo[e].touched()) {
+                int index = findVertex(memo[e].loop,path);
+                if (index >= 0) {
+                    int best = bestcolor(g,index,path);
+                    if ((g.reward==MIN && memo[e].best < best) || 
+                        (g.reward==MAX && memo[e].best > best)) 
+                    {
+                        next = memo[e];
+                    }
+                    else {
+                        next = getPlayMemo(g, path+v, w, memo);
+                        // memoizing
+                        if ((g.reward==MIN && g.colors[v] < next.best) || 
+                            (g.reward==MAX && g.colors[v] > next.best)) 
+                        {
+                            next.best = g.colors[v];
+                        }
+                        memo[e] = next;
+                    }
+                }
+                else {
+                    next = getPlayMemo(g, path+v, w, memo);
+                    // memoizing
+                    if ((g.reward==MIN && g.colors[v] < next.best) || 
+                        (g.reward==MAX && g.colors[v] > next.best)) 
+                    {
+                        next.best = g.colors[v];
+                    }
+                    memo[e] = next;
+                }
             }
             else {
                 next = getPlayMemo(g, path+v, w, memo);
-            }
-        }
-        else {
-            next = getPlayMemo(g, path+v, w, memo);
-        }
 
-        if (next.loop != v) {
-            if ((g.reward==MIN && g.colors[w] < next.best) || 
-                (g.reward==MAX && g.colors[w] > next.best)) 
-            {
-                memo[e] = {next.loop, g.colors[w], next.parity};
-            }
-            else {
+                // memoizing
+                if ((g.reward==MIN && g.colors[v] < next.best) || 
+                    (g.reward==MAX && g.colors[v] > next.best)) 
+                {
+                    next.best = g.colors[v];
+                }
                 memo[e] = next;
             }
-        }
 
-        if (next.parity == p) {
-            return next;
+
+            if (v == next.loop) {
+                next.best = -1;
+            }
+
+            if (next.parity == p) {
+                return next;
+            }
         }
+        return next;
     }
-    return next;
 }
 
 //-----------------------------------------------------------------------------------------------------
