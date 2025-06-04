@@ -3,8 +3,6 @@
 #endif
 
 #include "iostream"
-#include "chuffed/vars/modelling.h"
-#include "chuffed/core/propagator.h"
 
 class Zielonka {
 private:

@@ -44,6 +44,7 @@
                 "${workspaceFolder}/build/ex2",
                 "-I${env:HOME}/.local/include",
                 "-L${env:HOME}/.local/lib",
+                // "-lchuffed_fzn",
                 "-lchuffed",
             ],
             "problemMatcher": [
