@@ -10,11 +10,21 @@ struct splay {
 
 //-----------------------------------------------------------------------------------------------------
 
-// Overload + operator: vector + int → vector with int appended
 std::vector<int> operator+(const std::vector<int>& v, int x) {
     std::vector<int> result = v;
     result.push_back(x);
     return result;
+}
+
+std::ostream& operator<<(std::ostream& os, const std::vector<int>& vec) {
+    os << "[";
+    for (size_t i = 0; i < vec.size(); ++i) {
+        os << vec[i];
+        if (i != vec.size() - 1)
+            os << ", ";
+    }
+    os << "]";
+    return os;
 }
 
 //-----------------------------------------------------------------------------------------------------
@@ -33,6 +43,15 @@ int findVertexReverse(int vertex,const std::vector<int>& path) {
         if (path[i] == vertex) return i;
     }
     return -1;
+}
+
+//-----------------------------------------------------------------------------------------------------
+
+bool isBetter(Game& g,int v1,int v2) {
+    if ((g.reward==MIN && v1 < v2) || (g.reward==MAX && v1 > v2)) {
+        return true;
+    }
+    return false;
 }
 
 //-----------------------------------------------------------------------------------------------------
@@ -90,16 +109,14 @@ splay getPlayMemo(Game& g, std::vector<int> path, int v, std::vector<splay>& mem
 
                 int index = findVertex(memo[e].loop,path);
                 int until = bestcolor(g,index,path);
-                if ((g.reward==MIN && until < next.from) || 
-                    (g.reward==MAX && until > next.from)) 
-                {
+                if ( isBetter(g, until, next.from) ) {
                     next.best = until;
-                    if (next.parity() != memo[e].parity()) {
-                        
-                    }
                 }
                 else {
                     next.best = next.from;
+                }
+                if (next.parity() != memo[e].parity()) {
+                    next = getPlayMemo(g, path+v, w, memo);
                 }
             }
             else {
@@ -108,16 +125,15 @@ splay getPlayMemo(Game& g, std::vector<int> path, int v, std::vector<splay>& mem
 
             if (next.touched()) {
 
-                if ((g.reward==MIN && g.colors[v] < next.from) || 
-                    (g.reward==MAX && g.colors[v] > next.from)) 
-                {
+                if ( isBetter(g, g.colors[v], next.from)) {
                     next.from = g.colors[v];
                 }
                 memo[e] = next;
             }
 
-            if (v == next.loop) 
+            if (v == next.loop && g.owners[v]!=next.parity()) {
                 next.loop = -1;
+            }
 
             if (next.parity() == p) 
                 return next;
@@ -141,4 +157,31 @@ signed char getPlay(Game& g, int start, bool basic) {
     auto play = getPlayMemo(g, {}, start, memo);
 
     return play.parity();
+}
+
+
+//-----------------------------------------------------------------------------------------------------
+
+bool getAllCycles(Game& g, std::vector<int> path, int v, std::vector<bool>& touched) {
+    int index = findVertex(v,path);
+    if (index >= 0) {
+        int best = bestcolor(g,index,path);
+        std::cout << path+v << std::endl;
+        return best%2;
+    }
+    else {
+        int p = g.owners[v];
+        for(auto& e : g.outs[v]) {
+            if (touched[v]) {
+                std::cout<< path+v << " *" << std::endl;
+                continue;
+            }
+            auto next = getAllCycles(g, path+v, g.targets[e], touched);
+            // if (next == p) {
+            //     return p;
+            // }
+        }
+        touched[v] = true;
+        return 1-p;
+    }
 }

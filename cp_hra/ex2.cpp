@@ -218,8 +218,8 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --start <vertex>           : Starting vertex\n";
             std::cout << "  --print-time               : Print time)\n";
             std::cout << "  --print-game               : Print game)\n";
-            std::cout << "  --print-solution           : Print solution (All vertices))\n";
-            std::cout << "  --verbose                  : Print everything)\n";
+            std::cout << "  --print-solution           : Print solution (All vertices)\n";
+            std::cout << "  --verbose                  : Print everything\n";
             std::cout << "  --max                      : Seek to maximize the color\n";
             std::cout << "  --min                      : Seek to minimize the color\n";
             std::cout << "  --export-dzn <filename>    : Export game to DZN format (not solve)\n";
@@ -293,6 +293,8 @@ int main(int argc, char *argv[])
 
     if (options.solver==0) {
         // For testing purpposes
+        std::vector<bool> touched(game->nvertices,false);
+        getAllCycles(*game,{},0,touched);
     }
 
     //----------------------------------------------------------------------------------
@@ -502,6 +504,10 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
 
     else if (options.solver==1 || options.solver==2) { // HRA (Basic or MEMO)
+        if (options.print_solution || options.print_verbose) {
+            options.starts.resize(game->nvertices);
+            std::iota(options.starts.begin(), options.starts.end(), 0);
+        }
         for(auto& v : options.starts) {
             start = std::chrono::high_resolution_clock::now();
 

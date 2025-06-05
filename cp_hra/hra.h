@@ -18,5 +18,5 @@
 // signed char getPlayMemo(Game& g, int p, std::vector<int> path, int current, std::vector<int>& memo);
 
 signed char getPlay(Game& g, int start, bool basic=false);
-
+bool getAllCycles(Game& g, std::vector<int> path, int v, std::vector<bool>& touched);
 #endif // HRA_H
