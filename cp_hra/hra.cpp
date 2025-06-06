@@ -172,16 +172,16 @@ bool getAllCycles(Game& g, std::vector<int> path, int v, std::vector<bool>& touc
     else {
         int p = g.owners[v];
         for(auto& e : g.outs[v]) {
-            if (touched[v]) {
+            if (touched[e]) {
                 std::cout<< path+v << " *" << std::endl;
                 continue;
             }
             auto next = getAllCycles(g, path+v, g.targets[e], touched);
+            touched[e] = true;
             // if (next == p) {
             //     return p;
             // }
         }
-        touched[v] = true;
         return 1-p;
     }
 }

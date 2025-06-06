@@ -2,7 +2,7 @@
 #include "hra.h"
 #include "graph.h"
 #include "debugstd.h"
-// #include "hramodel.cpp"
+#include "hramodel.cpp"
 #include "zielonka.cpp"
 #include "tarjan.cpp"
 
@@ -293,75 +293,75 @@ int main(int argc, char *argv[])
 
     if (options.solver==0) {
         // For testing purpposes
-        std::vector<bool> touched(game->nvertices,false);
+        std::vector<bool> touched(game->nedges,false);
         getAllCycles(*game,{},0,touched);
     }
 
     //----------------------------------------------------------------------------------
 
-    // else if (options.proof==1 && options.solver==5) { //using Zielonka for proof cp
-    //     start = std::chrono::high_resolution_clock::now();
-    //     Zielonka zlk(*game);
+    else if (options.proof==1 && options.solver==5) { //using Zielonka for proof cp
+        start = std::chrono::high_resolution_clock::now();
+        Zielonka zlk(*game);
 
-    //     HRAModel* model = new HRAModel(*game,true);
-    //     so.print_sol = true;
-    //     so.nof_solutions = 0;
+        HRAModel* model = new HRAModel(*game,true);
+        so.print_sol = true;
+        so.nof_solutions = 0;
 
-    //     end = std::chrono::high_resolution_clock::now();
-    //     std::chrono::duration<double> preptime = end - start;
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> preptime = end - start;
 
-    //     if (options.print_time || options.print_verbose) {
-    //         std::cout << "Preparation time   : " << preptime.count() << std::endl;
-    //     }
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Preparation time   : " << preptime.count() << std::endl;
+        }
 
-    //     start = std::chrono::high_resolution_clock::now();
-    //     auto win = zlk.solve();
-    //     end = std::chrono::high_resolution_clock::now();
-    //     std::chrono::duration<double> totaltime1 = end - start;
+        start = std::chrono::high_resolution_clock::now();
+        auto win = zlk.solve();
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> totaltime1 = end - start;
         
-    //     if (options.print_time || options.print_verbose) {
-    //         std::cout << "Solving time (ZRA) : " << totaltime1.count() << std::endl;
-    //     }
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Solving time (ZRA) : " << totaltime1.count() << std::endl;
+        }
 
-    //     start = std::chrono::high_resolution_clock::now();
+        start = std::chrono::high_resolution_clock::now();
 
-    //     std::streambuf* old_buf = std::cout.rdbuf();
-    //     std::ofstream null_stream("/dev/null");  // or "NUL" on Windows
-    //     std::cout.rdbuf(null_stream.rdbuf());
+        std::streambuf* old_buf = std::cout.rdbuf();
+        std::ofstream null_stream("/dev/null");  // or "NUL" on Windows
+        std::cout.rdbuf(null_stream.rdbuf());
 
-    //     engine.solve(model);
+        engine.solve(model);
 
-    //     std::cout.rdbuf(old_buf);
+        std::cout.rdbuf(old_buf);
 
-    //     end = std::chrono::high_resolution_clock::now();
-    //     std::chrono::duration<double> totaltime2 = end - start;
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> totaltime2 = end - start;
 
-    //     if (options.print_time || options.print_verbose) {
-    //         std::cout << "Solving time (CP)  : " << totaltime2.count() << std::endl;
-    //     }
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Solving time (CP)  : " << totaltime2.count() << std::endl;
+        }
 
-    //     std::cout << "EVENs faults : ";
-    //     int counter=0;
-    //     for (auto& r : win[0]) {
-    //         if (model->getVal(r)!=EVEN) {
-    //             counter++;
-    //             std::cout << r << " ";
-    //         }
-    //     }
-    //     std::cout << " = " << counter << "/" << win[0].size() << std::endl;
+        std::cout << "EVENs faults : ";
+        int counter=0;
+        for (auto& r : win[0]) {
+            if (model->getVal(r)!=EVEN) {
+                counter++;
+                std::cout << r << " ";
+            }
+        }
+        std::cout << " = " << counter << "/" << win[0].size() << std::endl;
 
-    //     std::cout << "ODDs Faults  : ";
-    //     counter=0;
-    //     for (auto& r : win[1]) {
-    //         if (model->getVal(r)!=ODD) {
-    //             counter++;
-    //             std::cout << r << " ";
-    //         }
-    //     }
-    //     std::cout << " = " << counter << "/" << win[1].size() << std::endl;
+        std::cout << "ODDs Faults  : ";
+        counter=0;
+        for (auto& r : win[1]) {
+            if (model->getVal(r)!=ODD) {
+                counter++;
+                std::cout << r << " ";
+            }
+        }
+        std::cout << " = " << counter << "/" << win[1].size() << std::endl;
 
-    //     delete model;
-    // }
+        delete model;
+    }
     
     //----------------------------------------------------------------------------------
 
@@ -414,55 +414,55 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
 
     //Looking for counterexample using Zielonka
-    // else if (options.proof==2 && options.solver==5) { 
+    else if (options.proof==2 && options.solver==5) { 
 
-    //     if (options.game_type == RAND) {
-    //         Zielonka zlk(*game);
+        if (options.game_type == RAND) {
+            Zielonka zlk(*game);
 
-    //         HRAModel* model = new HRAModel(*game,true);
-    //         so.print_sol = true;
-    //         so.nof_solutions = 0;
+            HRAModel* model = new HRAModel(*game,true);
+            so.print_sol = true;
+            so.nof_solutions = 0;
 
-    //         auto win = zlk.solve();
+            auto win = zlk.solve();
 
-    //         std::streambuf* old_buf = std::cout.rdbuf();
-    //         std::ofstream null_stream("/dev/null");  // or "NUL" on Windows
-    //         std::cout.rdbuf(null_stream.rdbuf());
+            std::streambuf* old_buf = std::cout.rdbuf();
+            std::ofstream null_stream("/dev/null");  // or "NUL" on Windows
+            std::cout.rdbuf(null_stream.rdbuf());
 
-    //         engine.solve(model);
+            engine.solve(model);
 
-    //         std::cout.rdbuf(old_buf);
+            std::cout.rdbuf(old_buf);
 
-    //         int counter1=0;
-    //         for (auto& r : win[0]) {
-    //             if (model->getVal(r)!=EVEN) counter1++;
-    //         }
+            int counter1=0;
+            for (auto& r : win[0]) {
+                if (model->getVal(r)!=EVEN) counter1++;
+            }
 
-    //         int counter2=0;
-    //         for (auto& r : win[1]) {
-    //             if (model->getVal(r)!=ODD) counter2++;
-    //         }
+            int counter2=0;
+            for (auto& r : win[1]) {
+                if (model->getVal(r)!=ODD) counter2++;
+            }
 
-    //         delete model;
+            delete model;
 
-    //         if (counter1>0 || counter2>0) {
-    //             std::cout << "Counter example found:" << std::endl;
-    //             if (options.export_type == DZN) {
-    //                 game->exportFile(DZN, options.export_filename);
-    //             }
-    //             else if (options.export_type == GM) {
-    //                 game->exportFile(GM, options.export_filename);
-    //             }
+            if (counter1>0 || counter2>0) {
+                std::cout << "Counter example found:" << std::endl;
+                if (options.export_type == DZN) {
+                    game->exportFile(DZN, options.export_filename);
+                }
+                else if (options.export_type == GM) {
+                    game->exportFile(GM, options.export_filename);
+                }
 
-    //             if (options.print_game || options.print_verbose) {
-    //                 game->printGame();
-    //             }
-    //         }
-    //         else {
-    //             std::cout << ".";
-    //         }
-    //     }
-    // }
+                if (options.print_game || options.print_verbose) {
+                    game->printGame();
+                }
+            }
+            else {
+                std::cout << ".";
+            }
+        }
+    }
 
     //----------------------------------------------------------------------------------
     
@@ -626,47 +626,46 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------------------------------------------
 
-    // else if (options.solver==5) { //CP-HRA
-    //     start = std::chrono::high_resolution_clock::now();
-    //     HRAModel* model = new HRAModel(*game);
-    //     // so.print_sol = (options.print_solution || options.print_verbose);
-    //     so.nof_solutions = 0;
-    //     end = std::chrono::high_resolution_clock::now();
-    //     std::chrono::duration<double> preptime = end - start;
+    else if (options.solver==5) { //CP-HRA
+        start = std::chrono::high_resolution_clock::now();
+        HRAModel* model = new HRAModel(*game);
+        // so.print_sol = (options.print_solution || options.print_verbose);
+        so.nof_solutions = 0;
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> preptime = end - start;
 
-    //     if (options.print_time || options.print_verbose) {
-    //         std::cout << "Preparation time   : " << preptime.count() << std::endl;
-    //     }
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Preparation time   : " << preptime.count() << std::endl;
+        }
 
-    //     start = std::chrono::high_resolution_clock::now();
+        start = std::chrono::high_resolution_clock::now();
 
-    //     if (!options.print_solution && !options.print_verbose) {
-    //         std::streambuf* old_buf = std::cout.rdbuf();
-    //         std::ofstream null_stream("/dev/null");
-    //         std::cout.rdbuf(null_stream.rdbuf());
-    //         engine.solve(model);
-    //         std::cout.rdbuf(old_buf);
-    //     }
-    //     else {
-    //         engine.solve(model);
-    //     }
+        if (!options.print_solution && !options.print_verbose) {
+            std::streambuf* old_buf = std::cout.rdbuf();
+            std::ofstream null_stream("/dev/null");
+            std::cout.rdbuf(null_stream.rdbuf());
+            engine.solve(model);
+            std::cout.rdbuf(old_buf);
+        }
+        else {
+            engine.solve(model);
+        }
 
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> totaltime = end - start;
 
-    //     end = std::chrono::high_resolution_clock::now();
-    //     std::chrono::duration<double> totaltime = end - start;
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Solving time       : " << totaltime.count() << std::endl;
+        }
 
-    //     if (options.print_time || options.print_verbose) {
-    //         std::cout << "Solving time       : " << totaltime.count() << std::endl;
-    //     }
+        for(auto& v0 : options.starts) {
+            std::cout   << v0 << ": "
+                        << (model->getVal(v0)==EVEN?"EVEN ":"ODD ")
+                        << std::endl;
+        }
 
-    //     for(auto& v0 : options.starts) {
-    //         std::cout   << v0 << ": "
-    //                     << (model->getVal(v0)==EVEN?"EVEN ":"ODD ")
-    //                     << std::endl;
-    //     }
-
-    //     delete model;
-    // }
+        delete model;
+    }
 
     //----------------------------------------------------------------------------------
 
