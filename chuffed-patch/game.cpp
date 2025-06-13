@@ -62,6 +62,13 @@ void Game::parseline_gm(const std::string& line,std::vector<int>& vinfo,
 }
 
 //----------------------------------------------------------------------------------
+
+void Game::commonConstructor() {
+    active = std::make_unique<bool[]>(nvertices);
+    std::fill_n(active.get(), nvertices, true);
+}
+
+//----------------------------------------------------------------------------------
 // Default game
 
 Game::Game( std::vector<int> own,std::vector<int> col,
@@ -88,6 +95,7 @@ Game::Game( std::vector<int> own,std::vector<int> col,
         outs[sources[i]].push_back(i);
         ins [targets[i]].push_back(i);
     }
+    commonConstructor();
 }
 
 //----------------------------------------------------------------------------------
@@ -96,6 +104,12 @@ Game::Game( std::vector<int> own,std::vector<int> col,
 Game::Game(int type, std::string filename, int start, reward_type rew) 
 :   nvertices(0), nedges(0), start(start), reward(rew) 
 {
+    if (!filename.empty() && filename.back() == '.') {
+        switch (type) {
+            case DZN:   filename.append("dzn"); break;
+            case GM:    filename.append("gm");  break;
+        }
+    }
     std::ifstream file(filename);
     if (!file) {
         std::cerr << "Error: Could not open file!" << std::endl;
@@ -180,6 +194,7 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
             break;
         }
     }
+    commonConstructor();
 }
 
 //----------------------------------------------------------------------------------
@@ -289,6 +304,7 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
             }
         }
     }
+    commonConstructor();
 }
 
 //----------------------------------------------------------------------------------
@@ -367,3 +383,41 @@ void Game::printGame() {
 }
 
 //----------------------------------------------------------------------------------
+
+std::vector<int> Game::getVertices() {
+    std::vector<int> a;
+    for (int v=0; v<nvertices; v++) {
+        if (active[v]) a.push_back(v);
+    }
+    return a;
+}
+
+//----------------------------------------------------------------------------------
+
+void Game::activeAll() {
+    for (int v=0; v<nvertices; v++) {
+        active[v] = true;
+    }
+}
+
+//----------------------------------------------------------------------------------
+
+std::vector<int> Game::getOuts(int v) {
+    std::vector<int> es;
+    for(auto& e : outs[v]) {
+        int w = targets[e];
+        if (active[w]) es.push_back(e);
+    }
+    return es;
+}
+
+//----------------------------------------------------------------------------------
+
+std::vector<int> Game::getIns(int w) {
+    std::vector<int> es;
+    for(auto& e : ins[w]) {
+        int v = sources[e];
+        if (active[v]) es.push_back(e);
+    }
+    return es;
+}

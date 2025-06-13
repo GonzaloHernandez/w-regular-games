@@ -4,7 +4,7 @@
 #include "debugstd.h"
 #include "hramodel.cpp"
 #include "zielonka.cpp"
-#include "tarjan.cpp"
+#include "tarjan.h"
 
 //--------------------------------------------------------------------------------------
 
@@ -246,7 +246,7 @@ bool parseMyOptions(int argc, char *argv[]) {
 int main(int argc, char *argv[])
 {
     launchdebugstd();
-    // launchdebugchuffed();
+    launchdebugchuffed();
     if (!parseMyOptions(argc, argv)) exit(1);
     Game* game = nullptr;
 

@@ -8,6 +8,7 @@
 
 #include "hrabranching.cpp"
 #include "../chuffed-patch/qualifynodeviations.cpp"
+#include "paritychecker.cpp"
 
 #ifndef debugchuffed_h
 #include "debugchuffed.h"
@@ -69,15 +70,16 @@ public:
         // -------------------------------------------------------------------
 
         new QualifyNoDeviations(g, Q);
+        new ParityChecker(g, Q);
 
         // -------------------------------------------------------------------
 
-        engine.branching->add(new HRABranching(g,Q));
+        // engine.branching->add(new HRABranching(g,Q));
         
-        // vec<Branching*> bq(static_cast<unsigned int>(g.nvertices));
-        // for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
-        // branch(bq, VAR_INORDER, VAL_MIN);
-        // output_vars(bq);
+        vec<Branching*> bq(static_cast<unsigned int>(g.nvertices));
+        for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
+        branch(bq, VAR_INORDER, VAL_MIN);
+        output_vars(bq);
     }
 
 
