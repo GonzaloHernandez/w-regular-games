@@ -81,12 +81,20 @@ public:
 
     //-----------------------------------------------------------------------
 
-    std::vector<int> getBestVertices() {
+    std::vector<int> getBestVertices(bool threshold=false, int best=0) {
         std::vector<int> bestVertices;
         bool found = false;
         int bestColor;
         for (int i=0; i<g.nvertices; i++) {
             if (!g.active[i]) continue;
+
+            if (threshold) {
+                if ((g.reward==MIN && g.colors[i] <= best) ||
+                    (g.reward==MAX && g.colors[i] >= best)) 
+                {
+                    continue;
+                }
+            }
 
             if (!found) {
                 bestColor = g.colors[i];
@@ -98,12 +106,9 @@ public:
             if (g.colors[i] == bestColor) {
                 bestVertices.push_back(i);
             }
-            else if (g.reward==MIN && g.colors[i] < bestColor) {
-                bestColor = g.colors[i];
-                bestVertices.clear();
-                bestVertices.push_back(i);
-            }
-            else if (g.reward==MAX && g.colors[i] > bestColor) {
+            else if (   (g.reward==MIN && g.colors[i] < bestColor) ||
+                        (g.reward==MAX && g.colors[i] > bestColor)) 
+            {
                 bestColor = g.colors[i];
                 bestVertices.clear();
                 bestVertices.push_back(i);
@@ -155,7 +160,6 @@ public:
 
         // Ensuring that plays never leave their winning region
         for(int v=0; v<g.nvertices; v++) {
-            if (!Q[v].isFixed()) continue;
             std::vector<bool> touched(g.nvertices,false);
             if (!dfs( {}, v, Q[v].getVal(), touched )) {
                 vec<Lit> lits;
@@ -167,26 +171,59 @@ public:
         }
 
         // Ensuring parity condition using SCC over EVEN's vertices
-        for (int v=0; v<g.nvertices; v++) {
-            if (!Q[v].isFixed()) return true;
-            if (Q[v].getVal() == ODD) 
-                g.active[v] = false;
-            else
-                g.active[v] = true;
-        }
-        TarjanSCC tscc(g);
-        auto sccs = tscc.solve();
-        for(auto& scc : sccs) {
+        {
+            for (int v=0; v<g.nvertices; v++) {
+                g.active[v] = (Q[v].getVal() == EVEN);
+            }
+            TarjanSCC tscc(g);
+            auto sccs = tscc.solve();
             auto A = getBestVertices();
-            int c = g.colors[A[0]];
-            attractor(EVEN, A);
-            if (A.size() == scc.size()) {
-                if (c%2 != EVEN) {
-                    vec<Lit> lits;
-                    lits.push();
-                    Clause* reason = Reason_new(lits);
-                    Q[A[0]].setVal( !Q[A[0]].getVal(), reason );
-                    return false;
+            for(auto& scc : sccs) {
+                while (A.size()>0) {
+                    int c = g.colors[A[0]];
+                    attractor(EVEN, A);
+                    if (A.size() == scc.size()) {
+                        if (c%2 == EVEN) {
+                            return true;
+                        }
+                        else {
+                            vec<Lit> lits;
+                            lits.push();
+                            Clause* reason = Reason_new(lits);
+                            Q[A[0]].setVal( !Q[A[0]].getVal(), reason );
+                            return false;
+                        }
+                    }
+                    A = getBestVertices(true,c);
+                }
+            }
+        }
+
+        // Ensuring parity condition using SCC over ODD's vertices
+        {
+            for (int v=0; v<g.nvertices; v++) {
+                g.active[v] = (Q[v].getVal() == ODD);
+            }
+            TarjanSCC tscc(g);
+            auto sccs = tscc.solve();
+            auto A = getBestVertices();
+            for(auto& scc : sccs) {
+                while (A.size()>0) {
+                    int c = g.colors[A[0]];
+                    attractor(ODD, A);
+                    if (A.size() == scc.size()) {
+                        if (c%2 == ODD) {
+                            return true;
+                        }
+                        else {
+                            vec<Lit> lits;
+                            lits.push();
+                            Clause* reason = Reason_new(lits);
+                            Q[A[0]].setVal( !Q[A[0]].getVal(), reason );
+                            return false;
+                        }
+                    }
+                    A = getBestVertices(true,c);
                 }
             }
         }
