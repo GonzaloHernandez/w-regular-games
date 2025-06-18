@@ -2,7 +2,9 @@
 #include "../chuffed-patch/game.h"
 #endif
 
-#include "tarjan.h"
+#ifndef tarjan_h
+#include "../various/tarjan.h"
+#endif
 
 #include <iostream>
 #include "chuffed/vars/modelling.h"

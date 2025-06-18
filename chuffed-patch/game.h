@@ -1,5 +1,5 @@
-#ifndef GAME_H
-#define GAME_H
+#ifndef game_h
+#define game_h
 
 #include <iostream>
 #include <vector>
@@ -71,4 +71,4 @@ public:
     void activeAll();
 };
 
-#endif // GAME_H
+#endif // game_h

@@ -6,17 +6,9 @@
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
 
-#include "hrabranching.cpp"
-#include "../chuffed-patch/qualifynodeviations.cpp"
-#include "paritychecker.cpp"
-
-#ifndef debugchuffed_h
-#include "debugchuffed.h"
-#endif
-
-#ifndef debugstd_h
-#include "debugstd.h"
-#endif
+#include "branch_hra.cpp"
+#include "prop_qnodeviations.cpp"
+#include "prop_paritychecker.cpp"
 
 class HRAModel : public Problem {
 private:

@@ -1,5 +1,5 @@
 #ifndef game_h
-#include "game.h"
+#include "../chuffed-patch/game.h"
 #endif
 
 #include "iostream"

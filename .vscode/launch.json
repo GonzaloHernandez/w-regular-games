@@ -29,6 +29,42 @@
         },
         // --------------------------------------------------------------
         {
+            "name": "C++ Debug NOC",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/ex3",
+            "args": [   
+                // "--gm", "${env:HOME}/gm/randomgame(5000,_10,_1,_20)id=0.gm",
+                // "--gm", "/home/chalo/ce.gm",
+                "--dzn", "${workspaceFolder}/build/rand.dzn",
+                // "--jurd","50","10","--min",
+                // "--rand","5","3","1","3",
+                // "--gm","build/rand01.gm",
+                "--start","0",
+                // "--proof",
+                // "--proof-eager",
+                // "--min",
+                // "--export-gm","/home/chalo/dbg.gm",
+                // "--verbose"
+                "--print-solution",
+                // "--matrix-based",
+                "--zra",
+                // "--hra-memo"
+                // "--zra",
+            ],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "externalConsole": false,
+            "MIMode": "gdb",  // lldb for osx / gdb for linux
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]            
+        },        // --------------------------------------------------------------
+        {
             "name": "C++ Debug HRA",
             "type": "cppdbg",
             "request": "launch",
