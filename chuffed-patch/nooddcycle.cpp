@@ -105,7 +105,7 @@ public:
             if (mincolor(index,pathV)%2==ODD) {
                 vec<Lit> lits;
                 lits.push();
-                clausify(pathE,E,lits,index);
+                clausify(pathE,E,lits,0);
                 Clause* reason = Reason_new(lits);
                 if (! E[lastEdge].setVal(false,reason)) {
                     return CF_CONFLICT;
@@ -143,7 +143,7 @@ public:
             if (min%2==ODD) {
                 vec<Lit> lits;
                 lits.push();
-                clausify(pathE,E,lits,index);
+                // clausify(pathE,E,lits,index);
                 Clause* reason = Reason_new(lits);
                 if (! E[lastEdge].setVal(false,reason)) {
                     return CF_CONFLICT;

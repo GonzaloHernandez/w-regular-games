@@ -1,10 +1,10 @@
 
-#include "../various/hra.h"
+#include "../various/fra.h"
 #include "../various/graph.h"
 #include "../various/zielonka.cpp"
 #include "../various/tarjan.h"
 
-#include "model_hra.cpp"
+#include "model_fra.cpp"
 
 #include "../resources/debugchuffed.h"
 #include "../resources/debugstd.h"
@@ -24,7 +24,7 @@ struct options {
     std::string         game_filename   = "";
     std::string         export_filename = "";
     int                 export_type     = 0; // 0=not export 2=DZN 3=GM
-    int                 solver          = 1; // 1=HRA-Basic 2=HRA-Memo 3=Matrix 4=ZRA 5=CP-HRA 6=SCC
+    int                 solver          = 1; // 1=FRA-Basic 2=FRA-Memo 3=Matrix 4=ZRA 5=CP-FRA 6=SCC
     int                 proof           = 0; // 0=no 1=yes 2=eager
 } options;
 
@@ -198,8 +198,8 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--max")==0)            { options.reward = MAX; }
         else if (strcmp(argv[i],"--min")==0)            { options.reward = MIN; }
         else if (strcmp(argv[i],"--test")==0)           { options.solver = 0; }
-        else if (strcmp(argv[i],"--hra-basic")==0)      { options.solver = 1; }
-        else if (strcmp(argv[i],"--hra-memo")==0)       { options.solver = 2; }
+        else if (strcmp(argv[i],"--fra-basic")==0)      { options.solver = 1; }
+        else if (strcmp(argv[i],"--fra-memo")==0)       { options.solver = 2; }
         else if (strcmp(argv[i],"--matrix-based")==0)   { options.solver = 3; }
         else if (strcmp(argv[i],"--zra")==0)            { options.solver = 4; }
         else if (strcmp(argv[i],"--cp")==0)             { options.solver = 5; }
@@ -227,9 +227,10 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --min                      : Seek to minimize the color\n";
             std::cout << "  --export-dzn <filename>    : Export game to DZN format (not solve)\n";
             std::cout << "  --export-gm <filename>     : Export game to GM format (not solve)\n";
-            std::cout << "  --hra-basic                : Solve using HRA-Basic\n";
-            std::cout << "  --hra-memo                 : Solve using HRA-MEMO\n";
+            std::cout << "  --fra-basic                : Solve using FRA-Basic\n";
+            std::cout << "  --fra-memo                 : Solve using FRA-MEMO\n";
             std::cout << "  --matrix-based             : Solve using Matrix-Based\n";
+            std::cout << "  --zra                      : Solve using Zielonka Recursive Algorithm\n";
             std::cout << "  --cp                       : Solve using CP (new method)\n";
             std::cout << "  --scc                      : Search for Strongly Connected Components\n";
             std::cout << "  --proof                    : Compare results using Zielonka\n";
@@ -306,7 +307,7 @@ int main(int argc, char *argv[])
         start = std::chrono::high_resolution_clock::now();
         Zielonka zlk(*game);
 
-        HRAModel* model = new HRAModel(*game,true);
+        FRAModel* model = new FRAModel(*game,true);
         so.print_sol = true;
         so.nof_solutions = 0;
 
@@ -368,7 +369,7 @@ int main(int argc, char *argv[])
     
     //----------------------------------------------------------------------------------
 
-    //using Zielonka for proof hra
+    //using Zielonka for proof fra
     else if (options.proof==1 && (options.solver==1 || options.solver==2)) { 
         start = std::chrono::high_resolution_clock::now();
         Zielonka zlk(*game);
@@ -422,7 +423,7 @@ int main(int argc, char *argv[])
         if (options.game_type == RAND) {
             Zielonka zlk(*game);
 
-            HRAModel* model = new HRAModel(*game,true);
+            FRAModel* model = new FRAModel(*game,true);
             so.print_sol = true;
             so.nof_solutions = 0;
 
@@ -469,7 +470,7 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------------------------------------------
     
-    //Looking for counterexample using Zielonka and hra
+    //Looking for counterexample using Zielonka and fra
     else if (options.proof==2 && (options.solver==1 || options.solver==2)) { 
 
         if (options.game_type == RAND) {
@@ -506,7 +507,7 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------------------------------------------
 
-    else if (options.solver==1 || options.solver==2) { // HRA (Basic or MEMO)
+    else if (options.solver==1 || options.solver==2) { // FRA (Basic or MEMO)
         if (options.print_solution || options.print_verbose) {
             options.starts.resize(game->nvertices);
             std::iota(options.starts.begin(), options.starts.end(), 0);
@@ -629,9 +630,9 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------------------------------------------
 
-    else if (options.solver==5) { //CP-HRA
+    else if (options.solver==5) { //CP-FRA
         start = std::chrono::high_resolution_clock::now();
-        HRAModel* model = new HRAModel(*game);
+        FRAModel* model = new FRAModel(*game);
         // so.print_sol = (options.print_solution || options.print_verbose);
         so.nof_solutions = 0;
         end = std::chrono::high_resolution_clock::now();

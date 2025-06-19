@@ -5,7 +5,7 @@
 #include "chuffed/branching/branching.h"
 #include "chuffed/core/propagator.h"
 
-class HRABranching : public Branching {
+class FRABranching : public Branching {
 private:
     const int   CF_DONE     = 1;
     const int   CF_FOUND    = 2;
@@ -59,7 +59,7 @@ public:
 
 public:
     //-----------------------------------------------------------------------
-    HRABranching(Game& g, vec<BoolView>& Q) : g(g), Q(Q){}
+    FRABranching(Game& g, vec<BoolView>& Q) : g(g), Q(Q){}
     //-----------------------------------------------------------------------
     bool finished() override {
         for(int i=0; i<Q.size(); i++) {

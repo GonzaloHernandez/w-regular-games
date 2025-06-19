@@ -6,11 +6,11 @@
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
 
-#include "branch_hra.cpp"
+#include "branch_fra.cpp"
 #include "prop_qnodeviations.cpp"
 #include "prop_paritychecker.cpp"
 
-class HRAModel : public Problem {
+class FRAModel : public Problem {
 private:
     Game&                   g;
     vec<BoolView>           Q;
@@ -19,7 +19,7 @@ private:
 
 public:
 
-    HRAModel(Game&g, bool proof=false) : g(g), vals(std::make_unique<bool[]>(g.nvertices)), proof(proof) {
+    FRAModel(Game&g, bool proof=false) : g(g), vals(std::make_unique<bool[]>(g.nvertices)), proof(proof) {
         Q.growTo(g.nvertices);
 
         for (int i=0; i<g.nvertices; i++) Q[i] = newBoolVar();
@@ -66,7 +66,7 @@ public:
 
         // -------------------------------------------------------------------
 
-        // engine.branching->add(new HRABranching(g,Q));
+        // engine.branching->add(new FRABranching(g,Q));
         
         vec<Branching*> bq(static_cast<unsigned int>(g.nvertices));
         for (int i = g.nvertices; (i--) != 0;) bq[i] = &Q[i];
@@ -126,7 +126,7 @@ public:
 //     launchdebugstd();
 //     Game g(DZN, "data/game-wikidzn",0,MAX);
 
-//     HRAModel* model = new HRAModel(g);
+//     FRAModel* model = new FRAModel(g);
 
 //     so.nof_solutions = 0;
 //     engine.solve(model);

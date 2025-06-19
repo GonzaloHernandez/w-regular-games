@@ -1,5 +1,5 @@
-#ifndef HRA_H
-#define HRA_H
+#ifndef FRA_H
+#define FRA_H
 
 #include <iostream>
 #include <vector>
@@ -19,4 +19,4 @@
 
 signed char getPlay(Game& g, int start, bool basic=false);
 bool getAllCycles(Game& g, std::vector<int> path, int v, std::vector<bool>& touched);
-#endif // HRA_H
+#endif // FRA_H

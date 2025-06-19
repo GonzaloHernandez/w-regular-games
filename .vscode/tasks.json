@@ -51,7 +51,7 @@
         },        // -------------------------------------------------------------------
         {
             "type": "cppbuild",
-            "label": "C/C++: build HRA",
+            "label": "C/C++: build FRA",
             "command": "/usr/bin/g++",
             "args": [
                 "-std=c++17",
@@ -59,11 +59,11 @@
                 "-g",
                 "-O0",
                 "${workspaceFolder}/chuffed-patch/game.cpp",
-                "${workspaceFolder}/various/hra.cpp",
+                "${workspaceFolder}/various/fra.cpp",
                 "${workspaceFolder}/various/graph.cpp",
                 "${workspaceFolder}/various/tarjan.cpp",
-                "${workspaceFolder}/cp_hra/ex2.cpp",
-                // "${workspaceFolder}/cp_hra/coattractorbranching.cpp",
+                "${workspaceFolder}/cp_fra/ex2.cpp",
+                // "${workspaceFolder}/cp_fra/coattractorbranching.cpp",
                 "-o",
                 "${workspaceFolder}/build/ex2",
                 "-I${env:HOME}/.local/include",
@@ -79,16 +79,16 @@
         // -------------------------------------------------------------------
         {
             "type": "cppbuild",
-            "label": "C/C++: build CP-HRA (Solver)",
+            "label": "C/C++: build CP-FRA (Solver)",
             "command": "/usr/bin/g++",
             "args": [
                 "-std=c++14",
                 "-fdiagnostics-color=always",
                 "-g",
                 "${workspaceFolder}/chuffed-patch/game.cpp",
-                "${workspaceFolder}/cp_hra/hramodel.cpp",
+                "${workspaceFolder}/cp_fra/framodel.cpp",
                 "-o",
-                "${workspaceFolder}/build/hramodel",
+                "${workspaceFolder}/build/framodel",
                 "-I${env:HOME}/.local/include",
                 "-L${env:HOME}/.local/lib",
                 "-lchuffed"

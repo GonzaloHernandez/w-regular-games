@@ -20,7 +20,7 @@ struct options {
     std::string         game_filename   = "";
     std::string         export_filename = "";
     int                 export_type     = 0; // 0=not export 2=DZN 3=GM
-    int                 solver          = 1; // 1=CPModel 2=SAT-encoding 3=SAT-zchaff 4=SAT-cadical 5=ZRA
+    int                 solver          = 5; // 1=CPModel 2=SAT-encoding 3=SAT-zchaff 4=SAT-cadical 5=ZRA
     int                 filter_type     = 3;
     int                 proof           = 0; // 0=no 1=yes 2=eager
 } options;
@@ -191,6 +191,24 @@ bool parseMyOptions(int argc, char *argv[]) {
             }
             options.export_type = GM;
             options.export_filename = argv[i];                
+        }
+        else if (strcmp(argv[i],"--filter")==0) {
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Number of vertices missing\n";
+                return false;                    
+            }
+            char* endptr;
+            int n = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || n < 1 || n > 3) {
+                std::cerr << "ERROR: Filter number out of range\n";
+                return false;
+            }
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: Filter number is no numeric\n";
+                return false;
+            }
+            options.filter_type = n;
         }
         else if (strcmp(argv[i],"--max")==0)            { options.reward = MAX; }
         else if (strcmp(argv[i],"--min")==0)            { options.reward = MIN; }
@@ -366,7 +384,7 @@ int main(int argc, char *argv[])
             std::cout << ".";
         }
         else {
-            std::cout << "Counter example found:" << std::endl;
+            std::cout << "Counter example found (Starting at " << game->start << "):" << std::endl;
             if (options.export_type == DZN) {
                 game->exportFile(DZN, options.export_filename);
             }
