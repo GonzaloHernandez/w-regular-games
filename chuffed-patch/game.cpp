@@ -305,6 +305,60 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
             }
         }
     }
+    else if (type == LADDER) {
+        int bl = vals[0];
+        nvertices   = bl*3+1;
+        nedges      = bl*4+1;
+
+        assert(start >= 0 && start < nvertices);
+
+        owners  .resize(nvertices,ODD);
+        colors  .resize(nvertices);
+        sources .resize(nedges);
+        targets .resize(nedges);
+        outs    .resize(nvertices);
+        ins     .resize(nvertices);
+
+        int consecutive = bl*2;
+        colors[0] = consecutive--;
+        for (int i=0; i<bl; i++) {
+            colors[i*3+1] = 0;
+            colors[i*3+2] = consecutive--;
+            colors[i*3+3] = consecutive--;
+        }
+
+        int e = 0;
+        for (int i=0; i<bl; i++) {
+            sources[e] = i*3+0;
+            targets[e] = i*3+1;
+            outs[i*3+0].push_back(e);
+            ins [i*3+1].push_back(e);
+            e++;
+
+            sources[e] = i*3+1;
+            targets[e] = i*3+2;
+            outs[i*3+1].push_back(e);
+            ins [i*3+2].push_back(e);
+            e++;
+
+            sources[e] = i*3+1;
+            targets[e] = i*3+3;
+            outs[i*3+1].push_back(e);
+            ins [i*3+3].push_back(e);
+            e++;
+
+            sources[e] = i*3+2;
+            targets[e] = i*3+3;
+            outs[i*3+2].push_back(e);
+            ins [i*3+3].push_back(e);
+            e++;
+        }
+
+        sources[e] = bl*3;
+        targets[e] = 0;
+        outs[bl*3].push_back(e);
+        ins [0].push_back(e);
+    }
     commonConstructor();
 }
 

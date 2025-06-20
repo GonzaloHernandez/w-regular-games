@@ -6,14 +6,6 @@
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
 
-struct memo {
-    int loop;
-    int best;
-    int from;
-    bool touched()  { return loop>=0; }
-    bool parity()   { return best%2; }
-}; 
-
 class NoOddCycle : public Propagator {
 private:
     Game& g;
@@ -23,7 +15,6 @@ private:
 
     const int   CF_DONE     = 1;
     const int   CF_CONFLICT = 2;
-    const int   CF_STAY     = 3;
 
 public:
     //-----------------------------------------------------------------------
@@ -203,44 +194,6 @@ public:
         return CF_DONE;
     }
     //-----------------------------------------------------------------------
-    int filterReload(vec<int> pathV, vec<int> pathE, int vertex, 
-        vec<BoolView> &E, int lastEdge, bool definedEdge, std::vector<memo>& touched) 
-    {
-        int index = findVertex(vertex,pathV);
-        if (index >= 0) {
-            if (mincolor(index,pathV)%2==ODD) {
-                vec<Lit> lits;
-                lits.push();
-                clausify(pathE,E,lits,0);
-                Clause* reason = Reason_new(lits);
-                if (! E[lastEdge].setVal(false,reason)) {
-                    return CF_CONFLICT;
-                }
-            }
-            else {
-                return CF_DONE;
-            }
-        }
-        else {
-            if (definedEdge) {
-                for (auto& e : g.outs[vertex]) {
-                    if (!E[e].isFalse()) {
-                        vec<int> newpathV(pathV);
-                        vec<int> newpathE(pathE);
-                        newpathV.push(vertex);
-                        newpathE.push(e);
-                        int status = filterReload(newpathV, newpathE, 
-                                        g.targets[e], E, e, E[e].isTrue(),touched);
-                        if (status == CF_CONFLICT) {
-                            return status;
-                        }
-                    }
-                }
-            }
-        }
-        return CF_STAY;
-    }
-    //-----------------------------------------------------------------------
     int filterMultiStart(vec<int> pathV, vec<int> pathE, int vertex, 
         vec<BoolView> &E, int lastEdge, bool definedEdge, vec<bool>& touched) 
     {
@@ -267,7 +220,7 @@ public:
                     newpathE.push(e);
                     int status = filterMultiStart(newpathV, newpathE, 
                         g.targets[e], E, e, E[e].isTrue(),touched);
-                    if (status == CF_CONFLICT || status == CF_DONE) {
+                    if (status == CF_CONFLICT) {
                         return status;
                     }
                 }
@@ -306,12 +259,6 @@ public:
         case 3: { // Remembering best plays
             std::vector<std::pair<int,int>> touched(g.nedges,{-1,-1});
             if (filterMemo(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
-                return false;
-            break;
-        }
-        case 4: { // new Remembering best plays
-            std::vector<memo> touched(g.nedges,{-1,-1,-1});
-            if (filterReload(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
                 return false;
             break;
         }

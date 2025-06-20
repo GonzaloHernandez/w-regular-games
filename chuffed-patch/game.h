@@ -11,9 +11,9 @@
 #include <random>
 #include <chrono> 
 
-enum parity_type    {EVEN,ODD};                 // 0,1
-enum reward_type    {MIN,MAX};                  // 0,1
-enum game_type      {DEF,JURD,DZN,GM,RAND};     // 0,1,2,3,4
+enum parity_type    {EVEN,ODD};                     // 0,1
+enum reward_type    {MIN,MAX};                      // 0,1
+enum game_type      {DEF,JURD,DZN,GM,RAND,LADDER};  // 0,1,2,3,4,5
 
 //======================================================================================
 

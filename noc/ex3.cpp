@@ -12,16 +12,15 @@ struct options {
     bool print_game        = false; 
     bool print_solution    = false; 
     bool print_verbose     = false; 
-    int game_type       = 0; // enum game_type{DEF,JURD,DZN,GM,RAND}
-    std::vector<int>    jurd            = {2,1};
-    std::vector<int>    rand            = {2,2,2,2};
+    int game_type          = 0; // enum game_type{DEF,JURD,DZN,GM,RAND}
+    std::vector<int>    vals            = {};
     reward_type         reward          = MAX; 
     std::vector<int>    starts          = {0};
     std::string         game_filename   = "";
     std::string         export_filename = "";
     int                 export_type     = 0; // 0=not export 2=DZN 3=GM
     int                 solver          = 5; // 1=CPModel 2=SAT-encoding 3=SAT-zchaff 4=SAT-cadical 5=ZRA
-    int                 filter_type     = 3;
+    int                 filter_type     = 3; // 1=Basic 2=Multi 3=Memo 4=Reload
     int                 proof           = 0; // 0=no 1=yes 2=eager
 } options;
 
@@ -47,7 +46,7 @@ bool parseMyOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Jurdzinski level no numeric\n";
                 return false;
             }
-            options.jurd[0] = levels;
+            options.vals.push_back(levels);
 
             i++;
             if (i>=argc || argv[i][0] == '-') {
@@ -63,7 +62,7 @@ bool parseMyOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Jurdzinski blocks no numeric\n";
                 return false;
             }
-            options.jurd[1] = blocks;
+            options.vals.push_back(blocks);
         }
         else if (strcmp(argv[i],"--rand")==0) {
             options.game_type = RAND;
@@ -83,7 +82,7 @@ bool parseMyOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Number of vertices no numeric\n";
                 return false;
             }
-            options.rand[0] = ns;
+            options.vals.push_back(ns);
 
             i++;
             if (i>=argc || argv[i][0] == '-') {
@@ -99,7 +98,7 @@ bool parseMyOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Amount of priorities no numeric\n";
                 return false;
             }
-            options.rand[1] = ps;
+            options.vals.push_back(ps);
 
             i++;
             if (i>=argc || argv[i][0] == '-') {
@@ -115,7 +114,7 @@ bool parseMyOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Min amount of edges  no numeric\n";
                 return false;
             }
-            options.rand[2] = d1;
+            options.vals.push_back(d1);
 
             i++;
             if (i>=argc || argv[i][0] == '-') {
@@ -131,7 +130,27 @@ bool parseMyOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Max amount of edges  no numeric\n";
                 return false;
             }
-            options.rand[3] = d2;
+            options.vals.push_back(d2);
+        }
+        if (strcmp(argv[i],"--ladder")==0) {
+            options.game_type = LADDER;
+            i++;
+            
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Number of blocks missing\n";
+                return false;                    
+            }
+            char* endptr;
+            int blocks = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || blocks < 1 || blocks > 1000000) {
+                std::cerr << "ERROR: Ladder blocks out of range\n";
+                return false;
+            }
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: Ladder blocks no numeric\n";
+                return false;
+            }
+            options.vals.push_back(blocks);
         }
         else if (strcmp(argv[i],"--dzn")==0) {
             options.game_type = DZN;
@@ -200,7 +219,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             }
             char* endptr;
             int n = std::strtol(argv[i],&endptr,10);
-            if (errno == ERANGE || n < 1 || n > 3) {
+            if (errno == ERANGE || n < 1 || n > 4) {
                 std::cerr << "ERROR: Filter number out of range\n";
                 return false;
             }
@@ -227,6 +246,10 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--print-solution")==0) { options.print_solution = true; }
         else if (strcmp(argv[i],"--verbose")==0)        { options.print_verbose  = true; }
 
+        else if (strcmp(argv[i],"--filter-basic")==0)   { options.filter_type = 1; }
+        else if (strcmp(argv[i],"--filter-memo")==0)    { options.filter_type = 3; }
+        else if (strcmp(argv[i],"--filter-reload")==0)  { options.filter_type = 4; }
+
         else if (strcmp(argv[i],"--help")==0) {
             std::cout << "Usage: " << argv[0] << " [options]\n";
             std::cout << "Options:\n";
@@ -234,6 +257,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --gm <filename>            : GM file name\n";
             std::cout << "  --jurd <levels> <blocks>   : Jurdzinski game\n";
             std::cout << "  --rand <ns> <ps> <d1> <d2> : Random game\n";
+            std::cout << "  --ladder <bl>              : Ladder game\n";
             std::cout << "  --start <vertex>           : Starting vertex\n";
             std::cout << "  --print-time               : Print time)\n";
             std::cout << "  --print-game               : Print game)\n";
@@ -249,6 +273,9 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --sat-cadical              : Solve using Cadical\n";
             std::cout << "  --proof                    : Compare results using Zielonka\n";
             std::cout << "  --proof-eager              : Looking for counterexample\n";
+            std::cout << "  --filter-basic             : Filter of NOC\n";
+            std::cout << "  --filter-memo              : Filter of NOC\n";
+            std::cout << "  --filter-reload            : Filter of NOC\n";
             return false;
         }
         else {
@@ -290,7 +317,7 @@ int main(int argc, char *argv[])
 
     switch (options.game_type) {
         case 1: // jurd
-            game = new Game(JURD, options.jurd, options.starts[0], options.reward);
+            game = new Game(JURD, options.vals, options.starts[0], options.reward);
             break;
         case 2: // dzn
             game = new Game(DZN, options.game_filename, options.starts[0], options.reward);
@@ -299,7 +326,10 @@ int main(int argc, char *argv[])
             game = new Game(GM, options.game_filename, options.starts[0], options.reward);
             break;
         case 4: // random
-            game = new Game(RAND, options.rand, options.starts[0], options.reward);
+            game = new Game(RAND, options.vals, options.starts[0], options.reward);
+            break;
+        case 5: // ladder
+            game = new Game(LADDER, options.vals, options.starts[0], options.reward);
             break;
         default:
             game = new Game({0,1},{3,2},{0,1},{1,0},EVEN,MIN);

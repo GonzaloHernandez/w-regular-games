@@ -36,12 +36,13 @@
             "args": [   
                 // "--gm", "${env:HOME}/gm/randomgame(5000,_10,_1,_20)id=0.gm",
                 // "--gm", "/home/chalo/ce.gm",
-                // "--dzn", "${workspaceFolder}/build/rand.dzn",
-                "--gm", "${workspaceFolder}/build/temp.gm",
+                // "--dzn", "${workspaceFolder}/data/rand15.dzn",
+                // "--gm", "${workspaceFolder}/build/temp.gm",
                 // "--jurd","50","10","--min",
                 // "--rand","5","3","1","3",
                 // "--gm","build/rand01.gm",
-                "--start","4",
+                "--ladder","2",
+                "--start","0",
                 // "--proof",
                 // "--proof-eager",
                 // "--min",
@@ -49,9 +50,9 @@
                 // "--verbose"
                 // "--print-solution",
                 // "--matrix-based",
-                "--cp",
+                // "--cp",
                 // "--fra-memo"
-                // "--zra",
+                "--zra",
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
@@ -64,7 +65,8 @@
                     "ignoreFailures": true
                 }
             ]            
-        },        // --------------------------------------------------------------
+        },        
+        // --------------------------------------------------------------
         {
             "name": "C++ Debug FRA",
             "type": "cppdbg",

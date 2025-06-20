@@ -1,9 +1,9 @@
 #!/bin/bash
 
-nv=3
-np=3
+nv=5
+np=5
 e1=1
-e2=2
+e2=3
 
 while true; do
     all_dots=true
@@ -11,7 +11,7 @@ while true; do
     ./ex3 --rand $nv $np $e1 $e2 --export-gm temp.gm
 
     for ((i=0; i<nv; i++)); do
-        output=$(./ex3 --gm temp.gm --min --cp --proof --start "$i" --filter 3)
+        output=$(./ex3 --gm temp.gm --min --cp --proof --start "$i" --filter-reload)
         
         if [ "$output" = "." ]; then
             echo -n "."
