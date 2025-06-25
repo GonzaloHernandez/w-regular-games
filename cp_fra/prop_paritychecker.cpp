@@ -1,8 +1,8 @@
-#ifndef game_h
+#ifndef GAME_H
 #include "../chuffed-patch/game.h"
 #endif
 
-#ifndef tarjan_h
+#ifndef TARJAN_H
 #include "../various/tarjan.h"
 #endif
 

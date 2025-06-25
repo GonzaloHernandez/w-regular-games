@@ -7,7 +7,7 @@
 #include <cstring>
 #include <chrono>
 
-#ifndef game_h 
+#ifndef GAME_H 
 #include "../chuffed-patch/game.h"
 #endif
 

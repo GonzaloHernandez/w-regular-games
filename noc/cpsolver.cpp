@@ -1,4 +1,4 @@
-// #ifndef game_h
+// #ifndef GAME_H
 // #include "../chuffed-patch/game.h"
 // #endif
 
@@ -8,7 +8,7 @@
 #include "initializer_list"
 #include "chuffed/globals/dconnected.h"
 
-#include "../chuffed-patch/nooddcycle.cpp"
+#include "prop_noc.cpp"
 
 class CPModel : public Problem {
 public:
@@ -85,6 +85,8 @@ public:
         // Every infinite ODD play must be avoided.
         new NoOddCycle(g,V,E,filtertype);
 
+        // Checker
+        new NoOddCycle(g,V,E,0);
 
         // Every unreachable vertex must be avoided.
         if (reachability == 1) {

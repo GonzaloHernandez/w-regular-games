@@ -1,7 +1,6 @@
 #include "cpsolver.cpp"
 
 #include "../various/zielonka.cpp"
-
 #include "../resources/debugchuffed.h"
 #include "../resources/debugstd.h"
 
@@ -132,7 +131,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             }
             options.vals.push_back(d2);
         }
-        if (strcmp(argv[i],"--ladder")==0) {
+        else if (strcmp(argv[i],"--ladder")==0) {
             options.game_type = LADDER;
             i++;
             

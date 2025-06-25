@@ -1,7 +1,7 @@
 #ifndef TARJAN_H
 #define TARJAN_H
 
-#ifndef game_h
+#ifndef GAME_H
 #include "../chuffed-patch/game.h"
 #endif
 

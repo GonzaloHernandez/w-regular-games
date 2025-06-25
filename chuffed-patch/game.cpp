@@ -457,6 +457,14 @@ void Game::activeAll() {
 
 //----------------------------------------------------------------------------------
 
+void Game::deactiveAll() {
+    for (int v=0; v<nvertices; v++) {
+        active[v] = false;
+    }
+}
+
+//----------------------------------------------------------------------------------
+
 std::vector<int> Game::getOuts(int v) {
     std::vector<int> es;
     for(auto& e : outs[v]) {

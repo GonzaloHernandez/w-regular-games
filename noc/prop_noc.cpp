@@ -1,10 +1,15 @@
-#ifndef game_cpp
-#include "game.cpp"
+#ifndef GAME_H
+#include "../chuffed-patch/game.cpp"
+#endif
+
+#ifndef TARJAN_H
+#include "../various/tarjan.h"
 #endif
 
 #include "iostream"
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
+#include "stack"
 
 struct memo {
     int loop;
@@ -77,30 +82,53 @@ public:
     int checker(vec<int> pathV, vec<int> pathE, int vertex, 
         vec<BoolView> &E, int lastEdge) 
     {
-        int index = findVertex(vertex,pathV);
-        if (index >= 0) {
-            if (mincolor(index,pathV)%2==ODD) {
-                vec<Lit> lits;
-                lits.push();
-                clausify(pathE,E,lits,index);
-                Clause* reason = Reason_new(lits);
-                if (! E[lastEdge].setVal(false,reason)) {
-                    return CF_CONFLICT;
+        for (int i=0; i<g.nvertices; i++) {
+            if (!V[i].isFixed()) return CF_DONE;
+            g.active[i] = (V[i].isTrue());
+        }
+
+        std::stack<std::vector<int>> stack;
+
+        TarjanSCC t1(g);
+        auto sccs = t1.solve();
+        for (auto& scc : sccs) {
+            stack.push(scc);
+        }
+
+        while (stack.size()>0) {
+            auto& scc = stack.top();
+            stack.pop();
+
+            bool first = true;
+            std::vector<int> bests;
+            for (auto& v : scc) {
+                if (first) {
+                    bests.push_back(v);
+                    first = false;
+                    continue;
+                }
+                if (g.colors[v] < g.colors[bests[0]]) {
+                    bests.clear();
+                    bests.push_back(v);
+                    continue;
+                }
+                if (g.colors[v] == g.colors[bests[0]]) {
+                    bests.push_back(v);
+                    continue;
                 }
             }
-        }
-        else {
-            for (auto& e : g.outs[vertex]) {
-                if (E[e].isTrue()) {
-                    vec<int> newpathV(pathV);
-                    vec<int> newpathE(pathE);
-                    newpathV.push(vertex);
-                    newpathE.push(e);
-                    int status = checker(newpathV, newpathE, g.targets[e], E, e);
-                    if (status == CF_CONFLICT) {
-                        return status;
-                    }
-                }
+            if (g.colors[bests[0]]%2 == ODD) {
+                return CF_CONFLICT;
+            }
+
+            g.deactiveAll();
+            for (auto& v : scc) {
+                g.active[v] = true;
+            }
+            TarjanSCC t2(g);
+            auto sccs = t2.solve();
+            for (auto& scc : sccs) {
+                stack.push(scc);
             }
         }
         return CF_DONE;

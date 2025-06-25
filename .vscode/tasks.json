@@ -36,6 +36,7 @@
                 "-g",
                 "-O0",
                 // "${workspaceFolder}/chuffed-patch/game.cpp",
+                "${workspaceFolder}/various/tarjan.cpp",
                 "${workspaceFolder}/noc/ex3.cpp",
                 "-o",
                 "${workspaceFolder}/build/ex3",

@@ -1,5 +1,5 @@
-#ifndef game_h
-#define game_h
+#ifndef GAME_H
+#define GAME_H
 
 #include <iostream>
 #include <vector>
@@ -69,6 +69,7 @@ public:
     std::vector<int> getIns(int w);     // Only return a set of active ins of w
 
     void activeAll();
+    void deactiveAll();
 };
 
-#endif // game_h
+#endif // GAME_H
