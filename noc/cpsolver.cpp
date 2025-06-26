@@ -9,6 +9,7 @@
 #include "chuffed/globals/dconnected.h"
 
 #include "prop_noc.cpp"
+#include "checker_scc.cpp"
 
 class CPModel : public Problem {
 public:
@@ -98,7 +99,7 @@ public:
         // new NoOddCycle(g,V,E,filtertype);
 
         // Checker
-        new NoOddCycle(g,V,E,0);
+        new CheckerSCC(g,V,E);
 
         // Every unreachable vertex must be avoided.
         if (reachability == 1) {
@@ -120,7 +121,7 @@ public:
                 _en[e].push(g.sources[e]);
                 _en[e].push(g.targets[e]);
             }
-            // new DReachabilityPropagator(g.start, V, E, _in, _out, _en);
+            new DReachabilityPropagator(g.start, V, E, _in, _out, _en);
         }
 
         //------------------------------------------------------------

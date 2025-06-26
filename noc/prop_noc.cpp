@@ -176,11 +176,6 @@ public:
         return CF_DONE;
     }
     //-----------------------------------------------------------------------
-    bool propagate() override {
-        if (checker() == CF_CONFLICT) return false;
-        return true;
-    }
-    //-----------------------------------------------------------------------
     int filterBasic(vec<int> pathV, vec<int> pathE, int vertex, 
         vec<BoolView> &E, int lastEdge, bool definedEdge) 
     {
@@ -351,52 +346,52 @@ public:
         return CF_DONE;
     }
     //-----------------------------------------------------------------------
-    // bool propagate() override {
-    //     vec<int> pathV;
-    //     vec<int> pathE;
+    bool propagate() override {
+        vec<int> pathV;
+        vec<int> pathE;
 
-    //     switch (filtertype) {
-    //     case 0: { // Checker
-    //         if (checker() == CF_CONFLICT)
-    //             return false;
-    //         break;
-    //     }
-    //     case 1: { // Basic filter affecting the edge before starting the cycle
-    //         if (filterBasic(pathV,pathE,g.start,E,-1,true) == CF_CONFLICT)
-    //             return false;
-    //         break;
-    //     }
-    //     case 2: { // Applying SimpleFilter starting at every other vertex
-    //         vec<bool> touched(V.size(),false);
-    //         if (filterMultiStart(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
-    //             return false;
-    //         for (int i=0; i<touched.size(); i++) {
-    //             if (!touched[i]) {
-    //                 if (filterMultiStart(pathV,pathE,i,E,-1,true,touched) == CF_CONFLICT)
-    //                     return false;
-    //             }
-    //         }
-    //         break;
-    //     }
-    //     case 3: { // Remembering best plays
-    //         std::vector<std::pair<int,int>> touched(g.nedges,{-1,-1});
-    //         if (filterMemo(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
-    //             return false;
-    //         break;
-    //     }
-    //     case 4: { // new Remembering best plays
-    //         std::vector<memo> touched(g.nedges,{-1,-1,-1});
-    //         if (filterReload(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
-    //             return false;
-    //         break;
-    //     }
-    //     default:
-    //         if (filterBasic(pathV,pathE,g.start,E,-1,true) == CF_CONFLICT)
-    //             return false;
-    //     }
+        switch (filtertype) {
+        case 0: { // Checker
+            if (checker() == CF_CONFLICT)
+                return false;
+            break;
+        }
+        case 1: { // Basic filter affecting the edge before starting the cycle
+            if (filterBasic(pathV,pathE,g.start,E,-1,true) == CF_CONFLICT)
+                return false;
+            break;
+        }
+        case 2: { // Applying SimpleFilter starting at every other vertex
+            vec<bool> touched(V.size(),false);
+            if (filterMultiStart(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
+                return false;
+            for (int i=0; i<touched.size(); i++) {
+                if (!touched[i]) {
+                    if (filterMultiStart(pathV,pathE,i,E,-1,true,touched) == CF_CONFLICT)
+                        return false;
+                }
+            }
+            break;
+        }
+        case 3: { // Remembering best plays
+            std::vector<std::pair<int,int>> touched(g.nedges,{-1,-1});
+            if (filterMemo(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
+                return false;
+            break;
+        }
+        case 4: { // new Remembering best plays
+            std::vector<memo> touched(g.nedges,{-1,-1,-1});
+            if (filterReload(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
+                return false;
+            break;
+        }
+        default:
+            if (filterBasic(pathV,pathE,g.start,E,-1,true) == CF_CONFLICT)
+                return false;
+        }
 
-    //     return true;
-    // }
+        return true;
+    }
     //-----------------------------------------------------------------------
     void wakeup(int i, int) override {
         pushInQueue();
