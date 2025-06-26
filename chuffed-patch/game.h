@@ -38,7 +38,8 @@ public:
     reward_type reward;
     //----------------------------------------------------------------------------------
 
-    std::unique_ptr<bool[]> active;
+    std::unique_ptr<bool[]> currentv;
+    std::unique_ptr<bool[]> currente;
 
     //----------------------------------------------------------------------------------
 
@@ -61,10 +62,12 @@ public:
     void setReward(reward_type rew);
     void exportFile(int type, std::string filename);
     void printGame();
+    std::string viewCurrent();
 
     //----------------------------------------------------------------------------------
 
     std::vector<int> getVertices();     // Only return a set of active vertices
+    std::vector<int> getEdges();        // Only return a set of active edges
     std::vector<int> getOuts(int v);    // Only return a set of active outs of v
     std::vector<int> getIns(int w);     // Only return a set of active ins of w
 

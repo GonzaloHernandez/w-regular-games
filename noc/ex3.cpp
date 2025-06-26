@@ -305,8 +305,8 @@ std::string exec(const char* cmd) {
 
 int main(int argc, char *argv[])
 {
-    // launchdebugstd();
-    // launchdebugchuffed();
+    launchdebugstd();
+    launchdebugchuffed();
     if (!parseMyOptions(argc, argv)) exit(1);
     Game* game = nullptr;
 
@@ -365,9 +365,10 @@ int main(int argc, char *argv[])
         Zielonka zlk(*game);
 
         CPModel* model;
-        model = new CPModel(*game, options.filter_type, false, options.print_solution);
+        model = new CPModel(*game, options.filter_type, true, options.print_solution);
         so.print_sol = true;
-        so.nof_solutions = 0;
+        // so.lazy = false;
+        so.nof_solutions = 1;
 
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> preptime = end - start;
@@ -487,7 +488,8 @@ int main(int argc, char *argv[])
     else if (options.solver==1) { //CP-NOC
             start = std::chrono::high_resolution_clock::now();
             CPModel* model;
-            model = new CPModel(*game, options.filter_type, false, options.print_solution);
+            model = new CPModel(*game, options.filter_type, true, options.print_solution);
+            // so.lazy = false;
             so.nof_solutions = 1;
             so.sym_static = true;
             so.print_sol = options.print_solution==0?false:true;

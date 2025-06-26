@@ -65,8 +65,10 @@ void Game::parseline_gm(const std::string& line,std::vector<int>& vinfo,
 //----------------------------------------------------------------------------------
 
 void Game::commonConstructor() {
-    active = std::make_unique<bool[]>(nvertices);
-    std::fill_n(active.get(), nvertices, true);
+    currentv = std::make_unique<bool[]>(nvertices);
+    std::fill_n(currentv.get(), nvertices, true);
+    currente = std::make_unique<bool[]>(nedges);
+    std::fill_n(currente.get(), nedges, true);
 }
 
 //----------------------------------------------------------------------------------
@@ -414,6 +416,70 @@ void Game::exportFile(int type, std::string filename) {
 
 //----------------------------------------------------------------------------------
 
+std::vector<int> Game::getVertices() {
+    std::vector<int> vs;
+    for (int v=0; v<nvertices; v++) {
+        if (currentv[v]) vs.push_back(v);
+    }
+    return vs;
+}
+
+//----------------------------------------------------------------------------------
+
+std::vector<int> Game::getEdges() {
+    std::vector<int> es;
+    for (int e=0; e<nedges; e++) {
+        if (currente[e]) es.push_back(e);
+    }
+    return es;
+}
+
+//----------------------------------------------------------------------------------
+
+void Game::activeAll() {
+    for (int v=0; v<nvertices; v++) {
+        currentv[v] = true;
+    }
+    for (int e=0; e<nedges; e++) {
+        currente[e] = true;
+    }
+}
+
+//----------------------------------------------------------------------------------
+
+void Game::deactiveAll() {
+    for (int v=0; v<nvertices; v++) {
+        currentv[v] = false;
+    }
+    for (int e=0; e<nedges; e++) {
+        currente[e] = false;
+    }
+}
+
+//----------------------------------------------------------------------------------
+
+std::vector<int> Game::getOuts(int v) {
+    std::vector<int> es;
+    for(auto& e : outs[v]) {
+        int w = targets[e];
+        if (currente[e] && currentv[w]) es.push_back(e);
+    }
+    return es;
+}
+
+//----------------------------------------------------------------------------------
+
+std::vector<int> Game::getIns(int w) {
+    std::vector<int> es;
+    for(auto& e : ins[w]) {
+        int v = sources[e];
+        if (currente[e] && currentv[v]) es.push_back(e);
+    }
+    return es;
+}
+
+//----------------------------------------------------------------------------------
+
 void Game::printGame() {
     std::cout << "nvertices: " << owners.size() << std::endl;
     std::cout << "owners:    {";
@@ -439,48 +505,19 @@ void Game::printGame() {
 
 //----------------------------------------------------------------------------------
 
-std::vector<int> Game::getVertices() {
-    std::vector<int> a;
-    for (int v=0; v<nvertices; v++) {
-        if (active[v]) a.push_back(v);
+std::string Game::viewCurrent() {
+    std::stringstream ss;
+    ss << "{";
+    for(int i=0; i<nvertices; i++) if (currentv[i]) {
+        if (i>0) ss << ",";
+        ss << i << ",";
     }
-    return a;
-}
-
-//----------------------------------------------------------------------------------
-
-void Game::activeAll() {
-    for (int v=0; v<nvertices; v++) {
-        active[v] = true;
+    ss << "} {";
+    for(int i=0; i<nedges; i++) if (currente[i]) {
+        if (i>0) ss << ",";
+        ss << i << ",";
     }
-}
+    ss << "}";
 
-//----------------------------------------------------------------------------------
-
-void Game::deactiveAll() {
-    for (int v=0; v<nvertices; v++) {
-        active[v] = false;
-    }
-}
-
-//----------------------------------------------------------------------------------
-
-std::vector<int> Game::getOuts(int v) {
-    std::vector<int> es;
-    for(auto& e : outs[v]) {
-        int w = targets[e];
-        if (active[w]) es.push_back(e);
-    }
-    return es;
-}
-
-//----------------------------------------------------------------------------------
-
-std::vector<int> Game::getIns(int w) {
-    std::vector<int> es;
-    for(auto& e : ins[w]) {
-        int v = sources[e];
-        if (active[v]) es.push_back(e);
-    }
-    return es;
+    return ss.str();
 }

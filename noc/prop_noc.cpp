@@ -79,29 +79,59 @@ public:
         }
     }
     //-----------------------------------------------------------------------
-    int checker(vec<int> pathV, vec<int> pathE, int vertex, 
-        vec<BoolView> &E, int lastEdge) 
+    int backtrack() 
     {
+        vec<Lit> lits;
+
+        lits.push();
+
+        for (int i=1; i<g.nvertices; i++)   lits.push(V[i].getValLit());
+        for (int i=0; i<g.nedges; i++)      lits.push(E[i].getValLit());
+
+        Clause* reason = Reason_new(lits);
+
+        V[0].setVal(V[0].isFalse(),reason);
+
+        return CF_CONFLICT;
+    }
+    //-----------------------------------------------------------------------
+    int checker() {
         for (int i=0; i<g.nvertices; i++) {
             if (!V[i].isFixed()) return CF_DONE;
-            g.active[i] = (V[i].isTrue());
+            g.currentv[i] = (V[i].isTrue());
+        }
+        for (int i=0; i<g.nedges; i++) {
+            if (!E[i].isFixed()) return CF_DONE;
+            g.currente[i] = (E[i].isTrue());
         }
 
         std::stack<std::vector<int>> stack;
 
         TarjanSCC t1(g);
-        auto sccs = t1.solve();
-        for (auto& scc : sccs) {
-            stack.push(scc);
+        auto ss = t1.solve();
+        for (auto& s : ss) {
+            stack.push(s);
         }
 
         while (stack.size()>0) {
-            auto& scc = stack.top();
+            auto sc = stack.top();
             stack.pop();
+
+            if (sc.size()==1) {
+                int v = sc[0];
+                for(auto& e : g.outs[v]) {
+                    if (E[e].isFalse()) continue;
+                    int w = g.targets[e];
+                    if (v==w && g.colors[v]%2 == ODD) {
+                        return backtrack();
+                    }
+                }
+                continue;
+            }
 
             bool first = true;
             std::vector<int> bests;
-            for (auto& v : scc) {
+            for (auto& v : sc) {
                 if (first) {
                     bests.push_back(v);
                     first = false;
@@ -118,20 +148,37 @@ public:
                 }
             }
             if (g.colors[bests[0]]%2 == ODD) {
-                return CF_CONFLICT;
+                return backtrack();
             }
 
             g.deactiveAll();
-            for (auto& v : scc) {
-                g.active[v] = true;
+            for (auto& v : sc) {
+                if (std::find(bests.begin(), bests.end(), v) == bests.end()) {
+                    g.currentv[v] = true;
+                }
             }
+            for (auto& v : sc) {
+                if (std::find(bests.begin(), bests.end(), v) == bests.end()) {
+                    for (auto& e : g.outs[v]) { int w = g.targets[e];
+                        if ( E[e].isTrue() && g.currentv[w]) {
+                            g.currente[e] = true;
+                        }
+                    }
+                }
+            }
+
             TarjanSCC t2(g);
-            auto sccs = t2.solve();
-            for (auto& scc : sccs) {
-                stack.push(scc);
+            auto ss = t2.solve();
+            for (auto& s : ss) {
+                stack.push(s);
             }
         }
         return CF_DONE;
+    }
+    //-----------------------------------------------------------------------
+    bool propagate() override {
+        if (checker() == CF_CONFLICT) return false;
+        return true;
     }
     //-----------------------------------------------------------------------
     int filterBasic(vec<int> pathV, vec<int> pathE, int vertex, 
@@ -304,52 +351,52 @@ public:
         return CF_DONE;
     }
     //-----------------------------------------------------------------------
-    bool propagate() override {
-        vec<int> pathV;
-        vec<int> pathE;
+    // bool propagate() override {
+    //     vec<int> pathV;
+    //     vec<int> pathE;
 
-        switch (filtertype) {
-        case 0: { // Checker
-            if (checker(pathV,pathE,g.start,E,-1) == CF_CONFLICT)
-                return false;
-            break;
-        }
-        case 1: { // Basic filter affecting the edge before starting the cycle
-            if (filterBasic(pathV,pathE,g.start,E,-1,true) == CF_CONFLICT)
-                return false;
-            break;
-        }
-        case 2: { // Applying SimpleFilter starting at every other vertex
-            vec<bool> touched(V.size(),false);
-            if (filterMultiStart(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
-                return false;
-            for (int i=0; i<touched.size(); i++) {
-                if (!touched[i]) {
-                    if (filterMultiStart(pathV,pathE,i,E,-1,true,touched) == CF_CONFLICT)
-                        return false;
-                }
-            }
-            break;
-        }
-        case 3: { // Remembering best plays
-            std::vector<std::pair<int,int>> touched(g.nedges,{-1,-1});
-            if (filterMemo(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
-                return false;
-            break;
-        }
-        case 4: { // new Remembering best plays
-            std::vector<memo> touched(g.nedges,{-1,-1,-1});
-            if (filterReload(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
-                return false;
-            break;
-        }
-        default:
-            if (filterBasic(pathV,pathE,g.start,E,-1,true) == CF_CONFLICT)
-                return false;
-        }
+    //     switch (filtertype) {
+    //     case 0: { // Checker
+    //         if (checker() == CF_CONFLICT)
+    //             return false;
+    //         break;
+    //     }
+    //     case 1: { // Basic filter affecting the edge before starting the cycle
+    //         if (filterBasic(pathV,pathE,g.start,E,-1,true) == CF_CONFLICT)
+    //             return false;
+    //         break;
+    //     }
+    //     case 2: { // Applying SimpleFilter starting at every other vertex
+    //         vec<bool> touched(V.size(),false);
+    //         if (filterMultiStart(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
+    //             return false;
+    //         for (int i=0; i<touched.size(); i++) {
+    //             if (!touched[i]) {
+    //                 if (filterMultiStart(pathV,pathE,i,E,-1,true,touched) == CF_CONFLICT)
+    //                     return false;
+    //             }
+    //         }
+    //         break;
+    //     }
+    //     case 3: { // Remembering best plays
+    //         std::vector<std::pair<int,int>> touched(g.nedges,{-1,-1});
+    //         if (filterMemo(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
+    //             return false;
+    //         break;
+    //     }
+    //     case 4: { // new Remembering best plays
+    //         std::vector<memo> touched(g.nedges,{-1,-1,-1});
+    //         if (filterReload(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
+    //             return false;
+    //         break;
+    //     }
+    //     default:
+    //         if (filterBasic(pathV,pathE,g.start,E,-1,true) == CF_CONFLICT)
+    //             return false;
+    //     }
 
-        return true;
-    }
+    //     return true;
+    // }
     //-----------------------------------------------------------------------
     void wakeup(int i, int) override {
         pushInQueue();

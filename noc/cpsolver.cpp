@@ -52,6 +52,18 @@ public:
             sat.addClause(clause);
         }
 
+        // For every EVEN vertice, at most one outgoing edge must be activated
+        for (int v=0; v<g.nvertices; v++) if (g.owners[v] == EVEN) {
+            for (int i=0; i<g.outs[v].size(); i++) {
+                for (int j=i+1; j<g.outs[v].size(); j++) {
+                    vec<Lit> clause;
+                    clause.push( E[g.outs[v][i]].getLit(false) );
+                    clause.push( E[g.outs[v][j]].getLit(false) );
+                    sat.addClause(clause);
+                }
+            }
+        }
+
         // For every ODD vertice, each outgoing edge must be activated
         for (int v=0; v<g.nvertices; v++) if (g.owners[v] == ODD) {
             for (int e=0; e<g.nedges; e++) if (g.sources[e]==v) {
@@ -82,8 +94,8 @@ public:
             }
         }
 
-        // Every infinite ODD play must be avoided.
-        new NoOddCycle(g,V,E,filtertype);
+        // // Every infinite ODD play must be avoided.
+        // new NoOddCycle(g,V,E,filtertype);
 
         // Checker
         new NoOddCycle(g,V,E,0);
@@ -108,7 +120,7 @@ public:
                 _en[e].push(g.sources[e]);
                 _en[e].push(g.targets[e]);
             }
-            new DReachabilityPropagator(g.start, V, E, _in, _out, _en);
+            // new DReachabilityPropagator(g.start, V, E, _in, _out, _en);
         }
 
         //------------------------------------------------------------

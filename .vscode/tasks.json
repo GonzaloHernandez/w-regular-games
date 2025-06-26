@@ -9,6 +9,8 @@
                 "-std=c++14",
                 "-fdiagnostics-color=always",
                 "-g",
+                "-O0",
+                "-DNDEBUG",
                 "${file}",
                 "-o",
                 "${workspaceFolder}/build/${fileBasenameNoExtension}",

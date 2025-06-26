@@ -24,7 +24,6 @@ inline std::string wsvi(std::vector<int>& data) {
 }
 
 // --------------------------------------------------------------------------------
-
 inline void launchdebugstd() {
     std::vector<int> svi;
     wsvi(svi);
