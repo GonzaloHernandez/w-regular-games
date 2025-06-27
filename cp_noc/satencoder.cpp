@@ -1,5 +1,5 @@
 #ifndef GAME_H
-#include "chuffed-patch/game.h"
+#include "../various/game.h"
 #endif
 
 #include <cmath>

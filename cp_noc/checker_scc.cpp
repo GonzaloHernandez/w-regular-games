@@ -1,5 +1,5 @@
 #ifndef GAME_H
-#include "../chuffed-patch/game.cpp"
+#include "../various/game.h"
 #endif
 
 #ifndef TARJAN_H

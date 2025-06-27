@@ -8,7 +8,7 @@
 #include <chrono>
 
 #ifndef GAME_H 
-#include "../chuffed-patch/game.h"
+#include "game.h"
 #endif
 
 // private functions:
@@ -19,4 +19,5 @@
 
 signed char getPlay(Game& g, int start, bool basic=false);
 bool getAllCycles(Game& g, std::vector<int> path, int v, std::vector<bool>& touched);
+
 #endif // FRA_H

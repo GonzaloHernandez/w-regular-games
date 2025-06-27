@@ -1,7 +1,3 @@
-#ifndef GAME_H
-#include "../chuffed-patch/game.h"
-#endif
-
 #include "tarjan.h"
 #include <vector>
 

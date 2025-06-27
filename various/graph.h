@@ -8,7 +8,7 @@
 #include <cstdint>
 
 #ifndef GAME_H 
-#include "../chuffed-patch/game.h"
+#include "game.h"
 #endif
 
 struct Node

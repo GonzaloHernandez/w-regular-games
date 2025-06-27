@@ -2,7 +2,7 @@
 #define TARJAN_H
 
 #ifndef GAME_H
-#include "../chuffed-patch/game.h"
+#include "game.h"
 #endif
 
 #include <vector>
@@ -27,4 +27,4 @@ public:
     //----------------------------------------------------------------------------------
 };
 
-#endif
+#endif // TARJAN_H

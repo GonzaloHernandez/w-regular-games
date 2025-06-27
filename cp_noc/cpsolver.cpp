@@ -1,7 +1,3 @@
-// #ifndef GAME_H
-// #include "../chuffed-patch/game.h"
-// #endif
-
 #include "iostream"
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
@@ -24,17 +20,17 @@ private:
 
 public:
 
-    CPModel(Game& g,int filtertype=3,int reachability=1,int printtype=0) 
+    CPModel(Game& g, int filtertype=0, int printtype=0) 
     : g(g), filtertype(filtertype), printtype(printtype) 
     {
         V.growTo(g.nvertices);
         E.growTo(g.nedges);
-        setupConstraints(reachability);
+        setupConstraints();
     }
 
     //----------------------------------------------------------------
 
-    void setupConstraints(int reachability=1) {
+    void setupConstraints() {
 
         for (int i=0; i<g.nvertices;  i++) V[i] = newBoolVar();
         for (int i=0; i<g.nedges;     i++) E[i] = newBoolVar();
@@ -95,7 +91,9 @@ public:
         }
 
         // Every infinite ODD play must be avoided.
-        new NoOddCycle(g,V,E,3);
+        if (filtertype>0) {
+            new NoOddCycle(g,V,E,3);
+        }
 
         // Checker
         new CheckerSCC(g,V,E);
@@ -155,30 +153,25 @@ public:
 
     //----------------------------------------------------------------
 
-    void print(std::ostream& out)   override {
-        switch (printtype) {
-            case 0:
-                out << "SAT ";
-                break;
-            case 1:
-                out << "V=[";
-                bool first = true;
-                for (int i=0; i<V.size(); i++) {
-                    if (V[i].isTrue()) {
-                        if (first) first=false; else out << ",";
-                        out << i;
-                    }
+    void print(std::ostream& out) override {
+        if (printtype) {
+            out << "V=[";
+            bool first = true;
+            for (int i=0; i<V.size(); i++) {
+                if (V[i].isTrue()) {
+                    if (first) first=false; else out << ",";
+                    out << i;
                 }
-                out << "]\nE=[";
-                first = true;
-                for (int i=0; i<E.size(); i++) {
-                    if (E[i].isTrue()) {
-                        if (first) first=false; else out << ",";
-                        out << i;
-                    }
+            }
+            out << "]\nE=[";
+            first = true;
+            for (int i=0; i<E.size(); i++) {
+                if (E[i].isTrue()) {
+                    if (first) first=false; else out << ",";
+                    out << i;
                 }
-                out << "]";
-                break;
+            }
+            out << "]";
         }
     }
 };

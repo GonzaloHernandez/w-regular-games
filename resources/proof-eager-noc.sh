@@ -11,10 +11,10 @@ while true; do
     ./ex3 --rand $nv $np $e1 $e2 --export-gm temp.gm
 
     for ((i=0; i<nv; i++)); do
-        output=$(./ex3 --gm temp.gm --min --cp --proof --start "$i" --filter-reload)
+        output=$(./ex3 --gm temp.gm --min --cp --filter-memo --proof --start "$i" --filter-reload)
         
         if [ "$output" = "." ]; then
-            echo -n "."
+            printf "."
         else
             all_dots=false
         fi
@@ -23,4 +23,6 @@ while true; do
     if [ "$all_dots" = false ]; then
         break
     fi
+
+    printf "\n"
 done

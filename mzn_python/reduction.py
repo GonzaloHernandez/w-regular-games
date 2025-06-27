@@ -15,7 +15,7 @@ def compute(d,levels,blocks) :
 
     solver      = Solver.lookup(driver[d])
     
-    model       = Model("./model/reduction-cp.mzn")
+    model       = Model("./mzn_model/reduction-cp.mzn")
     instance    = Instance(solver, model)
 
     instance["nvertices"]   = g.nvertices
