@@ -47,11 +47,8 @@ public:
 
         std::stack<std::vector<int>> stack;
 
-        TarjanSCC t1(g);
-        auto ss = t1.solve();
-        for (auto& s : ss) {
-            stack.push(s);
-        }
+        TarjanSCC tar(g);
+        for (auto& s : tar.solve()) stack.push(s);
 
         while (stack.size()>0) {
             auto sc = stack.top();
@@ -77,12 +74,12 @@ public:
                     first = false;
                     continue;
                 }
-                if (g.colors[v] < g.colors[bests[0]]) {
+                if (g.compareVertices(v,bests[0],BET)) {
                     bests.clear();
                     bests.push_back(v);
                     continue;
                 }
-                if (g.colors[v] == g.colors[bests[0]]) {
+                if (g.compareVertices(v,bests[0],EQU) ) {
                     bests.push_back(v);
                     continue;
                 }
@@ -107,11 +104,8 @@ public:
                 }
             }
 
-            TarjanSCC t2(g);
-            auto ss = t2.solve();
-            for (auto& s : ss) {
-                stack.push(s);
-            }
+            TarjanSCC tar(g);
+            for (auto& s : tar.solve()) stack.push(s);
         }
         return true;
     }

@@ -379,6 +379,32 @@ void Game::setReward(reward_type rew) {
 
 //----------------------------------------------------------------------------------
 
+bool Game::compareVertices(int v1,int v2,parity_comp rel) {
+    return compareColors(colors[v1],colors[v2]);
+}
+
+//----------------------------------------------------------------------------------
+
+bool Game::compareColors(int c1,int c2,parity_comp rel) {
+    switch (rel) {
+    case BET:
+        if (reward==MIN && c1 < c2) return true; 
+        if (reward==MAX && c1 > c2) return true;
+        break;   
+    case EQU:
+        if (reward==MIN && c1 == c2) return true; 
+        if (reward==MAX && c1 == c2) return true;
+        break;   
+    case BEQ:
+        if (reward==MIN && c1 <= c2) return true; 
+        if (reward==MAX && c1 >= c2) return true;
+        break;   
+    }
+    return false;
+}
+
+//----------------------------------------------------------------------------------
+
 void Game::exportFile(int type, std::string filename) {
     std::ofstream file(filename);
     if (!file) {

@@ -6,7 +6,6 @@
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
 #include "initializer_list"
-#include "chuffed/globals/dconnected.h"
 
 #include "prop_noc.cpp"
 #include "checker_scc.cpp"
@@ -95,34 +94,11 @@ public:
             }
         }
 
-        // // Every infinite ODD play must be avoided.
-        // new NoOddCycle(g,V,E,filtertype);
+        // Every infinite ODD play must be avoided.
+        new NoOddCycle(g,V,E,3);
 
         // Checker
         new CheckerSCC(g,V,E);
-
-        // Every unreachable vertex must be avoided.
-        if (reachability == 1) {
-            vec<vec<int>> _in, _out, _en;
-            for (int v=0; v<g.owners.size(); v++) {
-                _in.push();
-                _out.push();
-                for (int e=0; e<g.targets.size(); e++) {
-                    if (g.targets[e]==v) {
-                        _in[v].push(e);
-                    }
-                    if (g.sources[e]==v) {
-                        _out[v].push(e);
-                    }
-                }
-            }
-            for (int e=0; e<g.targets.size(); e++) {
-                _en.push();
-                _en[e].push(g.sources[e]);
-                _en[e].push(g.targets[e]);
-            }
-            new DReachabilityPropagator(g.start, V, E, _in, _out, _en);
-        }
 
         //------------------------------------------------------------
 

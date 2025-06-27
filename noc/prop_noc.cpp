@@ -53,14 +53,14 @@ public:
         return -1;
     }
     //-----------------------------------------------------------------------
-    int mincolor(int index,vec<int>& path) {
-        int min = g.colors[path[index]];
+    int bestcolor(int index,vec<int>& path) {
+        int m = g.colors[path[index]];
         for (int i=index+1; i<path.size(); i++) {
-            if (g.colors[path[i]] < min) {
-                min = g.colors[path[i]];
+            if (g.compareColors(g.colors[path[i]],m,BET)) {
+                m = g.colors[path[i]];
             }
         }
-        return min;
+        return m;
     }
     //-----------------------------------------------------------------------
     void clausify(vec<int>& path, vec<BoolView> &B, vec<Lit>& lits,int from) {
@@ -79,98 +79,33 @@ public:
         }
     }
     //-----------------------------------------------------------------------
-    int backtrack() 
+    int checker(vec<int> pathV, vec<int> pathE, int vertex, 
+        vec<BoolView> &E, int lastEdge) 
     {
-        vec<Lit> lits;
-
-        lits.push();
-
-        for (int i=1; i<g.nvertices; i++)   lits.push(V[i].getValLit());
-        for (int i=0; i<g.nedges; i++)      lits.push(E[i].getValLit());
-
-        Clause* reason = Reason_new(lits);
-
-        V[0].setVal(V[0].isFalse(),reason);
-
-        return CF_CONFLICT;
-    }
-    //-----------------------------------------------------------------------
-    int checker() {
-        for (int i=0; i<g.nvertices; i++) {
-            if (!V[i].isFixed()) return CF_DONE;
-            g.currentv[i] = (V[i].isTrue());
+        int index = findVertex(vertex,pathV);
+        if (index >= 0) {
+            if (bestcolor(index,pathV)%2==ODD) {
+                vec<Lit> lits;
+                lits.push();
+                clausify(pathE,E,lits,index);
+                Clause* reason = Reason_new(lits);
+                if (! E[lastEdge].setVal(false,reason)) {
+                    return CF_CONFLICT;
+                }
+            }
         }
-        for (int i=0; i<g.nedges; i++) {
-            if (!E[i].isFixed()) return CF_DONE;
-            g.currente[i] = (E[i].isTrue());
-        }
-
-        std::stack<std::vector<int>> stack;
-
-        TarjanSCC t1(g);
-        auto ss = t1.solve();
-        for (auto& s : ss) {
-            stack.push(s);
-        }
-
-        while (stack.size()>0) {
-            auto sc = stack.top();
-            stack.pop();
-
-            if (sc.size()==1) {
-                int v = sc[0];
-                for(auto& e : g.outs[v]) {
-                    if (E[e].isFalse()) continue;
-                    int w = g.targets[e];
-                    if (v==w && g.colors[v]%2 == ODD) {
-                        return backtrack();
+        else {
+            for (auto& e : g.outs[vertex]) {
+                if (E[e].isTrue()) {
+                    vec<int> newpathV(pathV);
+                    vec<int> newpathE(pathE);
+                    newpathV.push(vertex);
+                    newpathE.push(e);
+                    int status = checker(newpathV, newpathE, g.targets[e], E, e);
+                    if (status == CF_CONFLICT) {
+                        return status;
                     }
                 }
-                continue;
-            }
-
-            bool first = true;
-            std::vector<int> bests;
-            for (auto& v : sc) {
-                if (first) {
-                    bests.push_back(v);
-                    first = false;
-                    continue;
-                }
-                if (g.colors[v] < g.colors[bests[0]]) {
-                    bests.clear();
-                    bests.push_back(v);
-                    continue;
-                }
-                if (g.colors[v] == g.colors[bests[0]]) {
-                    bests.push_back(v);
-                    continue;
-                }
-            }
-            if (g.colors[bests[0]]%2 == ODD) {
-                return backtrack();
-            }
-
-            g.deactiveAll();
-            for (auto& v : sc) {
-                if (std::find(bests.begin(), bests.end(), v) == bests.end()) {
-                    g.currentv[v] = true;
-                }
-            }
-            for (auto& v : sc) {
-                if (std::find(bests.begin(), bests.end(), v) == bests.end()) {
-                    for (auto& e : g.outs[v]) { int w = g.targets[e];
-                        if ( E[e].isTrue() && g.currentv[w]) {
-                            g.currente[e] = true;
-                        }
-                    }
-                }
-            }
-
-            TarjanSCC t2(g);
-            auto ss = t2.solve();
-            for (auto& s : ss) {
-                stack.push(s);
             }
         }
         return CF_DONE;
@@ -181,7 +116,7 @@ public:
     {
         int index = findVertex(vertex,pathV);
         if (index >= 0) {
-            if (mincolor(index,pathV)%2==ODD) {
+            if (bestcolor(index,pathV)%2==ODD) {
                 vec<Lit> lits;
                 lits.push();
                 clausify(pathE,E,lits,0);
@@ -216,13 +151,13 @@ public:
     {
         int index = findVertex(vertex,pathV);
         if (index >= 0) {
-            int min = mincolor(index,pathV);
+            int m = bestcolor(index,pathV);
             touched[lastEdge].first = vertex;
-            touched[lastEdge].second = min;
-            if (min%2==ODD) {
+            touched[lastEdge].second = m;
+            if (m%2==ODD) {
                 vec<Lit> lits;
                 lits.push();
-                // clausify(pathE,E,lits,index);
+                clausify_except(pathE, E, lits, 0, lastEdge);
                 Clause* reason = Reason_new(lits);
                 if (! E[lastEdge].setVal(false,reason)) {
                     return CF_CONFLICT;
@@ -249,8 +184,8 @@ public:
                             int i;
                             for (i=0; i<pathV.size(); i++) {
                                 if (pathV[i] == touched[e].first) {
-                                    int min = mincolor(i,pathV);
-                                    if (min < touched[e].second) {
+                                    int m = bestcolor(i,pathV);
+                                    if (g.compareColors(m,touched[e].second,BET)) {
                                         int status = filterMemo(newpathV, newpathE,g.targets[e], E, e, E[e].isTrue(),touched);
                                         if (status == CF_CONFLICT) {
                                             return status;
@@ -278,7 +213,7 @@ public:
     {
         int index = findVertex(vertex,pathV);
         if (index >= 0) {
-            if (mincolor(index,pathV)%2==ODD) {
+            if (bestcolor(index,pathV)%2==ODD) {
                 vec<Lit> lits;
                 lits.push();
                 clausify(pathE,E,lits,0);
@@ -317,7 +252,7 @@ public:
         touched[vertex] = true;
         int index = findVertex(vertex,pathV);
         if (index >= 0) {
-            if (mincolor(index,pathV)%2==ODD) {
+            if (bestcolor(index,pathV)%2==ODD) {
                 vec<Lit> lits;
                 lits.push();
                 clausify(pathE,E,lits,index);
@@ -352,7 +287,7 @@ public:
 
         switch (filtertype) {
         case 0: { // Checker
-            if (checker() == CF_CONFLICT)
+            if (checker(pathV,pathE,g.start,E,-1) == CF_CONFLICT)
                 return false;
             break;
         }

@@ -14,6 +14,7 @@
 enum parity_type    {EVEN,ODD};                     // 0,1
 enum reward_type    {MIN,MAX};                      // 0,1
 enum game_type      {DEF,JURD,DZN,GM,RAND,LADDER};  // 0,1,2,3,4,5
+enum parity_comp    {BET,EQU,BEQ,DIFF};
 
 //======================================================================================
 
@@ -60,6 +61,8 @@ public:
 
     void setStart(int startv);
     void setReward(reward_type rew);
+    bool compareVertices(int v1,int v2,parity_comp rel=BET);
+    bool compareColors(int c1,int c2,parity_comp rel=BET);
     void exportFile(int type, std::string filename);
     void printGame();
     std::string viewCurrent();
