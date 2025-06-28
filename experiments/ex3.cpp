@@ -2,6 +2,7 @@
 #include "../various/game.h"
 #include "../various/tarjan.h"
 #include "../various/zielonka.h"
+#include "../various/satencoder.h"
 
 #include "../cp_noc/cpsolver.cpp"
 
@@ -15,14 +16,14 @@ struct options {
     bool print_game         = false; 
     bool print_solution     = false; 
     bool print_verbose      = false; 
-    int  game_type          = 0; // enum game_type{DEF,JURD,DZN,GM,RAND}
+    int  game_type          = 0; // enum game_type {DEF,JURD,RAND,LADDER,DZN,GM,DIM}
     reward_type         reward          = MAX;
     std::vector<int>    vals            = {};
     std::vector<int>    starts          = {0};
     std::string         game_filename   = "";
     std::string         export_filename = "";
-    int                 export_type     = 0; // 0=not export 2=DZN 3=GM
-    int                 solver          = 5; // 1=CPModel 2=SAT-encoding 3=SAT-zchaff 4=SAT-cadical 5=ZRA 6=FRA 7=SCC
+    int                 export_type     = 0; // 0=not DZN GM DIM
+    int                 solver          = 0; // 1=CPModel 2=SAT-encoding 3=SAT-zchaff 4=SAT-cadical 5=ZRA 6=FRA 7=SCC
     int                 filter_type     = 0; // 0=none 1=Basic 2=Multi 3=Memo 4=Reload
     int                 proof           = 0; // 0=no 1=yes 2=eager
 } options;
@@ -173,6 +174,15 @@ bool parseMyOptions(int argc, char *argv[]) {
             }
             options.game_filename = argv[i];                
         }
+        else if (strcmp(argv[i],"--dimacs")==0) {
+            options.game_type = DIM;
+            i++;
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Dimacs file name missing\n";
+                return false;                    
+            }
+            options.game_filename = argv[i];
+        }
         else if (strcmp(argv[i],"--start")==0) {
             i++;
             if (i>=argc || argv[i][0] == '-') {
@@ -214,32 +224,22 @@ bool parseMyOptions(int argc, char *argv[]) {
             options.export_type = GM;
             options.export_filename = argv[i];                
         }
-        else if (strcmp(argv[i],"--filter")==0) {
+        else if (strcmp(argv[i],"--export-dimacs")==0) {
             i++;
             if (i>=argc || argv[i][0] == '-') {
-                std::cerr << "ERROR: Number of vertices missing\n";
+                std::cerr << "ERROR: Target DIMAS file name missing\n";
                 return false;                    
             }
-            char* endptr;
-            int n = std::strtol(argv[i],&endptr,10);
-            if (errno == ERANGE || n < 1 || n > 4) {
-                std::cerr << "ERROR: Filter number out of range\n";
-                return false;
-            }
-            if (*endptr != '\0') {
-                std::cerr << "ERROR: Filter number is no numeric\n";
-                return false;
-            }
-            options.filter_type = n;
+            options.export_type = DIM;
+            options.export_filename = argv[i];        
         }
         else if (strcmp(argv[i],"--max")==0)            { options.reward = MAX; }
         else if (strcmp(argv[i],"--min")==0)            { options.reward = MIN; }
 
-        else if (strcmp(argv[i],"--test")==0)           { options.solver = 0; }
+        else if (strcmp(argv[i],"--test")==0)           { options.solver = -1; }
         else if (strcmp(argv[i],"--cp")==0)             { options.solver = 1; }
-        else if (strcmp(argv[i],"--sat-enc")==0)        { options.solver = 2; }
-        else if (strcmp(argv[i],"--sat-zchaf")==0)      { options.solver = 3; }
-        else if (strcmp(argv[i],"--sat_cadical")==0)    { options.solver = 4; }
+        else if (strcmp(argv[i],"--zchaff")==0)         { options.solver = 3; }
+        else if (strcmp(argv[i],"--cadical")==0)        { options.solver = 4; }
         else if (strcmp(argv[i],"--zra")==0)            { options.solver = 5; }
         else if (strcmp(argv[i],"--fra")==0)            { options.solver = 6; }
         else if (strcmp(argv[i],"--scc")==0)            { options.solver = 7; }
@@ -321,20 +321,19 @@ int main(int argc, char *argv[])
     auto start = std::chrono::high_resolution_clock::now();
 
     switch (options.game_type) {
-        case 1: // jurd
-            game = new Game(JURD, options.vals, options.starts[0], options.reward);
+        case JURD: case RAND: case LADDER:
+            game = new Game(options.game_type, 
+                            options.vals,
+                            options.starts[0],
+                            options.reward);
             break;
-        case 2: // dzn
-            game = new Game(DZN, options.game_filename, options.starts[0], options.reward);
+        case DZN: case GM:
+            game = new Game(options.game_type, 
+                            options.game_filename, 
+                            options.starts[0],
+                            options.reward);
             break;
-        case 3: // gm
-            game = new Game(GM, options.game_filename, options.starts[0], options.reward);
-            break;
-        case 4: // random
-            game = new Game(RAND, options.vals, options.starts[0], options.reward);
-            break;
-        case 5: // ladder
-            game = new Game(LADDER, options.vals, options.starts[0], options.reward);
+        case DIM:
             break;
         default:
             game = new Game({0,1},{3,2},{0,1},{1,0},EVEN,MIN);
@@ -343,7 +342,7 @@ int main(int argc, char *argv[])
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> launchinggame = end - start;
 
-    if ((options.print_game || options.print_verbose) && options.proof<2) {
+    if (game && (options.print_game || options.print_verbose) && options.proof<2) {
         game->printGame();
     }
 
@@ -351,23 +350,41 @@ int main(int argc, char *argv[])
         std::cout << "Game creation time : " << launchinggame.count() << std::endl;
     }
 
-    if (options.export_type == DZN && options.game_type != DZN && options.proof<2) {
+    if (game && options.export_type == DZN && options.proof<2) {
         game->exportFile(DZN, options.export_filename);
     }
-    else if (options.export_type == GM && options.game_type != GM && options.proof<2) {
+    else if (game && options.export_type == GM && options.proof<2) {
         game->exportFile(GM, options.export_filename);
+    }
+    else if (game && options.export_type == DIM && options.proof<2) {
+        SATEncoder encoder(*game);
+
+        auto start = std::chrono::high_resolution_clock::now();
+        auto cnf = encoder.getCNF();
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> encodetime = end - start;
+
+        start = std::chrono::high_resolution_clock::now();
+        encoder.dimacs(cnf,options.export_filename);
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> dimacstime = end - start;
+
+        if (options.print_time || options.print_verbose) {
+            std::cout << "Encoding time      : " << encodetime.count() << std::endl;
+            std::cout << "Dimacs time        : " << dimacstime.count() << std::endl;
+        } 
     }
 
     //----------------------------------------------------------------------------------
-    // For testing purpposes
+    // For testing purposes
 
-    if (options.solver==0) {
+    if (options.solver==(-1)) {
     }
 
     //----------------------------------------------------------------------------------
     // CP-NOC
 
-    else if (options.proof==0 && options.solver==1) {
+    else if (game && options.proof==0 && options.solver==1) {
         start = std::chrono::high_resolution_clock::now();
         CPModel* model;
         model = new CPModel(*game, options.filter_type, (options.print_solution || options.print_verbose));
@@ -410,27 +427,71 @@ int main(int argc, char *argv[])
     }
 
     //----------------------------------------------------------------------------------
-    // SAT-Encoding
-
-    else if (options.proof==0 && options.solver==2) {
-    }
-
-    //----------------------------------------------------------------------------------
     // SAT-zchaff
 
     else if (options.proof==0 && options.solver==3) {
-    }
+        std::string output;
+        if (options.game_type == DIM) {
+            std::string command = "./zchaff " + options.game_filename + " | grep -E \"RESULT|Total Run Time\"";
+            output = exec(command.c_str());
+        }
+        else {
+            SATEncoder encoder(*game);
+            auto start = std::chrono::high_resolution_clock::now();
+            auto cnf = encoder.getCNF();
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> encodetime = end - start;
+            
+            start = std::chrono::high_resolution_clock::now();
+            encoder.dimacs(cnf,"temp.cnf");
+            end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> dimacstime = end - start;
+            
+            output = exec("./zchaff temp.cnf | grep -E \"RESULT|Total Run Time\"");
+            std::cout << game->nvertices << " ";
+            std::cout << game->nedges << " ";
+            std::cout << encodetime.count() << " ";
+            std::cout << dimacstime.count() << " ";
+        }
+    
+        std::cout << output << std::endl;
+     }
 
     //----------------------------------------------------------------------------------
     // SAT-Cadical
 
     else if (options.proof==0 && options.solver==4) {
+        std::string output;
+        if (options.game_type == DIM) {
+            std::string command = "./cadical " + options.game_filename + " | grep -E \"^s |total process time since initialization\"";
+            output = exec(command.c_str());
+        }
+        else {
+            SATEncoder encoder(*game);
+            auto start = std::chrono::high_resolution_clock::now();
+            auto cnf = encoder.getCNF();
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> encodetime = end - start;
+            
+            start = std::chrono::high_resolution_clock::now();
+            encoder.dimacs(cnf,"temp.cnf");
+            end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> dimacstime = end - start;    
+
+            output = exec("./cadical temp.cnf | grep -E \"^s |total process time since initialization\"");
+            std::cout << game->nvertices << " ";
+            std::cout << game->nedges << " ";
+            std::cout << encodetime.count() << " ";
+            std::cout << dimacstime.count() << " ";
+        }
+
+        std::cout << output << std::endl;
     }
 
     //----------------------------------------------------------------------------------
     // ZRA
 
-    else if (options.proof==0 && options.solver==5) {
+    else if (game && options.proof==0 && options.solver==5) {
         start = std::chrono::high_resolution_clock::now();
 
         Zielonka zlk(*game);
@@ -470,7 +531,7 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
     // FRA
 
-    else if (options.proof==0 && options.solver==6) {
+    else if (game && options.proof==0 && options.solver==6) {
         if (options.print_solution || options.print_verbose) {
             options.starts.resize(game->nvertices);
             std::iota(options.starts.begin(), options.starts.end(), 0);
@@ -496,7 +557,7 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
     // SCC
 
-    else if (options.proof==0 && options.solver==7) { 
+    else if (game && options.proof==0 && options.solver==7) { 
         TarjanSCC tscc(*game);
         auto sccs = tscc.solve();
         for (auto& scc : sccs) {
@@ -507,7 +568,7 @@ int main(int argc, char *argv[])
     //==================================================================================
     //CP-NOC + Zielonka (proof)
 
-    else if (options.proof==1 && options.solver==1) { 
+    else if (game && options.proof==1 && options.solver==1) { 
         start = std::chrono::high_resolution_clock::now();
         Zielonka zlk(*game);
 

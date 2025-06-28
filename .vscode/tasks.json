@@ -37,7 +37,8 @@
                 "-fdiagnostics-color=always",
                 "-g",
                 "-O0",
-                // "${workspaceFolder}/chuffed-patch/game.cpp",
+
+                "${workspaceFolder}/various/satencoder.cpp",
                 "${workspaceFolder}/various/zielonka.cpp",
                 "${workspaceFolder}/various/tarjan.cpp",
                 "${workspaceFolder}/various/game.cpp",

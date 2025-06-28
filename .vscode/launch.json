@@ -29,30 +29,32 @@
         },
         // --------------------------------------------------------------
         {
-            "name": "C++ Debug NOC",
+            "name": "C++ Debug experments 3",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/ex3",
             "args": [   
                 // "--gm", "${env:HOME}/gm/randomgame(5000,_10,_1,_20)id=0.gm",
                 // "--gm", "/home/chalo/ce.gm",
-                "--dzn", "${workspaceFolder}/data/other.dzn",
+                // "--dzn", "${workspaceFolder}/data/other.dzn",
                 // "--gm", "${workspaceFolder}/build/temp.gm",
                 // "--jurd","50","10","--min",
                 // "--rand","5","3","1","3",
                 // "--gm","build/rand01.gm",
+                "--dimacs","jurd.cnf",
                 // "--ladder","2",
-                "--start","0",
+                // "--start","0",
                 // "--proof",
                 // "--proof-eager",
-                "--min",
+                // "--min",
                 // "--export-gm","/home/chalo/dbg.gm",
                 // "--verbose"
                 // "--print-solution",
                 // "--matrix-based",
-                "--cp",
+                // "--cp",
                 // "--fra-memo"
                 // "--zra",
+                "--zchaff"
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
