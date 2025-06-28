@@ -12,10 +12,10 @@
 //--------------------------------------------------------------------------------------
 
 struct options {
-    bool print_time         = false; 
     bool print_game         = false; 
     bool print_solution     = false; 
     bool print_verbose      = false; 
+    int  print_time         = 0; // 1=Solving Time 2=All times
     int  game_type          = 0; // enum game_type {DEF,JURD,RAND,LADDER,DZN,GM,DIM}
     reward_type         reward          = MAX;
     std::vector<int>    vals            = {};
@@ -236,7 +236,7 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--max")==0)            { options.reward = MAX; }
         else if (strcmp(argv[i],"--min")==0)            { options.reward = MIN; }
 
-        else if (strcmp(argv[i],"--test")==0)           { options.solver = -1; }
+        else if (strcmp(argv[i],"--testiing")==0)       { options.solver = -1; }
         else if (strcmp(argv[i],"--cp")==0)             { options.solver = 1; }
         else if (strcmp(argv[i],"--zchaff")==0)         { options.solver = 3; }
         else if (strcmp(argv[i],"--cadical")==0)        { options.solver = 4; }
@@ -246,7 +246,8 @@ bool parseMyOptions(int argc, char *argv[]) {
 
         else if (strcmp(argv[i],"--proof")==0)          { options.proof = 1; }
         else if (strcmp(argv[i],"--proof-eager")==0)    { options.proof = 2; }
-        else if (strcmp(argv[i],"--print-time")==0)     { options.print_time     = true; }
+        else if (strcmp(argv[i],"--print-time")==0)     { options.print_time     = 1; }
+        else if (strcmp(argv[i],"--print-times")==0)    { options.print_time     = 2; }
         else if (strcmp(argv[i],"--print-game")==0)     { options.print_game     = true; }
         else if (strcmp(argv[i],"--print-solution")==0) { options.print_solution = true; }
         else if (strcmp(argv[i],"--verbose")==0)        { options.print_verbose  = true; }
@@ -346,7 +347,7 @@ int main(int argc, char *argv[])
         game->printGame();
     }
 
-    if ((options.print_time || options.print_verbose) && options.proof<2) {
+    if ((options.print_time>1 || options.print_verbose) && options.proof<2) {
         std::cout << "Game creation time : " << launchinggame.count() << std::endl;
     }
 
@@ -369,7 +370,7 @@ int main(int argc, char *argv[])
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> dimacstime = end - start;
 
-        if (options.print_time || options.print_verbose) {
+        if (options.print_time>1 || options.print_verbose) {
             std::cout << "Encoding time      : " << encodetime.count() << std::endl;
             std::cout << "Dimacs time        : " << dimacstime.count() << std::endl;
         } 
@@ -417,7 +418,7 @@ int main(int argc, char *argv[])
 
         std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
 
-        if (options.print_time || options.print_verbose) {
+        if (options.print_time>0 || options.print_verbose) {
             std::cout   << totaltime.count();
         }        
 
@@ -519,7 +520,7 @@ int main(int argc, char *argv[])
             std::cout << v0 << ": " << (it != win[0].end()?"EVEN ":"ODD ");
             
             
-            if (options.print_time || options.print_verbose) {
+            if (options.print_time>0 || options.print_verbose) {
                 std::cout   << totaltime.count();
             }
 
@@ -546,7 +547,7 @@ int main(int argc, char *argv[])
 
             std::cout << v << ": " << (play==EVEN?"EVEN ":"ODD "); 
 
-            if (options.print_time || options.print_verbose) {
+            if (options.print_time>0 || options.print_verbose) {
                 std::cout   << totaltime.count();
             }
 
@@ -573,14 +574,14 @@ int main(int argc, char *argv[])
         Zielonka zlk(*game);
 
         CPModel* model;
-        model = new CPModel(*game, options.filter_type, (options.print_time || options.print_verbose));
+        model = new CPModel(*game, options.filter_type, (options.print_solution || options.print_verbose));
         so.nof_solutions = 1;
         so.print_sol = (options.print_solution || options.print_verbose)?true:false;
 
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> preptime = end - start;
 
-        if (options.print_time || options.print_verbose) {
+        if (options.print_time>1 || options.print_verbose) {
             std::cout << "Preparation time   : " << preptime.count() << std::endl;
         }
 
@@ -589,7 +590,7 @@ int main(int argc, char *argv[])
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> totaltime1 = end - start;
         
-        if (options.print_time || options.print_verbose) {
+        if (options.print_time>1 || options.print_verbose) {
             std::cout << "Solving time (ZRA) : " << totaltime1.count() << std::endl;
         }
 
@@ -606,7 +607,7 @@ int main(int argc, char *argv[])
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> totaltime2 = end - start;
 
-        if (options.print_time || options.print_verbose) {
+        if (options.print_time>1 || options.print_verbose) {
             std::cout << "Solving time (CP)  : " << totaltime2.count() << std::endl;
         }
 
