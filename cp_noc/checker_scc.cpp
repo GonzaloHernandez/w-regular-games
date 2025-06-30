@@ -24,6 +24,28 @@ public:
         for (int i=0; i<g.sources.size(); i++) E[i].attach(this, 1 , EVENT_F );
     }
     //-----------------------------------------------------------------------
+    std::vector<int> bestColors(std::vector<int> subgraph) {
+        bool first = true;
+        std::vector<int> best_priorities;
+        for (auto& v : subgraph) {
+            if (first) {
+                best_priorities.push_back(v);
+                first = false;
+                continue;
+            }
+            if (g.compareVertices(v,best_priorities[0],BET)) {
+                best_priorities.clear();
+                best_priorities.push_back(v);
+                continue;
+            }
+            if (g.compareVertices(v,best_priorities[0],EQU) ) {
+                best_priorities.push_back(v);
+                continue;
+            }
+        }
+        return best_priorities;
+    }
+    //-----------------------------------------------------------------------
     bool backtrack() 
     {
         vec<Lit> lits;
@@ -67,35 +89,20 @@ public:
             }
 
             bool first = true;
-            std::vector<int> bests;
-            for (auto& v : sc) {
-                if (first) {
-                    bests.push_back(v);
-                    first = false;
-                    continue;
-                }
-                if (g.compareVertices(v,bests[0],BET)) {
-                    bests.clear();
-                    bests.push_back(v);
-                    continue;
-                }
-                if (g.compareVertices(v,bests[0],EQU) ) {
-                    bests.push_back(v);
-                    continue;
-                }
-            }
-            if (g.colors[bests[0]]%2 == ODD) {
+            std::vector<int> best = bestColors(sc);
+
+            if (g.colors[best[0]]%2 == ODD) {
                 return backtrack();
             }
 
             g.deactiveAll();
             for (auto& v : sc) {
-                if (std::find(bests.begin(), bests.end(), v) == bests.end()) {
+                if (std::find(best.begin(), best.end(), v) == best.end()) {
                     g.currentv[v] = true;
                 }
             }
             for (auto& v : sc) {
-                if (std::find(bests.begin(), bests.end(), v) == bests.end()) {
+                if (std::find(best.begin(), best.end(), v) == best.end()) {
                     for (auto& e : g.outs[v]) { int w = g.targets[e];
                         if ( E[e].isTrue() && g.currentv[w]) {
                             g.currente[e] = true;

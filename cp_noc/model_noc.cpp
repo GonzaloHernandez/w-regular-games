@@ -6,7 +6,7 @@
 #include "prop_noc.cpp"
 #include "checker_scc.cpp"
 
-class CPModel : public Problem {
+class NOCModel : public Problem {
 public:
     static const int DZN    = 0;
     static const int GM     = 1;
@@ -20,7 +20,7 @@ private:
 
 public:
 
-    CPModel(Game& g, int filtertype=0, int printtype=0) 
+    NOCModel(Game& g, int filtertype=0, int printtype=0) 
     : g(g), filtertype(filtertype), printtype(printtype) 
     {
         V.growTo(g.nvertices);

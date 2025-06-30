@@ -16,6 +16,10 @@ enum reward_type    {MIN,MAX};                          // 0,1
 enum game_type      {DEF,JURD,RAND,LADDER,DZN,GM,DIM};  // 0,1,2,3,4,5
 enum parity_comp    {BET,EQU,BEQ};
 
+//--------------------------------------------------------------------------------------
+
+parity_type enemy(parity_type PARITY);
+
 //======================================================================================
 
 class Game {

@@ -1,5 +1,5 @@
 #ifndef GAME_H
-#include "../chuffed-patch/game.h"
+#include "../various/game.h"
 #endif
 
 #include "iostream"
@@ -9,6 +9,7 @@
 #include "branch_fra.cpp"
 #include "prop_qnodeviations.cpp"
 #include "prop_paritychecker.cpp"
+#include "checker_fra_scc.cpp"
 
 class FRAModel : public Problem {
 private:
@@ -61,8 +62,9 @@ public:
 
         // -------------------------------------------------------------------
 
-        new QualifyNoDeviations(g, Q);
-        new ParityChecker(g, Q);
+        // new QualifyNoDeviations(g, Q);
+        // new ParityChecker(g, Q);
+        new FRACheckerSCC(g, Q);
 
         // -------------------------------------------------------------------
 
@@ -119,18 +121,3 @@ public:
     }
 
 };
-
-// int main(int argc, char *argv[])
-// {
-//     launchdebugchuffed();
-//     launchdebugstd();
-//     Game g(DZN, "data/game-wikidzn",0,MAX);
-
-//     FRAModel* model = new FRAModel(g);
-
-//     so.nof_solutions = 0;
-//     engine.solve(model);
-
-//     // delete model;
-//     return 0;
-// }

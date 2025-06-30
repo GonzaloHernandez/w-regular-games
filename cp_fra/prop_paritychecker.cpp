@@ -88,7 +88,7 @@ public:
         bool found = false;
         int bestColor;
         for (int i=0; i<g.nvertices; i++) {
-            if (!g.active[i]) continue;
+            if (!g.currentv[i]) continue;
 
             if (threshold) {
                 if ((g.reward==MIN && g.colors[i] <= best) ||
@@ -130,7 +130,7 @@ public:
             int w = U[i];
             for(auto& e : g.ins[w]) {
                 int v = g.sources[e];
-                if (!g.active[v]) continue;
+                if (!g.currentv[v]) continue;
                 bool ally = g.owners[v] == player;
                 if (d[v] == 0) {
                     if (ally) {
@@ -140,7 +140,7 @@ public:
                     else {
                         int outbound = 0ull;
                         for(auto& e_ : g.outs[v]) {
-                            if (g.active[g.targets[e_]]) outbound++;
+                            if (g.currentv[g.targets[e_]]) outbound++;
                         }
                         d[v] = outbound;
                         if (outbound == 1) U.push_back(v);
@@ -175,7 +175,7 @@ public:
         // Ensuring parity condition using SCC over EVEN's vertices
         {
             for (int v=0; v<g.nvertices; v++) {
-                g.active[v] = (Q[v].getVal() == EVEN);
+                g.currentv[v] = (Q[v].getVal() == EVEN);
             }
             TarjanSCC tscc(g);
             auto sccs = tscc.solve();
@@ -204,7 +204,7 @@ public:
         // Ensuring parity condition using SCC over ODD's vertices
         {
             for (int v=0; v<g.nvertices; v++) {
-                g.active[v] = (Q[v].getVal() == ODD);
+                g.currentv[v] = (Q[v].getVal() == ODD);
             }
             TarjanSCC tscc(g);
             auto sccs = tscc.solve();

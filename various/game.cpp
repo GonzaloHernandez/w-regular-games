@@ -12,6 +12,12 @@
 
 //----------------------------------------------------------------------------------
 
+parity_type enemy(parity_type PARITY) {
+    if (PARITY==EVEN) return ODD; return EVEN;
+}
+
+//----------------------------------------------------------------------------------
+
 void Game::fixStartingZero() {
     for (int i=0; i<sources.size(); i++) {
         sources[i]--;

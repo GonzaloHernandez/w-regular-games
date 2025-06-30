@@ -4,7 +4,8 @@
 #include "../various/zielonka.h"
 #include "../various/satencoder.h"
 
-#include "../cp_noc/cpsolver.cpp"
+#include "../cp_noc/model_noc.cpp"
+#include "../cp_fra/model_fra.cpp"
 
 #include "../resources/debugchuffed.h"
 #include "../resources/debugstd.h"
@@ -23,7 +24,7 @@ struct options {
     std::string         game_filename   = "";
     std::string         export_filename = "";
     int                 export_type     = 0; // 0=not DZN GM DIM
-    int                 solver          = 0; // 1=CPModel 2=SAT-encoding 3=SAT-zchaff 4=SAT-cadical 5=ZRA 6=FRA 7=SCC
+    int                 solver          = 0; // 1=CP-NOC 2=CP-FRA 3=SAT-zchaff 4=SAT-cadical 5=ZRA 6=FRA 7=SCC
     int                 filter_type     = 0; // 0=none 1=Basic 2=Multi 3=Memo 4=Reload
     int                 proof           = 0; // 0=no 1=yes 2=eager
 } options;
@@ -236,8 +237,9 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--max")==0)            { options.reward = MAX; }
         else if (strcmp(argv[i],"--min")==0)            { options.reward = MIN; }
 
-        else if (strcmp(argv[i],"--testiing")==0)       { options.solver = -1; }
-        else if (strcmp(argv[i],"--cp")==0)             { options.solver = 1; }
+        else if (strcmp(argv[i],"--testing")==0)        { options.solver = -1; }
+        else if (strcmp(argv[i],"--cp-noc")==0)         { options.solver = 1; }
+        else if (strcmp(argv[i],"--cp-fra")==0)         { options.solver = 2; }
         else if (strcmp(argv[i],"--zchaff")==0)         { options.solver = 3; }
         else if (strcmp(argv[i],"--cadical")==0)        { options.solver = 4; }
         else if (strcmp(argv[i],"--zra")==0)            { options.solver = 5; }
@@ -273,7 +275,8 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --min                      : Seek to minimize the color\n";
             std::cout << "  --export-dzn <filename>    : Export game to DZN format (not solve)\n";
             std::cout << "  --export-gm <filename>     : Export game to GM format (not solve)\n"; 
-            std::cout << "  --cp                       : Solve using CP (new method)\n";
+            std::cout << "  --cp-noc                   : Solve using CP-NOC\n";
+            std::cout << "  --cp-fra                   : Solve using CP-FRA\n";
             std::cout << "  --sat-encoding             : Encode on DIMACS\n";
             std::cout << "  --sat-zchaff               : Solve using zChaff\n";
             std::cout << "  --sat-cadical              : Solve using Cadical\n";
@@ -387,8 +390,8 @@ int main(int argc, char *argv[])
 
     else if (game && options.proof==0 && options.solver==1) {
         start = std::chrono::high_resolution_clock::now();
-        CPModel* model;
-        model = new CPModel(*game, options.filter_type, (options.print_solution || options.print_verbose));
+        NOCModel* model;
+        model = new NOCModel(*game, options.filter_type, (options.print_solution || options.print_verbose));
         so.nof_solutions = 1;
         so.print_sol = (options.print_solution || options.print_verbose)?true:false;
         end = std::chrono::high_resolution_clock::now();
@@ -427,6 +430,54 @@ int main(int argc, char *argv[])
         delete model;
     }
 
+    //----------------------------------------------------------------------------------
+    // CP-FRA
+
+    else if (game && options.proof==0 && options.solver==2) {
+
+        std::cout << "Warning: This method is not finished" << std::endl;
+
+        start = std::chrono::high_resolution_clock::now();
+        FRAModel* model;
+        model = new FRAModel(*game);
+        so.nof_solutions = 1;
+        so.print_sol = (options.print_solution || options.print_verbose)?true:false;
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> preptime = end - start;            
+
+        start = std::chrono::high_resolution_clock::now();
+
+        if (options.print_solution || options.print_verbose) {
+            engine.solve(model);
+        }
+        else {
+            std::streambuf* old_buf = std::cout.rdbuf();
+            std::ofstream null_stream("/dev/null");
+            std::cout.rdbuf(null_stream.rdbuf());
+            engine.solve(model);
+            std::cout.rdbuf(old_buf);
+        }
+
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> totaltime = end - start;
+        
+        if (options.print_verbose) {
+            std::cout << "Init time          : " << engine.init_time.count()/1000.0 << std::endl;
+            std::cout << "Solving time       : " << totaltime.count() << std::endl;
+            std::cout << "Mem used           : " << memUsed() << std::endl;
+        }   
+
+        std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
+
+        if (options.print_time>0 || options.print_verbose) {
+            std::cout   << totaltime.count();
+        }        
+
+        std::cout << std::endl;
+        
+        delete model;
+    }
+    
     //----------------------------------------------------------------------------------
     // SAT-zchaff
 
@@ -573,8 +624,8 @@ int main(int argc, char *argv[])
         start = std::chrono::high_resolution_clock::now();
         Zielonka zlk(*game);
 
-        CPModel* model;
-        model = new CPModel(*game, options.filter_type, (options.print_solution || options.print_verbose));
+        NOCModel* model;
+        model = new NOCModel(*game, options.filter_type, (options.print_solution || options.print_verbose));
         so.nof_solutions = 1;
         so.print_sol = (options.print_solution || options.print_verbose)?true:false;
 
