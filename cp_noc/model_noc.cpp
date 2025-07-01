@@ -92,7 +92,7 @@ public:
 
         // Every infinite ODD play must be avoided.
         if (filtertype>0) {
-            new NoOddCycle(g,V,E,3);
+            new NoOddCycle(g,V,E,filtertype);
         }
 
         // Checker
