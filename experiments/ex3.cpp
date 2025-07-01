@@ -17,7 +17,7 @@ struct options {
     bool print_solution     = false; 
     bool print_verbose      = false; 
     int  print_time         = 0; // 1=Solving Time 2=All times
-    int  game_type          = 0; // enum game_type {DEF,JURD,RAND,LADDER,DZN,GM,DIM}
+    int  game_type          = 0; // enum game_type {DEF,JURD,RAND,MLADDER,DZN,GM,DIM}
     reward_type         reward          = MAX;
     std::vector<int>    vals            = {};
     std::vector<int>    starts          = {0};
@@ -137,8 +137,8 @@ bool parseMyOptions(int argc, char *argv[]) {
             }
             options.vals.push_back(d2);
         }
-        else if (strcmp(argv[i],"--ladder")==0) {
-            options.game_type = LADDER;
+        else if (strcmp(argv[i],"--mladder")==0) {
+            options.game_type = MLADDER;
             i++;
             
             if (i>=argc || argv[i][0] == '-') {
@@ -148,11 +148,11 @@ bool parseMyOptions(int argc, char *argv[]) {
             char* endptr;
             int blocks = std::strtol(argv[i],&endptr,10);
             if (errno == ERANGE || blocks < 1 || blocks > 1000000) {
-                std::cerr << "ERROR: Ladder blocks out of range\n";
+                std::cerr << "ERROR: MLadder blocks out of range\n";
                 return false;
             }
             if (*endptr != '\0') {
-                std::cerr << "ERROR: Ladder blocks no numeric\n";
+                std::cerr << "ERROR: MLadder blocks no numeric\n";
                 return false;
             }
             options.vals.push_back(blocks);
@@ -255,6 +255,7 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--verbose")==0)        { options.print_verbose  = true; }
 
         else if (strcmp(argv[i],"--filter-basic")==0)   { options.filter_type = 1; }
+        else if (strcmp(argv[i],"--filter-multi")==0)   { options.filter_type = 2; }
         else if (strcmp(argv[i],"--filter-memo")==0)    { options.filter_type = 3; }
         else if (strcmp(argv[i],"--filter-reload")==0)  { options.filter_type = 4; }
 
@@ -265,7 +266,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --gm <filename>            : GM file name\n";
             std::cout << "  --jurd <levels> <blocks>   : Jurdzinski game\n";
             std::cout << "  --rand <ns> <ps> <d1> <d2> : Random game\n";
-            std::cout << "  --ladder <bl>              : Ladder game\n";
+            std::cout << "  --mladder <bl>             : ModelcheckerLadder game\n";
             std::cout << "  --start <vertex>           : Starting vertex\n";
             std::cout << "  --print-time               : Print time)\n";
             std::cout << "  --print-game               : Print game)\n";
@@ -284,6 +285,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --proof-eager              : Looking for counterexample\n";
             std::cout << "  --filter-basic             : Filter of NOC\n";
             std::cout << "  --filter-memo              : Filter of NOC\n";
+            std::cout << "  --filter-multi             : Filter of NOC\n";
             std::cout << "  --filter-reload            : Filter of NOC\n";
             return false;
         }
@@ -325,7 +327,7 @@ int main(int argc, char *argv[])
     auto start = std::chrono::high_resolution_clock::now();
 
     switch (options.game_type) {
-        case JURD: case RAND: case LADDER:
+        case JURD: case RAND: case MLADDER:
             game = new Game(options.game_type, 
                             options.vals,
                             options.starts[0],

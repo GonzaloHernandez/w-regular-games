@@ -313,7 +313,7 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
             }
         }
     }
-    else if (type == LADDER) {
+    else if (type == MLADDER) {
         int bl = vals[0];
         nvertices   = bl*3+1;
         nedges      = bl*4+1;

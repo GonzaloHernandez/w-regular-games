@@ -249,7 +249,6 @@ public:
     int filterMultiStart(vec<int> pathV, vec<int> pathE, int vertex, 
         vec<BoolView> &E, int lastEdge, bool definedEdge, vec<bool>& touched) 
     {
-        touched[vertex] = true;
         int index = findVertex(vertex,pathV);
         if (index >= 0) {
             if (bestcolor(index,pathV)%2==ODD) {
@@ -263,7 +262,7 @@ public:
             }
         }
         else if (definedEdge) {
-
+            touched[vertex] = true;
             for (auto& e : g.outs[vertex]) {
                 if (!E[e].isFalse()) {
                     vec<int> newpathV(pathV);

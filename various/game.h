@@ -13,7 +13,7 @@
 
 enum parity_type    {EVEN,ODD};                         // 0,1
 enum reward_type    {MIN,MAX};                          // 0,1
-enum game_type      {DEF,JURD,RAND,LADDER,DZN,GM,DIM};  // 0,1,2,3,4,5
+enum game_type      {DEF,JURD,RAND,MLADDER,DZN,GM,DIM}; // 0,1,2,3,4,5
 enum parity_comp    {BET,EQU,BEQ};
 
 //--------------------------------------------------------------------------------------
