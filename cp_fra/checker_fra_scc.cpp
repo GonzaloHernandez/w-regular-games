@@ -79,7 +79,7 @@ public:
                     int v = sc[0];
                     for(auto& e : g.outs[v]) {
                         int w = g.targets[e];
-                        if (v==w && g.colors[v]%2 == enemy(PARITY)) {
+                        if (v==w && g.colors[v]%2 == opponent(PARITY)) {
                             return backtrack();
                         }
                     }
@@ -104,7 +104,7 @@ public:
                         continue;
                     }
                 }
-                if (g.colors[bests[0]]%2 == enemy(PARITY)) {
+                if (g.colors[bests[0]]%2 == opponent(PARITY)) {
                     return backtrack();
                 }
 

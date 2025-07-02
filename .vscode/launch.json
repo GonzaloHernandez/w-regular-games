@@ -36,9 +36,9 @@
             "args": [   
                 // "--gm", "${env:HOME}/gm/randomgame(5000,_10,_1,_20)id=0.gm",
                 // "--gm", "/home/chalo/ce.gm",
-                // "--dzn", "${workspaceFolder}/data/SAT.dzn",
+                "--dzn", "${workspaceFolder}/data/jurd-2-1.dzn",
                 // "--gm", "${workspaceFolder}/build/temp.gm",
-                "--jurd","2","1","--min",
+                // "--jurd","2","1","--min",
                 // "--rand","5","3","1","3",
                 // "--gm","build/rand01.gm",
                 // "--dimacs","jurd.cnf",
@@ -51,11 +51,11 @@
                 // "--verbose"
                 "--print-solution",
                 // "--matrix-based",
-                "--cp-noc",
+                "--cp-nec",
                 // "--zra",
                 // "--zchaff"
                 // "--help"
-                "--filter-memo"
+                // "--filter-memo"
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

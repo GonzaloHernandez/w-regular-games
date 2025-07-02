@@ -17,11 +17,12 @@ private:
     vec<BoolView> E;
     int filtertype;
     int printtype;
+    parity_type playerSAT;
 
 public:
 
-    NOCModel(Game& g, int filtertype=0, int printtype=0) 
-    : g(g), filtertype(filtertype), printtype(printtype) 
+    NOCModel(Game& g, int filtertype=0, int printtype=0, parity_type playerSAT=EVEN) 
+    : g(g), filtertype(filtertype), printtype(printtype), playerSAT(playerSAT)
     {
         V.growTo(g.nvertices);
         E.growTo(g.nedges);
@@ -39,7 +40,7 @@ public:
         fixVertices({g.start},{});
 
         // For every EVEN vertice, at least one outgoing edge must be activated
-        for (int v=0; v<g.nvertices; v++) if (g.owners[v] == EVEN) {
+        for (int v=0; v<g.nvertices; v++) if (g.owners[v] == playerSAT) {
             vec<Lit> clause;
             clause.push( V[v].getLit(false) );
             for (int e=0; e<g.nedges; e++) if (g.sources[e]==v) {
@@ -49,7 +50,7 @@ public:
         }
 
         // For every EVEN vertice, at most one outgoing edge must be activated
-        for (int v=0; v<g.nvertices; v++) if (g.owners[v] == EVEN) {
+        for (int v=0; v<g.nvertices; v++) if (g.owners[v] == playerSAT) {
             for (int i=0; i<g.outs[v].size(); i++) {
                 for (int j=i+1; j<g.outs[v].size(); j++) {
                     vec<Lit> clause;
@@ -61,7 +62,7 @@ public:
         }
 
         // For every ODD vertice, each outgoing edge must be activated
-        for (int v=0; v<g.nvertices; v++) if (g.owners[v] == ODD) {
+        for (int v=0; v<g.nvertices; v++) if (g.owners[v] == opponent(playerSAT)) {
             for (int e=0; e<g.nedges; e++) if (g.sources[e]==v) {
                 vec<Lit> clause;
                 clause.push( V[v].getLit(false) );        
@@ -90,13 +91,23 @@ public:
             }
         }
 
-        // Every infinite ODD play must be avoided.
+        // For every activated vertice, at least one incoming edge must be activated
+        for (int w=0; w<g.nvertices; w++) if (w != g.start) {
+            vec<Lit> clause;
+            clause.push( V[w].getLit(false) );
+            for (int e=0; e<g.ins[w].size(); e++) if (g.targets[e]==w) {
+                clause.push( E[e].getLit(true) );
+            }
+            sat.addClause(clause);
+        }
+
+        // Every infinite ODD or EVEN play must be avoided.
         if (filtertype>0) {
-            new NoOddCycle(g,V,E,filtertype);
+            new NoOpponentCycle(g,V,E,filtertype,playerSAT);
         }
 
         // Checker
-        new CheckerSCC(g,V,E);
+        new CheckerSCC(g,V,E,playerSAT);
 
         //------------------------------------------------------------
 

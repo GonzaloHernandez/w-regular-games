@@ -16,10 +16,13 @@ private:
     Game& g;
     vec<BoolView> V;
     vec<BoolView> E;
+    parity_type playerSAT;
 
 public:
     //-----------------------------------------------------------------------
-    NOCSCC(Game& g, vec<BoolView>& V,vec<BoolView>& E) : g(g), V(V), E(E) {
+    NOCSCC(Game& g, vec<BoolView>& V,vec<BoolView>& E,parity_type playerSAT) 
+    : g(g), V(V), E(E), playerSAT(playerSAT)
+    {
         for (int i=0; i<g.owners.size(); i++)  V[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.sources.size(); i++) E[i].attach(this, 1 , EVENT_F );
     }
@@ -86,7 +89,7 @@ public:
                     if (E[e].isFalse() || !g.currente[e]) continue;
                     int w = g.targets[e];
                     if (!g.currentv[w]) continue;
-                    if (v==w && g.colors[v]%2 == ODD) {
+                    if (v==w && g.colors[v]%2 == opponent(playerSAT)) {
                         return backtrack();
                     }
                 }
@@ -96,7 +99,7 @@ public:
             bool first = true;
             std::vector<int> best = bestColors(sc);
 
-            if (g.colors[best[0]]%2 == ODD) {
+            if (g.colors[best[0]]%2 == opponent(playerSAT)) {
                 return backtrack();
             }
 

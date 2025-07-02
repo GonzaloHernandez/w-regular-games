@@ -32,6 +32,7 @@ struct options {
 //--------------------------------------------------------------------------------------
 
 bool parseMyOptions(int argc, char *argv[]) {
+    so.nof_solutions = 1;
     for (int i=1; i<argc; i++) {
         if (strcmp(argv[i],"--jurd")==0) {
             options.game_type = JURD;
@@ -234,11 +235,31 @@ bool parseMyOptions(int argc, char *argv[]) {
             options.export_type = DIM;
             options.export_filename = argv[i];        
         }
+        else if (strcmp(argv[i],"--nsolutions")==0) {
+            i++;
+            
+            if (i>=argc || argv[i][0] == '-') {
+                std::cerr << "ERROR: Number of solutions missing\n";
+                return false;                    
+            }
+            char* endptr;
+            int ns = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || ns < 0 || ns > 10) {
+                std::cerr << "ERROR: Number of solutions out of range\n";
+                return false;
+            }
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: MLadder blocks no numeric\n";
+                return false;
+            }
+            so.nof_solutions = ns;
+        }
         else if (strcmp(argv[i],"--max")==0)            { options.reward = MAX; }
         else if (strcmp(argv[i],"--min")==0)            { options.reward = MIN; }
 
         else if (strcmp(argv[i],"--testing")==0)        { options.solver = -1; }
         else if (strcmp(argv[i],"--cp-noc")==0)         { options.solver = 1; }
+        else if (strcmp(argv[i],"--cp-nec")==0)         { options.solver = 8; }
         else if (strcmp(argv[i],"--cp-fra")==0)         { options.solver = 2; }
         else if (strcmp(argv[i],"--zchaff")==0)         { options.solver = 3; }
         else if (strcmp(argv[i],"--cadical")==0)        { options.solver = 4; }
@@ -276,7 +297,8 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --min                      : Seek to minimize the color\n";
             std::cout << "  --export-dzn <filename>    : Export game to DZN format (not solve)\n";
             std::cout << "  --export-gm <filename>     : Export game to GM format (not solve)\n"; 
-            std::cout << "  --cp-noc                   : Solve using CP-NOC\n";
+            std::cout << "  --cp-noc                   : Solve using CP No-Odd-Cycles\n";
+            std::cout << "  --cp-nec                   : Solve using CP No-Even-Cycles\n";
             std::cout << "  --cp-fra                   : Solve using CP-FRA\n";
             std::cout << "  --sat-encoding             : Encode on DIMACS\n";
             std::cout << "  --sat-zchaff               : Solve using zChaff\n";
@@ -388,13 +410,16 @@ int main(int argc, char *argv[])
     }
 
     //----------------------------------------------------------------------------------
-    // CP-NOC
+    // CP-NC
 
-    else if (game && options.proof==0 && options.solver==1) {
+    else if (game && options.proof==0 && (options.solver==1 || options.solver==8)) {
         start = std::chrono::high_resolution_clock::now();
         NOCModel* model;
-        model = new NOCModel(*game, options.filter_type, (options.print_solution || options.print_verbose));
-        so.nof_solutions = 1;
+        model = new NOCModel(   *game, 
+                                options.filter_type, 
+                                (options.print_solution || options.print_verbose),
+                                options.solver==1?EVEN:ODD);
+        // so.nof_solutions = 1;
         so.print_sol = (options.print_solution || options.print_verbose)?true:false;
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> preptime = end - start;            
@@ -421,7 +446,12 @@ int main(int argc, char *argv[])
             std::cout << "Mem used           : " << memUsed() << std::endl;
         }   
 
-        std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
+        if (options.solver==1) {
+            std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
+        }
+        else {
+            std::cout << game->start << ": " << (engine.solutions>0?"ODD ":"EVEN ");
+        }
 
         if (options.print_time>0 || options.print_verbose) {
             std::cout   << totaltime.count();
@@ -622,12 +652,15 @@ int main(int argc, char *argv[])
     //==================================================================================
     //CP-NOC + Zielonka (proof)
 
-    else if (game && options.proof==1 && options.solver==1) { 
+    else if (game && options.proof==1 && (options.solver==1 || options.solver==8)) { 
         start = std::chrono::high_resolution_clock::now();
         Zielonka zlk(*game);
 
         NOCModel* model;
-        model = new NOCModel(*game, options.filter_type, (options.print_solution || options.print_verbose));
+        model = new NOCModel(   *game, 
+                                options.filter_type, 
+                                (options.print_solution || options.print_verbose),
+                                options.solver==1?EVEN:ODD);
         so.nof_solutions = 1;
         so.print_sol = (options.print_solution || options.print_verbose)?true:false;
 
@@ -664,12 +697,12 @@ int main(int argc, char *argv[])
             std::cout << "Solving time (CP)  : " << totaltime2.count() << std::endl;
         }
 
-        if (engine.solutions>0 && 
+        if (((engine.solutions>0 && options.solver==1) || (engine.solutions==0 && options.solver==8)) && 
             std::find(win[0].begin(), win[0].end(), game->start) != win[0].end()) 
         {
                 std::cout << ".";
         }
-        else if (engine.solutions==0 && 
+        else if (((engine.solutions==0 && options.solver==1) || (engine.solutions>0 && options.solver==8)) && 
             std::find(win[1].begin(), win[1].end(), game->start) != win[1].end()) 
         {
             std::cout << ".";

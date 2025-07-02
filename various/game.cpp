@@ -12,7 +12,7 @@
 
 //----------------------------------------------------------------------------------
 
-parity_type enemy(parity_type PARITY) {
+parity_type opponent(parity_type PARITY) {
     if (PARITY==EVEN) return ODD; return EVEN;
 }
 

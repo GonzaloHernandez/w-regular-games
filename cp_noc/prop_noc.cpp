@@ -19,12 +19,13 @@ struct memo {
     bool parity()   { return best%2; }
 }; 
 
-class NoOddCycle : public Propagator {
+class NoOpponentCycle : public Propagator {
 private:
     Game& g;
     vec<BoolView> V;
     vec<BoolView> E;
     int filtertype;
+    parity_type playerSAT;
 
     const int   CF_DONE     = 1;
     const int   CF_CONFLICT = 2;
@@ -32,8 +33,9 @@ private:
 
 public:
     //-----------------------------------------------------------------------
-    NoOddCycle(Game& g, vec<BoolView>& V,vec<BoolView>& E,int filtertype=3)
-    :   g(g), V(V), E(E), filtertype(filtertype)
+    NoOpponentCycle(Game& g, vec<BoolView>& V,vec<BoolView>& E,int filtertype,
+            parity_type playerSAT)
+    :   g(g), V(V), E(E), filtertype(filtertype), playerSAT(playerSAT)
     {
         for (int i=0; i<g.owners.size(); i++)  V[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.sources.size(); i++) E[i].attach(this, 1 , EVENT_F );
@@ -84,7 +86,7 @@ public:
     {
         int index = findVertex(vertex,pathV);
         if (index >= 0) {
-            if (bestcolor(index,pathV)%2==ODD) {
+            if (bestcolor(index,pathV)%2==opponent(playerSAT)) {
                 vec<Lit> lits;
                 lits.push();
                 clausify(pathE,E,lits,index);
@@ -116,7 +118,7 @@ public:
     {
         int index = findVertex(vertex,pathV);
         if (index >= 0) {
-            if (bestcolor(index,pathV)%2==ODD) {
+            if (bestcolor(index,pathV)%2==opponent(playerSAT)) {
                 vec<Lit> lits;
                 lits.push();
                 clausify(pathE,E,lits,0);
@@ -154,7 +156,7 @@ public:
             int m = bestcolor(index,pathV);
             touched[lastEdge].first = vertex;
             touched[lastEdge].second = m;
-            if (m%2==ODD) {
+            if (m%2==opponent(playerSAT)) {
                 vec<Lit> lits;
                 lits.push();
                 clausify_except(pathE, E, lits, 0, lastEdge);
@@ -213,7 +215,7 @@ public:
     {
         int index = findVertex(vertex,pathV);
         if (index >= 0) {
-            if (bestcolor(index,pathV)%2==ODD) {
+            if (bestcolor(index,pathV)%2==opponent(playerSAT)) {
                 vec<Lit> lits;
                 lits.push();
                 clausify(pathE,E,lits,0);
@@ -251,7 +253,7 @@ public:
     {
         int index = findVertex(vertex,pathV);
         if (index >= 0) {
-            if (bestcolor(index,pathV)%2==ODD) {
+            if (bestcolor(index,pathV)%2==opponent(playerSAT)) {
                 vec<Lit> lits;
                 lits.push();
                 clausify(pathE,E,lits,index);
