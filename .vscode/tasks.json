@@ -36,8 +36,6 @@
                 "-std=c++17",
                 "-fdiagnostics-color=always",
                 "-g",
-                "-O0",
-
                 "${workspaceFolder}/various/satencoder.cpp",
                 "${workspaceFolder}/various/zielonka.cpp",
                 "${workspaceFolder}/various/tarjan.cpp",

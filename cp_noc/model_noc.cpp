@@ -5,7 +5,6 @@
 
 #include "prop_noc.cpp"
 #include "checker_scc.cpp"
-#include "prop_scc.cpp"
 
 class NOCModel : public Problem {
 public:
@@ -16,14 +15,15 @@ private:
     Game& g;
     vec<BoolView> V;  
     vec<BoolView> E;
-    int filtertype;
+    int checker;
+    int filter;
     int printtype;
     parity_type playerSAT;
 
 public:
 
-    NOCModel(Game& g, int filtertype=0, int printtype=0, parity_type playerSAT=EVEN) 
-    : g(g), filtertype(filtertype), printtype(printtype), playerSAT(playerSAT)
+    NOCModel(Game& g, int checker, int filter, int printtype=0, parity_type playerSAT=EVEN) 
+    : g(g), checker(checker), filter(filter), printtype(printtype), playerSAT(playerSAT)
     {
         V.growTo(g.nvertices);
         E.growTo(g.nedges);
@@ -103,14 +103,8 @@ public:
         }
 
         // Every infinite ODD or EVEN play must be avoided.
-        if (filtertype>0) {
-            new NoOpponentCycle(g,V,E,filtertype,playerSAT);
-        }
-
-        // new NOCSCC(g,V,E,playerSAT);
-
-        // Checker
-        new CheckerSCC(g,V,E,playerSAT);
+        if (checker==1) new CheckerSCC(g,V,E,playerSAT);
+        if (filter > 0) new NoOpponentCycle(g,V,E,filter,playerSAT);
 
         //------------------------------------------------------------
 

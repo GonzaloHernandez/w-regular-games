@@ -15,7 +15,7 @@ struct options {
     int jurd_blocks     = 1;
     int game_start      = 0;
     int solving_type    = 1; // 1=cpsolver 2=satencoding 3=zchaff 4=cadical
-    int filter_type     = 3;
+    int propagator_type     = 3;
     int reachability    = 1; // 1=Use 0=Don't use
     std::string game_filename   = "";
     std::string dimacs_filename = "";
@@ -131,7 +131,7 @@ bool parseExperimentOptions(int argc, char *argv[]) {
                 std::cerr << "ERROR: Odd Cycle Filter no numeric\n";
                 return false;
             }
-            ex.filter_type = filter;
+            ex.propagator_type = filter;
         }
         else if (strcmp(argv[i],"-dimacs")==0) {
             i++;
@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
     switch (ex.solving_type) {
         case 1: { // cp solver
             CPModel* model;
-            model = new CPModel(*game, ex.filter_type, ex.reachability, ex.game_print);
+            model = new CPModel(*game, ex.propagator_type, ex.reachability, ex.game_print);
             so.nof_solutions = 1;
             so.sym_static = true;
             so.print_sol = ex.game_print==0?false:true;
@@ -380,7 +380,7 @@ int main(int argc, char *argv[])
             for (auto& r : res.second) {
                 CPModel* model;
                 game->start = r;
-                model = new CPModel(*game, ex.filter_type);
+                model = new CPModel(*game, ex.propagator_type);
                 so.nof_solutions = 1;
                 so.print_sol = false;
                 engine.solve(model);

@@ -25,7 +25,8 @@ struct options {
     std::string         export_filename = "";
     int                 export_type     = 0; // 0=not DZN GM DIM
     int                 solver          = 0; // 1=CP-NOC 2=CP-FRA 3=SAT-zchaff 4=SAT-cadical 5=ZRA 6=FRA 7=SCC
-    int                 filter_type     = 0; // 0=none 1=Basic 2=Multi 3=Memo 4=Reload
+    int                 checker         = 0; // 0=none 1=SCC
+    int                 filter          = 0; // 0=none 1=Basic 2=Memo
     int                 proof           = 0; // 0=no 1=yes 2=eager
 } options;
 
@@ -277,10 +278,9 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--print-solution")==0) { options.print_solution = true; }
         else if (strcmp(argv[i],"--verbose")==0)        { options.print_verbose  = true; }
 
-        else if (strcmp(argv[i],"--filter-basic")==0)   { options.filter_type = 1; }
-        else if (strcmp(argv[i],"--filter-multi")==0)   { options.filter_type = 2; }
-        else if (strcmp(argv[i],"--filter-memo")==0)    { options.filter_type = 3; }
-        else if (strcmp(argv[i],"--filter-reload")==0)  { options.filter_type = 4; }
+        else if (strcmp(argv[i],"--checker-scc")==0)    { options.checker       = 1; }
+        else if (strcmp(argv[i],"--filter-basic")==0)   { options.filter        = 1; }
+        else if (strcmp(argv[i],"--filter-memo")==0)    { options.filter        = 2; }
 
         else if (strcmp(argv[i],"--help")==0) {
             std::cout << "Usage: " << argv[0] << " [options]\n";
@@ -293,6 +293,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --start <vertex>           : Starting vertex\n";
             std::cout << "  --print-only-time          : Print only solving time\n";
             std::cout << "  --print-time               : Print solving time\n";
+            std::cout << "  --print-times              : Print all times\n";
             std::cout << "  --print-game               : Print game\n";
             std::cout << "  --print-solution           : Print solution (All vertices)\n";
             std::cout << "  --verbose                  : Print everything\n";
@@ -308,10 +309,9 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --sat-cadical              : Solve using Cadical\n";
             std::cout << "  --proof                    : Compare results using Zielonka\n";
             std::cout << "  --proof-eager              : Looking for counterexample\n";
-            std::cout << "  --filter-basic             : Filter of NOC\n";
-            std::cout << "  --filter-memo              : Filter of NOC\n";
-            std::cout << "  --filter-multi             : Filter of NOC\n";
-            std::cout << "  --filter-reload            : Filter of NOC\n";
+            std::cout << "  --checker-scc              : Checker by CP-NOC\n";
+            std::cout << "  --filter-basic             : Filter by CP-NOC\n";
+            std::cout << "  --filter-memo              : Filter by CP-NOC\n";
             return false;
         }
         else {
@@ -413,13 +413,13 @@ int main(int argc, char *argv[])
     }
 
     //----------------------------------------------------------------------------------
-    // CP-NC
+    // CP-NOC
 
     else if (game && options.proof==0 && (options.solver==1 || options.solver==8)) {
         start = std::chrono::high_resolution_clock::now();
         NOCModel* model;
         model = new NOCModel(   *game, 
-                                options.filter_type, 
+                                options.checker, options.filter, 
                                 (options.print_solution || options.print_verbose),
                                 options.solver==1?EVEN:ODD);
         // so.nof_solutions = 1;
@@ -443,18 +443,18 @@ int main(int argc, char *argv[])
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> totaltime = end - start;
         
-        if (options.print_verbose) {
-            std::cout << "Init time          : " << engine.init_time.count()/1000.0 << std::endl;
+        if (options.print_time>1) {
+            std::cout << "Init time          : " << preptime.count() << std::endl;
             std::cout << "Solving time       : " << totaltime.count() << std::endl;
             std::cout << "Mem used           : " << memUsed() << std::endl;
         }   
 
         if (options.solver==1) {
-            if (options.print_time>=0)
+            if (options.print_time>=0 || options.print_verbose)
                 std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
         }
         else {
-            if (options.print_time>=0)
+            if (options.print_time>=0 || options.print_verbose)
                 std::cout << game->start << ": " << (engine.solutions>0?"ODD ":"EVEN ");
         }
 
@@ -463,6 +463,10 @@ int main(int argc, char *argv[])
         }        
 
         std::cout << std::endl;
+
+        if (options.print_verbose) {
+            engine.printStats();
+        }
         
         delete model;
     }
@@ -498,12 +502,12 @@ int main(int argc, char *argv[])
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> totaltime = end - start;
         
-        if (options.print_verbose) {
-            std::cout << "Init time          : " << engine.init_time.count()/1000.0 << std::endl;
+        if (options.print_time>1) {
+            std::cout << "Init time          : " << preptime.count() << std::endl;
             std::cout << "Solving time       : " << totaltime.count() << std::endl;
             std::cout << "Mem used           : " << memUsed() << std::endl;
         }   
-        if (options.print_time>=0)
+        if (options.print_time>=0 || options.print_verbose)
             std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
 
         if (options.print_time!=0 || options.print_verbose) {
@@ -605,7 +609,7 @@ int main(int argc, char *argv[])
         for(auto& v0 : options.starts) {
             auto it = std::find(win[0].begin(), win[0].end(), v0);
 
-            if (options.print_time>=0)
+            if (options.print_time>=0 || options.print_verbose)
                 std::cout << v0 << ": " << (it != win[0].end()?"EVEN ":"ODD ");
             
             
@@ -634,7 +638,7 @@ int main(int argc, char *argv[])
             end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> totaltime = end - start;
 
-            if (options.print_time>=0)
+            if (options.print_time>=0 || options.print_verbose)
                 std::cout << v << ": " << (play==EVEN?"EVEN ":"ODD "); 
 
             if (options.print_time!=0 || options.print_verbose) {
@@ -665,7 +669,7 @@ int main(int argc, char *argv[])
 
         NOCModel* model;
         model = new NOCModel(   *game, 
-                                options.filter_type, 
+                                options.checker, options.filter, 
                                 (options.print_solution || options.print_verbose),
                                 options.solver==1?EVEN:ODD);
         so.nof_solutions = 1;
