@@ -20,7 +20,7 @@ private:
 
 public:
     //-----------------------------------------------------------------------
-    CheckerSCC(Game& g, vec<BoolView>& V,vec<BoolView>& E, parity_type playerSAT=EVEN) 
+    CheckerSCC(Game& g, vec<BoolView>& V,vec<BoolView>& E, parity_type playerSAT) 
     : g(g), V(V), E(E), playerSAT(playerSAT)
     {
         for (int i=0; i<g.owners.size(); i++)  V[i].attach(this, 1 , EVENT_F );
@@ -91,7 +91,6 @@ public:
                 continue;
             }
 
-            bool first = true;
             std::vector<int> best = bestColors(sc);
 
             if (g.colors[best[0]]%2 == opponent(playerSAT)) {

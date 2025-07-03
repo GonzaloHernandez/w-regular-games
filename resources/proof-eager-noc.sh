@@ -11,7 +11,7 @@ while true; do
     ./ex3 --rand $nv $np $e1 $e2 --export-gm temp.gm
 
     for ((i=0; i<nv; i++)); do
-        output=$(./ex3 --gm temp.gm --min --cp --filter-memo --proof --start "$i" --filter-reload)
+        output=$(./ex3 --gm temp.gm --min --cp-noc-odd --proof --start "$i" --filter-reload)
         
         if [ "$output" = "." ]; then
             printf "."

@@ -89,7 +89,7 @@ Game::Game( std::vector<int> own,std::vector<int> col,
     nvertices   = own.size();
     nedges      = sou.size();
 
-    assert(start >= 0 && start < nvertices);
+    assert(start >= 0 && start < nvertices && "Starting vertex must be within the valid range");
 
     outs.resize(nvertices);
     ins .resize(nvertices);
@@ -146,7 +146,7 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
             }
             file.close();
 
-            assert(start >= 0 && start < nvertices);
+            assert(start >= 0 && start < nvertices && "Starting vertex must be within the valid range");
 
             fixStartingZero();
             outs.resize(nvertices);
@@ -182,7 +182,7 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
 
             nvertices = counter;
 
-            assert(start >= 0 && start < nvertices);
+            assert(start >= 0 && start < nvertices && "Starting vertex must be within the valid range");
 
             outs.resize(nvertices);
             ins .resize(nvertices);
@@ -218,7 +218,7 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
         nvertices   = ((blocks*3)+1)*(levels-1) + ((blocks*2)+1);
         nedges      = (blocks*6)*(levels-1) + (blocks*4) + (blocks*2*(levels-1));
 
-        assert(start >= 0 && start < nvertices);
+        assert(start >= 0 && start < nvertices && "Starting vertex must be within the valid range");
 
         int es = 1;
         int os = 0;
@@ -280,7 +280,7 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
         nvertices   = vals[0];
         nedges      = 0;
     
-        assert(start >= 0 && start < nvertices);
+        assert(start >= 0 && start < nvertices && "Starting vertex must be within the valid range");
     
         std::random_device rd;
         std::mt19937 g(rd());
@@ -318,7 +318,7 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
         nvertices   = bl*3+1;
         nedges      = bl*4+1;
 
-        assert(start >= 0 && start < nvertices);
+        assert(start >= 0 && start < nvertices && "Starting vertex must be within the valid range");
 
         owners  .resize(nvertices,ODD);
         colors  .resize(nvertices);
@@ -373,7 +373,7 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
 //----------------------------------------------------------------------------------
 
 void Game::setStart(int startv) {
-    assert(startv >= 0 && startv < nvertices);
+    assert(startv >= 0 && startv < nvertices && "Starting vertex must be within the valid range");
     start = startv;
 }
 

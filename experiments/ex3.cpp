@@ -16,8 +16,8 @@ struct options {
     bool print_game         = false; 
     bool print_solution     = false; 
     bool print_verbose      = false; 
-    int  print_time         = 0; // 1=Solving Time 2=All times
-    int  game_type          = 0; // enum game_type {DEF,JURD,RAND,MLADDER,DZN,GM,DIM}
+    int  print_time         = 0;   // 0=Default 1=Solving Time 2=All times
+    int  game_type          = 0;    // enum game_type {DEF,JURD,RAND,MLADDER,DZN,GM,DIM}
     reward_type         reward          = MAX;
     std::vector<int>    vals            = {};
     std::vector<int>    starts          = {0};
@@ -259,7 +259,8 @@ bool parseMyOptions(int argc, char *argv[]) {
 
         else if (strcmp(argv[i],"--testing")==0)        { options.solver = -1; }
         else if (strcmp(argv[i],"--cp-noc")==0)         { options.solver = 1; }
-        else if (strcmp(argv[i],"--cp-nec")==0)         { options.solver = 8; }
+        else if (strcmp(argv[i],"--cp-noc-even")==0)    { options.solver = 1; }
+        else if (strcmp(argv[i],"--cp-noc-odd")==0)     { options.solver = 8; }
         else if (strcmp(argv[i],"--cp-fra")==0)         { options.solver = 2; }
         else if (strcmp(argv[i],"--zchaff")==0)         { options.solver = 3; }
         else if (strcmp(argv[i],"--cadical")==0)        { options.solver = 4; }
@@ -269,6 +270,7 @@ bool parseMyOptions(int argc, char *argv[]) {
 
         else if (strcmp(argv[i],"--proof")==0)          { options.proof = 1; }
         else if (strcmp(argv[i],"--proof-eager")==0)    { options.proof = 2; }
+        else if (strcmp(argv[i],"--print-only-time")==0){ options.print_time     = -1; }
         else if (strcmp(argv[i],"--print-time")==0)     { options.print_time     = 1; }
         else if (strcmp(argv[i],"--print-times")==0)    { options.print_time     = 2; }
         else if (strcmp(argv[i],"--print-game")==0)     { options.print_game     = true; }
@@ -289,16 +291,17 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --rand <ns> <ps> <d1> <d2> : Random game\n";
             std::cout << "  --mladder <bl>             : ModelcheckerLadder game\n";
             std::cout << "  --start <vertex>           : Starting vertex\n";
-            std::cout << "  --print-time               : Print time)\n";
-            std::cout << "  --print-game               : Print game)\n";
+            std::cout << "  --print-only-time          : Print only solving time\n";
+            std::cout << "  --print-time               : Print solving time\n";
+            std::cout << "  --print-game               : Print game\n";
             std::cout << "  --print-solution           : Print solution (All vertices)\n";
             std::cout << "  --verbose                  : Print everything\n";
             std::cout << "  --max                      : Seek to maximize the color\n";
             std::cout << "  --min                      : Seek to minimize the color\n";
             std::cout << "  --export-dzn <filename>    : Export game to DZN format (not solve)\n";
             std::cout << "  --export-gm <filename>     : Export game to GM format (not solve)\n"; 
-            std::cout << "  --cp-noc                   : Solve using CP No-Odd-Cycles\n";
-            std::cout << "  --cp-nec                   : Solve using CP No-Even-Cycles\n";
+            std::cout << "  --cp-noc-even              : CP-NOC satisfying player EVEN (No-Odd-Cycles)\n";
+            std::cout << "  --cp-noc-odd               : CP-NOC satisfying player ODD (No-Even-Cycles)\n";
             std::cout << "  --cp-fra                   : Solve using CP-FRA\n";
             std::cout << "  --sat-encoding             : Encode on DIMACS\n";
             std::cout << "  --sat-zchaff               : Solve using zChaff\n";
@@ -447,13 +450,15 @@ int main(int argc, char *argv[])
         }   
 
         if (options.solver==1) {
-            std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
+            if (options.print_time>=0)
+                std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
         }
         else {
-            std::cout << game->start << ": " << (engine.solutions>0?"ODD ":"EVEN ");
+            if (options.print_time>=0)
+                std::cout << game->start << ": " << (engine.solutions>0?"ODD ":"EVEN ");
         }
 
-        if (options.print_time>0 || options.print_verbose) {
+        if (options.print_time!=0 || options.print_verbose) {
             std::cout   << totaltime.count();
         }        
 
@@ -498,10 +503,10 @@ int main(int argc, char *argv[])
             std::cout << "Solving time       : " << totaltime.count() << std::endl;
             std::cout << "Mem used           : " << memUsed() << std::endl;
         }   
+        if (options.print_time>=0)
+            std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
 
-        std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
-
-        if (options.print_time>0 || options.print_verbose) {
+        if (options.print_time!=0 || options.print_verbose) {
             std::cout   << totaltime.count();
         }        
 
@@ -600,10 +605,11 @@ int main(int argc, char *argv[])
         for(auto& v0 : options.starts) {
             auto it = std::find(win[0].begin(), win[0].end(), v0);
 
-            std::cout << v0 << ": " << (it != win[0].end()?"EVEN ":"ODD ");
+            if (options.print_time>=0)
+                std::cout << v0 << ": " << (it != win[0].end()?"EVEN ":"ODD ");
             
             
-            if (options.print_time>0 || options.print_verbose) {
+            if (options.print_time!=0 || options.print_verbose) {
                 std::cout   << totaltime.count();
             }
 
@@ -628,9 +634,10 @@ int main(int argc, char *argv[])
             end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> totaltime = end - start;
 
-            std::cout << v << ": " << (play==EVEN?"EVEN ":"ODD "); 
+            if (options.print_time>=0)
+                std::cout << v << ": " << (play==EVEN?"EVEN ":"ODD "); 
 
-            if (options.print_time>0 || options.print_verbose) {
+            if (options.print_time!=0 || options.print_verbose) {
                 std::cout   << totaltime.count();
             }
 

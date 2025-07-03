@@ -5,6 +5,7 @@
 
 #include "prop_noc.cpp"
 #include "checker_scc.cpp"
+#include "prop_scc.cpp"
 
 class NOCModel : public Problem {
 public:
@@ -92,10 +93,10 @@ public:
         }
 
         // For every activated vertice, at least one incoming edge must be activated
-        for (int w=0; w<g.nvertices; w++) if (w != g.start) {
+        for (int w=0; w<g.nvertices; w++) if (w != g.start ) {
             vec<Lit> clause;
             clause.push( V[w].getLit(false) );
-            for (int e=0; e<g.ins[w].size(); e++) if (g.targets[e]==w) {
+            for (int e=0; e<g.nedges; e++) if (g.targets[e]==w) {
                 clause.push( E[e].getLit(true) );
             }
             sat.addClause(clause);
@@ -105,6 +106,8 @@ public:
         if (filtertype>0) {
             new NoOpponentCycle(g,V,E,filtertype,playerSAT);
         }
+
+        // new NOCSCC(g,V,E,playerSAT);
 
         // Checker
         new CheckerSCC(g,V,E,playerSAT);

@@ -53,10 +53,19 @@ public:
     {
         vec<Lit> lits;
         lits.push();
-        for (int i=1; i<g.nvertices; i++)   lits.push(V[i].getValLit());
-        for (int i=0; i<g.nedges; i++)      lits.push(E[i].getValLit());
+        int first = -1;
+        for (int i=0; i<g.nvertices; i++) 
+            if(V[i].isFixed()) {
+                if (first <0) 
+                    first = i;
+                else 
+                    lits.push(V[i].getValLit());
+            }
+        for (int i=0; i<g.nedges; i++)    
+            if(E[i].isFixed()) lits.push(E[i].getValLit());
+
         Clause* reason = Reason_new(lits);
-        V[0].setVal(V[0].isFalse(),reason);
+        V[first].setVal(V[first].isFalse(),reason);
         return false;
     }
     //-----------------------------------------------------------------------
@@ -96,7 +105,6 @@ public:
                 continue;
             }
 
-            bool first = true;
             std::vector<int> best = bestColors(sc);
 
             if (g.colors[best[0]]%2 == opponent(playerSAT)) {
@@ -105,14 +113,14 @@ public:
 
             g.deactiveAll();
             for (auto& v : sc) {
-                if (std::find(best.begin(), best.end(), v) == best.end()) {
+                if (std::find(best.begin(), best.end(), v) == best.end() && V[v].isTrue()) {
                     g.currentv[v] = true;
                 }
             }
             for (auto& v : sc) {
                 if (std::find(best.begin(), best.end(), v) == best.end()) {
                     for (auto& e : g.outs[v]) { int w = g.targets[e];
-                        if ( E[e].isTrue() && g.currentv[w]) {
+                        if ( E[e].isTrue() && g.currentv[w] && V[w].isTrue()) {
                             g.currente[e] = true;
                         }
                     }

@@ -36,7 +36,7 @@
             "args": [   
                 // "--gm", "${env:HOME}/gm/randomgame(5000,_10,_1,_20)id=0.gm",
                 // "--gm", "/home/chalo/ce.gm",
-                "--dzn", "${workspaceFolder}/data/jurd-2-1.dzn",
+                "--dzn", "${workspaceFolder}/data/other.dzn",
                 // "--gm", "${workspaceFolder}/build/temp.gm",
                 // "--jurd","2","1","--min",
                 // "--rand","5","3","1","3",
@@ -49,9 +49,9 @@
                 // "--min",
                 // "--export-gm","/home/chalo/dbg.gm",
                 // "--verbose"
-                "--print-solution",
+                // "--print-solution",
                 // "--matrix-based",
-                "--cp-nec",
+                "--cp-noc",
                 // "--zra",
                 // "--zchaff"
                 // "--help"
