@@ -259,9 +259,9 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--min")==0)            { options.reward = MIN; }
 
         else if (strcmp(argv[i],"--testing")==0)        { options.solver = -1; }
-        else if (strcmp(argv[i],"--cp-noc")==0)         { options.solver = 1; }
-        else if (strcmp(argv[i],"--cp-noc-even")==0)    { options.solver = 1; }
-        else if (strcmp(argv[i],"--cp-noc-odd")==0)     { options.solver = 8; }
+        else if (strcmp(argv[i],"--noc")==0)            { options.solver = 1; }
+        else if (strcmp(argv[i],"--noc-even")==0)       { options.solver = 1; }
+        else if (strcmp(argv[i],"--noc-odd")==0)        { options.solver = 8; }
         else if (strcmp(argv[i],"--cp-fra")==0)         { options.solver = 2; }
         else if (strcmp(argv[i],"--zchaff")==0)         { options.solver = 3; }
         else if (strcmp(argv[i],"--cadical")==0)        { options.solver = 4; }
@@ -301,8 +301,9 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --min                      : Seek to minimize the color\n";
             std::cout << "  --export-dzn <filename>    : Export game to DZN format (not solve)\n";
             std::cout << "  --export-gm <filename>     : Export game to GM format (not solve)\n"; 
-            std::cout << "  --cp-noc-even              : CP-NOC satisfying player EVEN (No-Odd-Cycles)\n";
-            std::cout << "  --cp-noc-odd               : CP-NOC satisfying player ODD (No-Even-Cycles)\n";
+            std::cout << "  --noc-even                 : CP-NOC satisfying player EVEN (No-Odd-Cycles)\n";
+            std::cout << "  --noc-odd                  : CP-NOC satisfying player ODD (No-Even-Cycles)\n";
+            std::cout << "  --fra                      : Solve using FRA\n";
             std::cout << "  --cp-fra                   : Solve using CP-FRA\n";
             std::cout << "  --sat-encoding             : Encode on DIMACS\n";
             std::cout << "  --sat-zchaff               : Solve using zChaff\n";
@@ -653,7 +654,8 @@ int main(int argc, char *argv[])
     // SCC
 
     else if (game && options.proof==0 && options.solver==7) { 
-        TarjanSCC tscc(*game);
+        GameView view(*game);
+        TarjanSCC tscc(*game,view);
         auto sccs = tscc.solve();
         for (auto& scc : sccs) {
             std::cout << scc << std::endl;            

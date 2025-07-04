@@ -61,18 +61,21 @@ public:
     }
     //-----------------------------------------------------------------------
     bool propagate() override {
+
+        GameView view(g);
+
         for (int i=0; i<g.nvertices; i++) {
             if (!V[i].isFixed()) return true;
-            g.currentv[i] = (V[i].isTrue());
+            view.vs[i] = (V[i].isTrue());
         }
         for (int i=0; i<g.nedges; i++) {
             if (!E[i].isFixed()) return true;
-            g.currente[i] = (E[i].isTrue());
+            view.es[i] = (E[i].isTrue());
         }
 
         std::stack<std::vector<int>> stack;
 
-        TarjanSCC tar(g);
+        TarjanSCC tar(g,view);
         for (auto& s : tar.solve()) stack.push(s);
 
         while (stack.size()>0) {
@@ -97,23 +100,23 @@ public:
                 return backtrack();
             }
 
-            g.deactiveAll();
+            view.deactiveAll();
             for (auto& v : sc) {
                 if (std::find(best.begin(), best.end(), v) == best.end()) {
-                    g.currentv[v] = true;
+                    view.vs[v] = true;
                 }
             }
             for (auto& v : sc) {
                 if (std::find(best.begin(), best.end(), v) == best.end()) {
                     for (auto& e : g.outs[v]) { int w = g.targets[e];
-                        if ( E[e].isTrue() && g.currentv[w]) {
-                            g.currente[e] = true;
+                        if ( E[e].isTrue() && view.vs[w]) {
+                            view.es[e] = true;
                         }
                     }
                 }
             }
 
-            TarjanSCC tar(g);
+            TarjanSCC tar(g,view);
             for (auto& s : tar.solve()) stack.push(s);
         }
         return true;

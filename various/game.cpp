@@ -69,15 +69,6 @@ void Game::parseline_gm(const std::string& line,std::vector<int>& vinfo,
 }
 
 //----------------------------------------------------------------------------------
-
-void Game::commonConstructor() {
-    currentv = std::make_unique<bool[]>(nvertices);
-    std::fill_n(currentv.get(), nvertices, true);
-    currente = std::make_unique<bool[]>(nedges);
-    std::fill_n(currente.get(), nedges, true);
-}
-
-//----------------------------------------------------------------------------------
 // Default game
 
 Game::Game( std::vector<int> own,std::vector<int> col,
@@ -104,7 +95,6 @@ Game::Game( std::vector<int> own,std::vector<int> col,
         outs[sources[i]].push_back(i);
         ins [targets[i]].push_back(i);
     }
-    commonConstructor();
 }
 
 //----------------------------------------------------------------------------------
@@ -203,7 +193,6 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
             break;
         }
     }
-    commonConstructor();
 }
 
 //----------------------------------------------------------------------------------
@@ -367,7 +356,6 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
         outs[bl*3].push_back(e);
         ins [0].push_back(e);
     }
-    commonConstructor();
 }
 
 //----------------------------------------------------------------------------------
@@ -446,69 +434,6 @@ void Game::exportFile(int type, std::string filename) {
     }
 }
 
-//----------------------------------------------------------------------------------
-
-std::vector<int> Game::getVertices() {
-    std::vector<int> vs;
-    for (int v=0; v<nvertices; v++) {
-        if (currentv[v]) vs.push_back(v);
-    }
-    return vs;
-}
-
-//----------------------------------------------------------------------------------
-
-std::vector<int> Game::getEdges() {
-    std::vector<int> es;
-    for (int e=0; e<nedges; e++) {
-        if (currente[e]) es.push_back(e);
-    }
-    return es;
-}
-
-//----------------------------------------------------------------------------------
-
-void Game::activeAll() {
-    for (int v=0; v<nvertices; v++) {
-        currentv[v] = true;
-    }
-    for (int e=0; e<nedges; e++) {
-        currente[e] = true;
-    }
-}
-
-//----------------------------------------------------------------------------------
-
-void Game::deactiveAll() {
-    for (int v=0; v<nvertices; v++) {
-        currentv[v] = false;
-    }
-    for (int e=0; e<nedges; e++) {
-        currente[e] = false;
-    }
-}
-
-//----------------------------------------------------------------------------------
-
-std::vector<int> Game::getOuts(int v) {
-    std::vector<int> es;
-    for(auto& e : outs[v]) {
-        int w = targets[e];
-        if (currente[e] && currentv[w]) es.push_back(e);
-    }
-    return es;
-}
-
-//----------------------------------------------------------------------------------
-
-std::vector<int> Game::getIns(int w) {
-    std::vector<int> es;
-    for(auto& e : ins[w]) {
-        int v = sources[e];
-        if (currente[e] && currentv[v]) es.push_back(e);
-    }
-    return es;
-}
 
 //----------------------------------------------------------------------------------
 
@@ -535,17 +460,90 @@ void Game::printGame() {
     // std::cout << "start:     " << start << std::endl;
 }
 
+//=====================================================================================
+
+GameView::GameView(Game& g) : g(g) {
+    vs = std::make_unique<bool[]>(g.nvertices);
+    std::fill_n(vs.get(), g.nvertices, true);
+    es = std::make_unique<bool[]>(g.nedges);
+    std::fill_n(es.get(), g.nedges, true);
+}
+
 //----------------------------------------------------------------------------------
 
-std::string Game::viewCurrent() {
+std::vector<int> GameView::getVertices() {
+    std::vector<int> vertices;
+    for (int v=0; v<g.nvertices; v++) {
+        if (vs[v]) vertices.push_back(v);
+    }
+    return vertices;
+}
+
+//----------------------------------------------------------------------------------
+
+std::vector<int> GameView::getEdges() {
+    std::vector<int> edges;
+    for (int e=0; e<g.nedges; e++) {
+        if (es[e]) edges.push_back(e);
+    }
+    return edges;
+}
+
+//----------------------------------------------------------------------------------
+
+void GameView::activeAll() {
+    for (int v=0; v<g.nvertices; v++) {
+        vs[v] = true;
+    }
+    for (int e=0; e<g.nedges; e++) {
+        es[e] = true;
+    }
+}
+
+//----------------------------------------------------------------------------------
+
+void GameView::deactiveAll() {
+    for (int v=0; v<g.nvertices; v++) {
+        vs[v] = false;
+    }
+    for (int e=0; e<g.nedges; e++) {
+        es[e] = false;
+    }
+}
+
+//----------------------------------------------------------------------------------
+
+std::vector<int> GameView::getOuts(int v) {
+    std::vector<int> edges;
+    for(auto& e : g.outs[v]) {
+        int w = g.targets[e];
+        if (es[e] && vs[w]) edges.push_back(e);
+    }
+    return edges;
+}
+
+//----------------------------------------------------------------------------------
+
+std::vector<int> GameView::getIns(int w) {
+    std::vector<int> edges;
+    for(auto& e : g.ins[w]) {
+        int v = g.sources[e];
+        if (es[e] && vs[v]) edges.push_back(e);
+    }
+    return edges;
+}
+
+//----------------------------------------------------------------------------------
+
+std::string GameView::viewCurrent() {
     std::stringstream ss;
     ss << "{";
-    for(int i=0; i<nvertices; i++) if (currentv[i]) {
+    for(int i=0; i<g.nvertices; i++) if (vs[i]) {
         if (i>0) ss << ",";
         ss << i << ",";
     }
     ss << "} {";
-    for(int i=0; i<nedges; i++) if (currente[i]) {
+    for(int i=0; i<g.nedges; i++) if (es[i]) {
         if (i>0) ss << ",";
         ss << i << ",";
     }

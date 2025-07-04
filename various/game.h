@@ -23,8 +23,6 @@ parity_type opponent(parity_type PARITY);
 //======================================================================================
 
 class Game {
-private:
-    void commonConstructor();
 public:
     friend class SATEncoder;
     friend class CPModel;
@@ -41,10 +39,6 @@ public:
     int nedges;
     int start;
     reward_type reward;
-    //----------------------------------------------------------------------------------
-
-    std::unique_ptr<bool[]> currentv;
-    std::unique_ptr<bool[]> currente;
 
     //----------------------------------------------------------------------------------
 
@@ -69,7 +63,17 @@ public:
     bool compareColors(int c1,int c2,parity_comp rel=BET);
     void exportFile(int type, std::string filename);
     void printGame();
-    std::string viewCurrent();
+};
+
+// =======================================================================================
+
+class GameView {
+private:
+    Game& g;
+public:
+    std::unique_ptr<bool[]> vs;
+    std::unique_ptr<bool[]> es;
+    GameView(Game& g);
 
     //----------------------------------------------------------------------------------
 
@@ -77,6 +81,7 @@ public:
     std::vector<int> getEdges();        // Only return a set of active edges
     std::vector<int> getOuts(int v);    // Only return a set of active outs of v
     std::vector<int> getIns(int w);     // Only return a set of active ins of w
+    std::string viewCurrent();
 
     void activeAll();
     void deactiveAll();

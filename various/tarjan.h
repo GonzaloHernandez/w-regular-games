@@ -10,6 +10,7 @@
 class TarjanSCC {
 private:
     Game& g;
+    GameView& view;
     std::vector<int>    indices;
     std::vector<int>    lowlink;
     std::vector<bool>   onstack;
@@ -17,7 +18,8 @@ private:
     std::vector<std::vector<int>>   sccs;
     int index = 0;
 public:
-    TarjanSCC(Game& g);
+    TarjanSCC(Game& g,GameView& view);
+    
     std::vector<std::vector<int>> solveRAW();
     void searchRAW(int v);
 

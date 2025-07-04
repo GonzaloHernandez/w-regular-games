@@ -15,10 +15,11 @@ class FRACheckerSCC : public Propagator {
 private:
     Game& g;
     vec<BoolView> Q;
+    GameView view;
 
 public:
     //-----------------------------------------------------------------------
-    FRACheckerSCC(Game& g, vec<BoolView>& Q) : g(g), Q(Q) {
+    FRACheckerSCC(Game& g, vec<BoolView>& Q) : g(g), Q(Q), view(g) {
         for (int i=0; i<g.nvertices; i++)  Q[i].attach(this, 1 , EVENT_F );
     }
     //-----------------------------------------------------------------------
@@ -63,12 +64,12 @@ public:
                 
                 if (Q[i].getVal()==PARITY) region.push_back(i);
 
-                g.currentv[i] = (Q[i].getVal()==PARITY);
+                view.vs[i] = (Q[i].getVal()==PARITY);
             }
 
             std::stack<std::vector<int>> stack;
 
-            TarjanSCC tar(g);
+            TarjanSCC tar(g,view);
             for (auto& s : tar.solve()) stack.push(s);
 
             while (stack.size()>0) {
@@ -108,23 +109,23 @@ public:
                     return backtrack();
                 }
 
-                g.deactiveAll();
+                view.deactiveAll();
                 for (auto& v : sc) {
                     if (std::find(bests.begin(), bests.end(), v) == bests.end()) {
-                        g.currentv[v] = true;
+                        view.vs[v] = true;
                     }
                 }
                 for (auto& v : sc) {
                     if (std::find(bests.begin(), bests.end(), v) == bests.end()) {
                         for (auto& e : g.outs[v]) { int w = g.targets[e];
-                            if (g.currentv[w]) {
-                                g.currente[e] = true;
+                            if (view.vs[w]) {
+                                view.es[e] = true;
                             }
                         }
                     }
                 }
 
-                TarjanSCC tar(g);
+                TarjanSCC tar(g,view);
                 for (auto& s : tar.solve()) stack.push(s);
             }
         }

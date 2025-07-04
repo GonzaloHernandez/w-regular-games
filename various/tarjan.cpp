@@ -1,8 +1,9 @@
 #include "tarjan.h"
 #include <vector>
 
-TarjanSCC::TarjanSCC(Game& g) 
-: g(g), indices(g.nvertices,-1), lowlink(g.nvertices,-1), onstack(g.nvertices,false) 
+TarjanSCC::TarjanSCC(Game& g,GameView& view) 
+:   g(g), view(view),
+    indices(g.nvertices,-1), lowlink(g.nvertices,-1), onstack(g.nvertices,false) 
 {        
 }
 
@@ -51,7 +52,7 @@ void TarjanSCC::searchRAW(int v) {
 //----------------------------------------------------------------------------------
 
 std::vector<std::vector<int>> TarjanSCC::solve() {
-    for (auto& v : g.getVertices()) {
+    for (auto& v : view.getVertices()) {
         if (indices[v] ==-1) {
             search(v);
         }
@@ -67,7 +68,7 @@ void TarjanSCC::search(int v) {
     stack.push(v);
     onstack[v] = true;
 
-    for(auto& e : g.getOuts(v)) {
+    for(auto& e : view.getOuts(v)) {
         int w = g.targets[e];
         if (indices[w] == -1) {
             search(w);

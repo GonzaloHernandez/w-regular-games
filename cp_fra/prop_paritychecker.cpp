@@ -16,6 +16,7 @@ class ParityChecker : public Propagator {
 private:
     Game& g;
     vec<BoolView> Q;
+    GameView view;
 
     const int   CF_DONE         = 1;
     const int   CF_CONFLICT     = 2;
@@ -23,7 +24,7 @@ private:
 
 public:
     //-----------------------------------------------------------------------
-    ParityChecker(Game& g, vec<BoolView>& Q) : g(g),Q(Q)
+    ParityChecker(Game& g, vec<BoolView>& Q) : g(g), Q(Q), view(g)
     {
         for (int i=0; i<g.nvertices; i++)   Q[i].attach(this, 1 , EVENT_F );
     }
@@ -88,7 +89,7 @@ public:
         bool found = false;
         int bestColor;
         for (int i=0; i<g.nvertices; i++) {
-            if (!g.currentv[i]) continue;
+            if (!view.vs[i]) continue;
 
             if (threshold) {
                 if ((g.reward==MIN && g.colors[i] <= best) ||
@@ -130,7 +131,7 @@ public:
             int w = U[i];
             for(auto& e : g.ins[w]) {
                 int v = g.sources[e];
-                if (!g.currentv[v]) continue;
+                if (!view.vs[v]) continue;
                 bool ally = g.owners[v] == player;
                 if (d[v] == 0) {
                     if (ally) {
@@ -140,7 +141,7 @@ public:
                     else {
                         int outbound = 0ull;
                         for(auto& e_ : g.outs[v]) {
-                            if (g.currentv[g.targets[e_]]) outbound++;
+                            if (view.vs[g.targets[e_]]) outbound++;
                         }
                         d[v] = outbound;
                         if (outbound == 1) U.push_back(v);
@@ -175,9 +176,9 @@ public:
         // Ensuring parity condition using SCC over EVEN's vertices
         {
             for (int v=0; v<g.nvertices; v++) {
-                g.currentv[v] = (Q[v].getVal() == EVEN);
+                view.vs[v] = (Q[v].getVal() == EVEN);
             }
-            TarjanSCC tscc(g);
+            TarjanSCC tscc(g,view);
             auto sccs = tscc.solve();
             auto A = getBestVertices();
             for(auto& scc : sccs) {
@@ -204,9 +205,9 @@ public:
         // Ensuring parity condition using SCC over ODD's vertices
         {
             for (int v=0; v<g.nvertices; v++) {
-                g.currentv[v] = (Q[v].getVal() == ODD);
+                view.vs[v] = (Q[v].getVal() == ODD);
             }
-            TarjanSCC tscc(g);
+            TarjanSCC tscc(g,view);
             auto sccs = tscc.solve();
             auto A = getBestVertices();
             for(auto& scc : sccs) {
