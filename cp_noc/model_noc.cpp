@@ -44,27 +44,92 @@ public:
         for (int v=0; v<g.nvertices; v++) if (g.owners[v] == playerSAT) {
             vec<Lit> clause;
             clause.push( V[v].getLit(false) );
-            for (int e=0; e<g.nedges; e++) if (g.sources[e]==v) {
+            // for (int e=0; e<g.nedges; e++) if (g.sources[e]==v) {
+            for (auto& e : g.outs[v]) {
                 clause.push( E[e].getLit(true) );
             }
             sat.addClause(clause);
         }
 
+        // // For every EVEN vertice, at most one outgoing edge must be activated
+        // for (int v=0; v<g.nvertices; v++) if (g.owners[v] == playerSAT) {
+        //     for (int i=0; i<g.outs[v].size()-1; i++) {
+        //         for (int j=i+1; j<g.outs[v].size(); j++) {
+        //             vec<Lit> clause;
+        //             clause.push( E[g.outs[v][i]].getLit(false) );
+        //             clause.push( E[g.outs[v][j]].getLit(false) );
+        //             sat.addClause(clause);
+        //         }
+        //     }
+        // }
+
+        // --------------------------------------------------------------
         // For every EVEN vertice, at most one outgoing edge must be activated
-        for (int v=0; v<g.nvertices; v++) if (g.owners[v] == playerSAT) {
-            for (int i=0; i<g.outs[v].size(); i++) {
-                for (int j=i+1; j<g.outs[v].size(); j++) {
+        for (int v = 0; v < g.nvertices; v++) if (g.owners[v] == playerSAT) {
+
+            int n = g.outs[v].size();
+            if (n <= 1) continue;
+
+            vec<BoolView> s(n - 1);
+            for (int j = 0; j < n - 1; j++) {
+                s[j] = newBoolVar();  // assume this gives a BoolView backed by a new SAT variable
+            }
+
+            // First literal
+            {
+                int e0 = g.outs[v][0];
+                // ¬E₀ ∨ s₀
+                vec<Lit> clause;
+                clause.push(E[e0].getLit(false));
+                clause.push(s[0].getLit(true));
+                sat.addClause(clause);
+            }
+
+            // Middle literals
+            for (int i = 1; i < n - 1; i++) {
+                int ei = g.outs[v][i];
+
+                // ¬s_{i-1} ∨ s_i
+                {
                     vec<Lit> clause;
-                    clause.push( E[g.outs[v][i]].getLit(false) );
-                    clause.push( E[g.outs[v][j]].getLit(false) );
+                    clause.push(s[i - 1].getLit(false));
+                    clause.push(s[i].getLit(true));
+                    sat.addClause(clause);
+                }
+
+                // ¬E_i ∨ ¬s_{i-1}
+                {
+                    vec<Lit> clause;
+                    clause.push(E[ei].getLit(false));
+                    clause.push(s[i - 1].getLit(false));
+                    sat.addClause(clause);
+                }
+
+                // ¬E_i ∨ s_i
+                {
+                    vec<Lit> clause;
+                    clause.push(E[ei].getLit(false));
+                    clause.push(s[i].getLit(true));
                     sat.addClause(clause);
                 }
             }
+
+            // Last literal
+            {
+                int e_last = g.outs[v][n - 1];
+                // ¬E_{n-1} ∨ ¬s_{n-2}
+                vec<Lit> clause;
+                clause.push(E[e_last].getLit(false));
+                clause.push(s[n - 2].getLit(false));
+                sat.addClause(clause);
+            }
         }
+        // --------------------------------------------------------------
 
         // For every ODD vertice, each outgoing edge must be activated
         for (int v=0; v<g.nvertices; v++) if (g.owners[v] == opponent(playerSAT)) {
-            for (int e=0; e<g.nedges; e++) if (g.sources[e]==v) {
+            // for (int e=0; e<g.nedges; e++) if (g.sources[e]==v) {
+            for (auto& e : g.outs[v]) {
                 vec<Lit> clause;
                 clause.push( V[v].getLit(false) );        
                 clause.push( E[e].getLit(true) );
@@ -72,19 +137,21 @@ public:
             }
         }
 
-        // For every activated edge, the source vertex must be activated
-        for (int v=0; v<g.nvertices; v++) {
-            for (int e=0; e<g.nedges; e++) if (g.sources[e]==v) {
-                vec<Lit> clause;
-                clause.push( E[e].getLit(false) );
-                clause.push( V[v].getLit(true) );
-                sat.addClause(clause);
-            }
-        }
+        // // For every activated edge, the source vertex must be activated
+        // for (int v=0; v<g.nvertices; v++) {
+        //     // for (int e=0; e<g.nedges; e++) if (g.sources[e]==v) {
+        //     for (auto& e : g.outs[v]) {
+        //         vec<Lit> clause;
+        //         clause.push( E[e].getLit(false) );
+        //         clause.push( V[v].getLit(true) );
+        //         sat.addClause(clause);
+        //     }
+        // }
 
         // For every activated edge, the target vertex must be activated
         for (int w=0; w<g.nvertices; w++) if (w != g.start) {
-            for (int e=0; e<g.nedges; e++) if (g.targets[e]==w) {
+            // for (int e=0; e<g.nedges; e++) if (g.targets[e]==w) {
+            for (auto& e : g.ins[w]) {
                 vec<Lit> clause;
                 clause.push( E[e].getLit(false) );
                 clause.push( V[w].getLit(true) );
@@ -92,19 +159,20 @@ public:
             }
         }
 
-        // For every activated vertice, at least one incoming edge must be activated
-        for (int w=0; w<g.nvertices; w++) if (w != g.start ) {
-            vec<Lit> clause;
-            clause.push( V[w].getLit(false) );
-            for (int e=0; e<g.nedges; e++) if (g.targets[e]==w) {
-                clause.push( E[e].getLit(true) );
-            }
-            sat.addClause(clause);
-        }
+        // // For every activated vertice, at least one incoming edge must be activated
+        // for (int w=0; w<g.nvertices; w++) if (w != g.start ) {
+        //     vec<Lit> clause;
+        //     clause.push( V[w].getLit(false) );
+        //     // for (int e=0; e<g.nedges; e++) if (g.targets[e]==w) {
+        //     for (auto& e : g.ins[w]) {
+        //         clause.push( E[e].getLit(true) );
+        //     }
+        //     sat.addClause(clause);
+        // }
 
         // Every infinite ODD or EVEN play must be avoided.
         if (checker==1) new CheckerSCC(g,V,E,playerSAT);
-        if (filter > 0) new NoOpponentCycle(g,V,E,filter,playerSAT);
+        if (filter > 0) new NoOpponentCycle(g,E,filter,playerSAT);
 
         //------------------------------------------------------------
 

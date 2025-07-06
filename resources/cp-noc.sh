@@ -7,10 +7,10 @@ fi
 
 base_cmd=("$@")
 
-"${base_cmd[@]}" --cp-noc-even &
+"${base_cmd[@]}" --noc-even &
 PID1=$!
 
-"${base_cmd[@]}" --cp-noc-odd &
+"${base_cmd[@]}" --noc-odd &
 PID2=$!
 
 wait -n

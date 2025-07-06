@@ -22,7 +22,6 @@ struct memo {
 class NoOpponentCycle : public Propagator {
 private:
     Game& g;
-    vec<BoolView> V;
     vec<BoolView> E;
     int filtertype;
     parity_type playerSAT;
@@ -33,11 +32,9 @@ private:
 
 public:
     //-----------------------------------------------------------------------
-    NoOpponentCycle(Game& g, vec<BoolView>& V,vec<BoolView>& E,int filtertype,
-            parity_type playerSAT)
-    :   g(g), V(V), E(E), filtertype(filtertype), playerSAT(playerSAT)
+    NoOpponentCycle(Game& g, vec<BoolView>& E, int filtertype, parity_type playerSAT)
+    :   g(g), E(E), filtertype(filtertype), playerSAT(playerSAT)
     {
-        for (int i=0; i<g.owners.size(); i++)  V[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.sources.size(); i++) E[i].attach(this, 1 , EVENT_F );
     }
     //-----------------------------------------------------------------------
@@ -81,8 +78,7 @@ public:
         }
     }
     //-----------------------------------------------------------------------
-    int checker(vec<int> pathV, vec<int> pathE, int vertex, 
-        vec<BoolView> &E, int lastEdge) 
+    int checker(vec<int> pathV, vec<int> pathE, int vertex, int lastEdge) 
     {
         int index = findVertex(vertex,pathV);
         if (index >= 0) {
@@ -103,7 +99,7 @@ public:
                     vec<int> newpathE(pathE);
                     newpathV.push(vertex);
                     newpathE.push(e);
-                    int status = checker(newpathV, newpathE, g.targets[e], E, e);
+                    int status = checker(newpathV, newpathE, g.targets[e], e);
                     if (status == CF_CONFLICT) {
                         return status;
                     }
@@ -113,10 +109,10 @@ public:
         return CF_DONE;
     }
     //-----------------------------------------------------------------------
-    int filterBasic(vec<int> pathV, vec<int> pathE, int vertex, 
-        vec<BoolView> &E, int lastEdge, bool definedEdge) 
+    int filterBasic(vec<int> pathV, vec<int> pathE, int v, 
+        int lastEdge, bool definedEdge) 
     {
-        int index = findVertex(vertex,pathV);
+        int index = findVertex(v,pathV);
         if (index >= 0) {
             if (bestcolor(index,pathV)%2==opponent(playerSAT)) {
                 vec<Lit> lits;
@@ -130,14 +126,14 @@ public:
         }
         else {
             if (definedEdge) {
-                for (auto& e : g.outs[vertex]) {
+                for (auto& e : g.outs[v]) {
                     if (!E[e].isFalse()) {
                         vec<int> newpathV(pathV);
                         vec<int> newpathE(pathE);
-                        newpathV.push(vertex);
+                        newpathV.push(v);
                         newpathE.push(e);
                         int status = filterBasic(newpathV, newpathE, 
-                                        g.targets[e], E, e, E[e].isTrue());
+                                        g.targets[e], e, E[e].isTrue());
                         if (status == CF_CONFLICT) {
                             return status;
                         }
@@ -148,13 +144,13 @@ public:
         return CF_DONE;
     }
     //-----------------------------------------------------------------------
-    int filterMemo(vec<int> pathV, vec<int> pathE, int vertex, 
-        vec<BoolView> &E, int lastEdge, bool definedEdge,std::vector<std::pair<int,int>>& touched) 
+    int filterMemo(vec<int> pathV, vec<int> pathE, int v, 
+        int lastEdge, bool definedEdge,std::vector<std::pair<int,int>>& touched) 
     {
-        int index = findVertex(vertex,pathV);
+        int index = findVertex(v,pathV);
         if (index >= 0) {
             int m = bestcolor(index,pathV);
-            touched[lastEdge].first = vertex;
+            touched[lastEdge].first = v;
             touched[lastEdge].second = m;
             if (m%2==opponent(playerSAT)) {
                 vec<Lit> lits;
@@ -169,15 +165,15 @@ public:
         else {
             if (definedEdge) {
 
-                for (auto& e : g.outs[vertex]) {
+                for (auto& e : g.outs[v]) {
                     if (!E[e].isFalse()) {
                         vec<int> newpathV(pathV);
                         vec<int> newpathE(pathE);
-                        newpathV.push(vertex);
+                        newpathV.push(v);
                         newpathE.push(e);
 
                         if (touched[e].first < 0) {
-                            int status = filterMemo(newpathV, newpathE,g.targets[e], E, e, E[e].isTrue(),touched);
+                            int status = filterMemo(newpathV, newpathE,g.targets[e], e, E[e].isTrue(),touched);
                             if (status == CF_CONFLICT) {
                                 return status;
                             }
@@ -188,7 +184,7 @@ public:
                                 if (pathV[i] == touched[e].first) {
                                     int m = bestcolor(i,pathV);
                                     if (g.compareColors(m,touched[e].second,BET)) {
-                                        int status = filterMemo(newpathV, newpathE,g.targets[e], E, e, E[e].isTrue(),touched);
+                                        int status = filterMemo(newpathV, newpathE,g.targets[e], e, E[e].isTrue(),touched);
                                         if (status == CF_CONFLICT) {
                                             return status;
                                         }
@@ -216,16 +212,16 @@ public:
 
         switch (filtertype) {
         case 0:
-            if (checker(pathV,pathE,g.start,E,-1) == CF_CONFLICT)
+            if (checker(pathV,pathE,g.start,-1) == CF_CONFLICT)
                 return false;
             break;
         case 1:
-            if (filterBasic(pathV,pathE,g.start,E,-1,true) == CF_CONFLICT)
+            if (filterBasic(pathV,pathE,g.start,-1,true) == CF_CONFLICT)
                 return false;
             break;
         case 2:
             std::vector<std::pair<int,int>> touched(g.nedges,{-1,-1});
-            if (filterMemo(pathV,pathE,g.start,E,-1,true,touched) == CF_CONFLICT)
+            if (filterMemo(pathV,pathE,g.start,-1,true,touched) == CF_CONFLICT)
                 return false;
             break;
         }
@@ -239,33 +235,5 @@ public:
     //-----------------------------------------------------------------------
     void clearPropState() override {
         in_queue = false;
-    }
-    //-----------------------------------------------------------------------
-    std::string currentV() {
-        std::stringstream out;
-        out << "V=[";
-        for (int i=0; i<V.size(); i++) {
-            // out << i << ":";
-            if (V[i].isFixed())
-                out << (int)V[i].isTrue() << (i<V.size()-1?",":"");
-            else
-                out << " " << (i<V.size()-1?",":"");
-        }
-        out << "]";
-        return out.str();
-    }
-    //-----------------------------------------------------------------------
-    std::string currentE() {
-        std::stringstream out;
-        out << "E=[";
-        for (int i=0; i<E.size(); i++) {
-            // out << i << ":";
-            if (E[i].isFixed())
-                out << (int)E[i].isTrue() << (i<E.size()-1?",":"");
-            else
-                out << " " << (i<E.size()-1?",":"");
-        }
-        out << "]";
-        return out.str();
     }
 };

@@ -278,9 +278,9 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--print-solution")==0) { options.print_solution = true; }
         else if (strcmp(argv[i],"--verbose")==0)        { options.print_verbose  = true; }
 
-        else if (strcmp(argv[i],"--checker-scc")==0)    { options.checker       = 1; }
-        else if (strcmp(argv[i],"--filter-basic")==0)   { options.filter        = 1; }
-        else if (strcmp(argv[i],"--filter-memo")==0)    { options.filter        = 2; }
+        else if (strcmp(argv[i],"--checker-scc")==0)    { options.checker = 1; }
+        else if (strcmp(argv[i],"--filter-basic")==0)   { options.filter  = 1; }
+        else if (strcmp(argv[i],"--filter-memo")==0)    { options.filter  = 2; options.checker = 1;}
 
         else if (strcmp(argv[i],"--help")==0) {
             std::cout << "Usage: " << argv[0] << " [options]\n";
@@ -428,6 +428,10 @@ int main(int argc, char *argv[])
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> preptime = end - start;            
 
+        if (options.print_time>1) {
+            std::cout << "Init time          : " << preptime.count() << std::endl;
+        }
+
         start = std::chrono::high_resolution_clock::now();
 
         if (options.print_solution || options.print_verbose) {
@@ -444,8 +448,7 @@ int main(int argc, char *argv[])
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> totaltime = end - start;
         
-        if (options.print_time>1) {
-            std::cout << "Init time          : " << preptime.count() << std::endl;
+        if (options.print_time>1 || options.print_verbose) {
             std::cout << "Solving time       : " << totaltime.count() << std::endl;
             std::cout << "Mem used           : " << memUsed() << std::endl;
         }   
@@ -503,7 +506,7 @@ int main(int argc, char *argv[])
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> totaltime = end - start;
         
-        if (options.print_time>1) {
+        if (options.print_time>1 || options.print_verbose) {
             std::cout << "Init time          : " << preptime.count() << std::endl;
             std::cout << "Solving time       : " << totaltime.count() << std::endl;
             std::cout << "Mem used           : " << memUsed() << std::endl;
@@ -713,7 +716,7 @@ int main(int argc, char *argv[])
         if (((engine.solutions>0 && options.solver==1) || (engine.solutions==0 && options.solver==8)) && 
             std::find(win[0].begin(), win[0].end(), game->start) != win[0].end()) 
         {
-                std::cout << ".";
+            std::cout << ".";
         }
         else if (((engine.solutions==0 && options.solver==1) || (engine.solutions>0 && options.solver==8)) && 
             std::find(win[1].begin(), win[1].end(), game->start) != win[1].end()) 

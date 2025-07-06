@@ -1,6 +1,6 @@
 #!/bin/bash
 
-nv=15
+nv=20
 np=10
 e1=1
 e2=5
@@ -11,7 +11,7 @@ while true; do
     ./ex3 --rand $nv $np $e1 $e2 --export-gm temp.gm
 
     for ((i=0; i<nv; i++)); do
-        output=$(./ex3 --gm temp.gm --min -noc-odd --checker-scc --proof --start "$i")
+        output=$(./ex3 --gm temp.gm --min --noc-odd --filter-basic --proof --start "$i")
         
         if [ "$output" = "." ]; then
             printf "."
