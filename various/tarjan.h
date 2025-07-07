@@ -14,7 +14,7 @@ private:
     std::vector<int>    indices;
     std::vector<int>    lowlink;
     std::vector<bool>   onstack;
-    std::stack<int>     stack;
+    std::vector<int>     stack;
     std::vector<std::vector<int>>   sccs;
     int index = 0;
 public:

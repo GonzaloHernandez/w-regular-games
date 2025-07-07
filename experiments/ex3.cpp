@@ -113,7 +113,7 @@ bool parseMyOptions(int argc, char *argv[]) {
                 return false;                    
             }
             int d1 = std::strtol(argv[i],&endptr,10);
-            if (errno == ERANGE || d1 < 1 || d1 > 99) {
+            if (errno == ERANGE || d1 < 1 || d1 > 199) {
                 std::cerr << "ERROR: Min amount of edges out of range\n";
                 return false;
             }
@@ -129,7 +129,7 @@ bool parseMyOptions(int argc, char *argv[]) {
                 return false;                    
             }
             int d2 = std::strtol(argv[i],&endptr,10);
-            if (errno == ERANGE || d2 < 2 || d2 > 100) {
+            if (errno == ERANGE || d2 < 2 || d2 > 300) {
                 std::cerr << "ERROR: Max amount of edges out of range\n";
                 return false;
             }
@@ -418,13 +418,12 @@ int main(int argc, char *argv[])
 
     else if (game && options.proof==0 && (options.solver==1 || options.solver==8)) {
         start = std::chrono::high_resolution_clock::now();
-        NOCModel* model;
-        model = new NOCModel(   *game, 
-                                options.checker, options.filter, 
+        NOCModel* model = new NOCModel(
+                                *game, options.checker, options.filter, 
                                 (options.print_solution || options.print_verbose),
                                 options.solver==1?EVEN:ODD);
-        // so.nof_solutions = 1;
-        so.print_sol = (options.print_solution || options.print_verbose)?true:false;
+
+        so.print_sol = options.print_solution || options.print_verbose;
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> preptime = end - start;            
 
@@ -529,7 +528,8 @@ int main(int argc, char *argv[])
     else if (options.proof==0 && options.solver==3) {
         std::string output;
         if (options.game_type == DIM) {
-            std::string command = "./zchaff " + options.game_filename + " | grep -E \"RESULT|Total Run Time\"";
+            std::string command =   "./zchaff " + options.game_filename + 
+                                    " | grep -E \"RESULT|Total Run Time\"";
             output = exec(command.c_str());
         }
         else {
@@ -560,7 +560,8 @@ int main(int argc, char *argv[])
     else if (options.proof==0 && options.solver==4) {
         std::string output;
         if (options.game_type == DIM) {
-            std::string command = "./cadical " + options.game_filename + " | grep -E \"^s |total process time since initialization\"";
+            std::string command =   "./cadical " + options.game_filename + 
+                                    " | grep -E \"^s |total process time since initialization\"";
             output = exec(command.c_str());
         }
         else {
@@ -672,13 +673,12 @@ int main(int argc, char *argv[])
         start = std::chrono::high_resolution_clock::now();
         Zielonka zlk(*game);
 
-        NOCModel* model;
-        model = new NOCModel(   *game, 
-                                options.checker, options.filter, 
+        NOCModel* model = new NOCModel(   
+                                *game, options.checker, options.filter, 
                                 (options.print_solution || options.print_verbose),
                                 options.solver==1?EVEN:ODD);
-        so.nof_solutions = 1;
-        so.print_sol = (options.print_solution || options.print_verbose)?true:false;
+
+        so.print_sol = options.print_solution || options.print_verbose;
 
         end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> preptime = end - start;

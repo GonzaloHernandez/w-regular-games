@@ -10,6 +10,7 @@
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
 #include "stack"
+#include <unordered_set>
 
 class CheckerSCC : public Propagator {
 private:
@@ -27,28 +28,53 @@ public:
         for (int i=0; i<g.sources.size(); i++) E[i].attach(this, 1 , EVENT_F );
     }
     //-----------------------------------------------------------------------
-    std::vector<int> bestColors(std::vector<int> subgraph) {
+    // std::vector<int> bestColors(std::vector<int> subgraph) {
+    //     bool first = true;
+    //     std::vector<int> best_priorities;
+    //     for (auto& v : subgraph) {
+    //         if (first) {
+    //             best_priorities.push_back(v);
+    //             first = false;
+    //             continue;
+    //         }
+    //         if (g.compareVertices(v,best_priorities[0],BET)) {
+    //             best_priorities.clear();
+    //             best_priorities.push_back(v);
+    //             continue;
+    //         }
+    //         if (g.compareVertices(v,best_priorities[0],EQU) ) {
+    //             best_priorities.push_back(v);
+    //             continue;
+    //         }
+    //     }
+    //     return best_priorities;
+    // }
+
+    std::unordered_set<int> bestColors(const std::vector<int>& subgraph) {
         bool first = true;
-        std::vector<int> best_priorities;
-        for (auto& v : subgraph) {
+        std::unordered_set<int> best_priorities;
+
+        for (int v : subgraph) {
             if (first) {
-                best_priorities.push_back(v);
+                best_priorities.insert(v);
                 first = false;
                 continue;
             }
-            if (g.compareVertices(v,best_priorities[0],BET)) {
+
+            int best = *best_priorities.begin(); 
+            if (g.compareVertices(v, best, BET)) {
                 best_priorities.clear();
-                best_priorities.push_back(v);
-                continue;
-            }
-            if (g.compareVertices(v,best_priorities[0],EQU) ) {
-                best_priorities.push_back(v);
-                continue;
+                best_priorities.insert(v);
+            } else if (g.compareVertices(v, best, EQU)) {
+                best_priorities.insert(v);
             }
         }
+
         return best_priorities;
     }
+
     //-----------------------------------------------------------------------
+
     bool backtrack() 
     {
         vec<Lit> lits;
@@ -73,18 +99,18 @@ public:
             view.es[i] = (E[i].isTrue());
         }
 
-        std::stack<std::vector<int>> stack;
+        std::deque<std::vector<int>> stack;
 
         TarjanSCC tar(g,view);
-        for (auto& s : tar.solve()) stack.push(s);
+        for (auto& s : tar.solve()) stack.push_back(std::move(s));
 
-        while (stack.size()>0) {
-            auto sc = stack.top();
-            stack.pop();
+        while (!stack.empty()) {
+            auto sc = std::move(stack.back());
+            stack.pop_back();
 
             if (sc.size()==1) {
                 int v = sc[0];
-                for(auto& e : g.outs[v]) {
+                for(int e : g.outs[v]) {
                     if (E[e].isFalse()) continue;
                     int w = g.targets[e];
                     if (v==w && g.colors[v]%2 == opponent(playerSAT)) {
@@ -94,21 +120,23 @@ public:
                 continue;
             }
 
-            std::vector<int> best = bestColors(sc);
+            std::unordered_set<int> bestSet = bestColors(sc);
 
-            if (g.colors[best[0]]%2 == opponent(playerSAT)) {
+            int v0 = *bestSet.begin();
+            if (g.colors[v0]%2 == opponent(playerSAT)) {
                 return backtrack();
             }
 
             view.deactiveAll();
-            for (auto& v : sc) {
-                if (std::find(best.begin(), best.end(), v) == best.end()) {
+            for (int v : sc) {
+                if (bestSet.count(v) == 0) {
                     view.vs[v] = true;
                 }
             }
-            for (auto& v : sc) {
-                if (std::find(best.begin(), best.end(), v) == best.end()) {
-                    for (auto& e : g.outs[v]) { int w = g.targets[e];
+            for (int v : sc) {
+                if (bestSet.count(v) == 0) {
+                    for (int e : g.outs[v]) { 
+                        int w = g.targets[e];
                         if ( E[e].isTrue() && view.vs[w]) {
                             view.es[e] = true;
                         }
@@ -117,7 +145,7 @@ public:
             }
 
             TarjanSCC tar(g,view);
-            for (auto& s : tar.solve()) stack.push(s);
+            for (auto& s : tar.solve()) stack.push_back(std::move(s));
         }
         return true;
     }

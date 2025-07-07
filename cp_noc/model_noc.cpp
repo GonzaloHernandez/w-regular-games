@@ -71,9 +71,7 @@ public:
             if (n <= 1) continue;
 
             vec<BoolView> s(n - 1);
-            for (int j = 0; j < n - 1; j++) {
-                s[j] = newBoolVar();  // assume this gives a BoolView backed by a new SAT variable
-            }
+            for (int j = 0; j < n - 1; j++) s[j] = newBoolVar();
 
             // First literal
             {

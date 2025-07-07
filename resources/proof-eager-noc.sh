@@ -1,7 +1,7 @@
 #!/bin/bash
 
-nv=20
-np=10
+nv=10
+np=5
 e1=1
 e2=5
 

@@ -23,24 +23,24 @@ std::vector<std::vector<int>> TarjanSCC::solveRAW() {
 void TarjanSCC::searchRAW(int v) {
     indices[v] = lowlink[v] = index;
     index++;
-    stack.push(v);
+    stack.emplace_back(v);
     onstack[v] = true;
 
     for(auto& e : g.outs[v]) {
         int w = g.targets[e];
         if (indices[w] == -1) {
             searchRAW(w);
-            lowlink[v] = lowlink[v]<lowlink[w]?lowlink[v]:lowlink[w];
+            lowlink[v] = std::min(lowlink[v], lowlink[w]);
         }
         else if (onstack[w]) {
-            lowlink[v] = lowlink[v]<lowlink[w]?lowlink[v]:lowlink[w];
+            lowlink[v] = std::min(lowlink[v], lowlink[w]);
         }
     }
     if (lowlink[v] == indices[v]) {
         std::vector<int> scc;
         while (true){
-            int w = stack.top();
-            stack.pop();
+            int w = stack.back();
+            stack.pop_back();
             onstack[w] = false;
             scc.push_back(w);
             if (w==v) break;
@@ -65,7 +65,7 @@ std::vector<std::vector<int>> TarjanSCC::solve() {
 void TarjanSCC::search(int v) {
     indices[v] = lowlink[v] = index;
     index++;
-    stack.push(v);
+    stack.emplace_back(v);
     onstack[v] = true;
 
     for(auto& e : view.getOuts(v)) {
@@ -81,8 +81,8 @@ void TarjanSCC::search(int v) {
     if (lowlink[v] == indices[v]) {
         std::vector<int> scc;
         while (true){
-            int w = stack.top();
-            stack.pop();
+            int w = stack.back();
+            stack.pop_back();
             onstack[w] = false;
             scc.push_back(w);
             if (w==v) break;

@@ -7,17 +7,17 @@
 #endif
 
 #include "iostream"
+// #include "array"
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
 #include "stack"
 
-struct memo {
+struct s_memo {
     int loop;
     int best;
-    int from;
     bool touched()  { return loop>=0; }
     bool parity()   { return best%2; }
-}; 
+};
 
 class NoOpponentCycle : public Propagator {
 private:
@@ -41,13 +41,6 @@ public:
     int findVertex(int vertex,vec<int>& path) {
         for (int i=0; i<path.size(); i++) {
             if (path[i] == vertex) return i;
-        }
-        return -1;
-    }
-    //-----------------------------------------------------------------------
-    int findEdge(int edge,vec<int>& path) {
-        for (int i=0; i<path.size(); i++) {
-            if (path[i] == edge ) return i;
         }
         return -1;
     }
@@ -78,9 +71,9 @@ public:
         }
     }
     //-----------------------------------------------------------------------
-    int checker(vec<int> pathV, vec<int> pathE, int vertex, int lastEdge) 
+    int checker(vec<int> pathV, vec<int> pathE, int v, int lastEdge) 
     {
-        int index = findVertex(vertex,pathV);
+        int index = findVertex(v,pathV);
         if (index >= 0) {
             if (bestcolor(index,pathV)%2==opponent(playerSAT)) {
                 vec<Lit> lits;
@@ -93,11 +86,11 @@ public:
             }
         }
         else {
-            for (auto& e : g.outs[vertex]) {
+            for (auto& e : g.outs[v]) {
                 if (E[e].isTrue()) {
                     vec<int> newpathV(pathV);
                     vec<int> newpathE(pathE);
-                    newpathV.push(vertex);
+                    newpathV.push(v);
                     newpathE.push(e);
                     int status = checker(newpathV, newpathE, g.targets[e], e);
                     if (status == CF_CONFLICT) {
@@ -109,7 +102,7 @@ public:
         return CF_DONE;
     }
     //-----------------------------------------------------------------------
-    int filterBasic(vec<int> pathV, vec<int> pathE, int v, 
+    int filterBasic(vec<int>& pathV, vec<int>& pathE, int v, 
         int lastEdge, bool definedEdge) 
     {
         int index = findVertex(v,pathV);
@@ -124,84 +117,79 @@ public:
                 }
             }
         }
-        else {
-            if (definedEdge) {
-                for (auto& e : g.outs[v]) {
-                    if (!E[e].isFalse()) {
-                        vec<int> newpathV(pathV);
-                        vec<int> newpathE(pathE);
-                        newpathV.push(v);
-                        newpathE.push(e);
-                        int status = filterBasic(newpathV, newpathE, 
-                                        g.targets[e], e, E[e].isTrue());
-                        if (status == CF_CONFLICT) {
-                            return status;
-                        }
-                    }
+        else if (definedEdge) {
+            pathV.push(v);
+            for (int e : g.outs[v]) {
+                if (E[e].isFalse()) continue;
+
+                int w = g.targets[e];
+                pathE.push(e);
+                int status = filterBasic(pathV, pathE, w, e, E[e].isTrue());
+                pathE.pop();
+                if (status == CF_CONFLICT) {
+                    return status;
                 }
             }
+            pathV.pop();
         }
         return CF_DONE;
     }
     //-----------------------------------------------------------------------
-    int filterMemo(vec<int> pathV, vec<int> pathE, int v, 
-        int lastEdge, bool definedEdge,std::vector<std::pair<int,int>>& touched) 
+    int filterMemo(vec<int>& pathV, vec<int>& pathE, int v, 
+        int lastEdge, bool definedEdge,s_memo* memo) 
     {
         int index = findVertex(v,pathV);
         if (index >= 0) {
             int m = bestcolor(index,pathV);
-            touched[lastEdge].first = v;
-            touched[lastEdge].second = m;
+            memo[lastEdge] = {v,m};
             if (m%2==opponent(playerSAT)) {
                 vec<Lit> lits;
                 lits.push();
-                clausify_except(pathE, E, lits, 0, lastEdge);
+                clausify(pathE, E, lits, 0);    int from;
+
                 Clause* reason = Reason_new(lits);
                 if (! E[lastEdge].setVal(false,reason)) {
                     return CF_CONFLICT;
                 }
             }
         }
-        else {
-            if (definedEdge) {
+        else if (definedEdge) {
+            pathV.push(v);
+            for (int e : g.outs[v]) {
+                if (E[e].isFalse()) continue;
 
-                for (auto& e : g.outs[v]) {
-                    if (!E[e].isFalse()) {
-                        vec<int> newpathV(pathV);
-                        vec<int> newpathE(pathE);
-                        newpathV.push(v);
-                        newpathE.push(e);
+                int w = g.targets[e];
+                pathE.push(e);
 
-                        if (touched[e].first < 0) {
-                            int status = filterMemo(newpathV, newpathE,g.targets[e], e, E[e].isTrue(),touched);
-                            if (status == CF_CONFLICT) {
-                                return status;
+                if (!memo[e].touched()) {
+                    int status = filterMemo(pathV, pathE, w, e, E[e].isTrue(),memo);
+                    if (status == CF_CONFLICT) return status;
+                }
+                else {
+                    int i;
+                    for (i=0; i<pathV.size()-1; i++) {
+                        if (pathV[i] == memo[e].loop) {
+                            int m = bestcolor(i,pathV);
+                            if (g.compareColors(m,memo[e].best,BET)) {
+
+                                memo[e].best = m;
+                                int status = filterMemo(pathV, pathE, w, e, E[e].isTrue(),memo);
+                                if (status == CF_CONFLICT) return status;
+
                             }
-                        }
-                        else {
-                            int i;
-                            for (i=0; i<pathV.size(); i++) {
-                                if (pathV[i] == touched[e].first) {
-                                    int m = bestcolor(i,pathV);
-                                    if (g.compareColors(m,touched[e].second,BET)) {
-                                        int status = filterMemo(newpathV, newpathE,g.targets[e], e, E[e].isTrue(),touched);
-                                        if (status == CF_CONFLICT) {
-                                            return status;
-                                        }
-                                    }
-                                    else {
-                                        touched[lastEdge] = touched[e];
-                                    }
-                                    break;
-                                }
+                            else {
+                                memo[lastEdge] = memo[e];
                             }
-                            if (i == pathV.size()) {
-                                touched[lastEdge] = touched[e];
-                            }
+                            break;
                         }
                     }
+                    if (i == pathV.size()) {
+                        memo[lastEdge] = memo[e];
+                    }
                 }
+                pathE.pop();
             }
+            pathV.pop();
         }
         return CF_DONE;
     }
@@ -220,8 +208,10 @@ public:
                 return false;
             break;
         case 2:
-            std::vector<std::pair<int,int>> touched(g.nedges,{-1,-1});
-            if (filterMemo(pathV,pathE,g.start,-1,true,touched) == CF_CONFLICT)
+            // std::vector<s_memo> memo(g.nedges,{-1,-1});
+            std::unique_ptr<s_memo[]> memo(new s_memo[g.nedges]);
+            std::fill_n(memo.get(), g.nedges, s_memo{-1,-1});
+            if (filterMemo(pathV,pathE,g.start,-1,true,memo.get()) == CF_CONFLICT)
                 return false;
             break;
         }
