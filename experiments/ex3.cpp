@@ -269,14 +269,15 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--fra")==0)            { options.solver = 6; }
         else if (strcmp(argv[i],"--scc")==0)            { options.solver = 7; }
 
-        else if (strcmp(argv[i],"--proof")==0)          { options.proof = 1; }
-        else if (strcmp(argv[i],"--proof-eager")==0)    { options.proof = 2; }
-        else if (strcmp(argv[i],"--print-only-time")==0){ options.print_time     = -1; }
-        else if (strcmp(argv[i],"--print-time")==0)     { options.print_time     = 1; }
-        else if (strcmp(argv[i],"--print-times")==0)    { options.print_time     = 2; }
-        else if (strcmp(argv[i],"--print-game")==0)     { options.print_game     = true; }
-        else if (strcmp(argv[i],"--print-solution")==0) { options.print_solution = true; }
-        else if (strcmp(argv[i],"--verbose")==0)        { options.print_verbose  = true; }
+        else if (strcmp(argv[i],"--proof")==0)              { options.proof = 1; }
+        else if (strcmp(argv[i],"--proof-eager")==0)        { options.proof = 2; }
+        else if (strcmp(argv[i],"--print-only-times")==0)   { options.print_time     = -2; }
+        else if (strcmp(argv[i],"--print-only-time")==0)    { options.print_time     = -1; }
+        else if (strcmp(argv[i],"--print-time")==0)         { options.print_time     = 1; }
+        else if (strcmp(argv[i],"--print-times")==0)        { options.print_time     = 2; }
+        else if (strcmp(argv[i],"--print-game")==0)         { options.print_game     = true; }
+        else if (strcmp(argv[i],"--print-solution")==0)     { options.print_solution = true; }
+        else if (strcmp(argv[i],"--verbose")==0)            { options.print_verbose  = true; }
 
         else if (strcmp(argv[i],"--checker-scc")==0)    { options.checker = 1; }
         else if (strcmp(argv[i],"--filter-basic")==0)   { options.filter  = 1; }
@@ -292,6 +293,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --mladder <bl>             : ModelcheckerLadder game\n";
             std::cout << "  --start <vertex>           : Starting vertex\n";
             std::cout << "  --print-only-time          : Print only solving time\n";
+            std::cout << "  --print-only-times         : Print only preptime + solving time\n";
             std::cout << "  --print-time               : Print solving time\n";
             std::cout << "  --print-times              : Print all times\n";
             std::cout << "  --print-game               : Print game\n";
@@ -450,7 +452,7 @@ int main(int argc, char *argv[])
         if (options.print_time>1 || options.print_verbose) {
             std::cout << "Solving time       : " << totaltime.count() << std::endl;
             std::cout << "Mem used           : " << memUsed() << std::endl;
-        }   
+        }
 
         if (options.solver==1) {
             if (options.print_time>=0 || options.print_verbose)
@@ -461,9 +463,14 @@ int main(int argc, char *argv[])
                 std::cout << game->start << ": " << (engine.solutions>0?"ODD ":"EVEN ");
         }
 
+        if (options.print_time<=-2 || options.print_verbose) {
+            std::cout   << preptime.count() << "\t";
+        }
+
         if (options.print_time!=0 || options.print_verbose) {
             std::cout   << totaltime.count();
         }        
+
 
         std::cout << std::endl;
 
@@ -512,6 +519,10 @@ int main(int argc, char *argv[])
         }   
         if (options.print_time>=0 || options.print_verbose)
             std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
+
+        if (options.print_time<=-2 || options.print_verbose) {
+            std::cout   << preptime.count() << "\t";
+        }
 
         if (options.print_time!=0 || options.print_verbose) {
             std::cout   << totaltime.count();

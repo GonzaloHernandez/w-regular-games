@@ -5,12 +5,12 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-base_cmd=("$@")
+user_args=("$@")
 
-"${base_cmd[@]}" --noc-even &
+./ex3 --noc-even "${user_args[@]}" &
 PID1=$!
 
-"${base_cmd[@]}" --noc-odd &
+./ex3 --noc-odd "${user_args[@]}" &
 PID2=$!
 
 wait -n

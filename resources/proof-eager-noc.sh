@@ -1,9 +1,9 @@
 #!/bin/bash
 
-nv=10
-np=5
+nv=15
+np=10
 e1=1
-e2=5
+e2=10
 
 while true; do
     all_dots=true

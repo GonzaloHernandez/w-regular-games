@@ -55,8 +55,24 @@ public:
         return m;
     }
     //-----------------------------------------------------------------------
+    int bestcolor(int index,vec<int>& path,int v) {
+        int m = g.colors[v];
+        for (int i=index; i<path.size(); i++) {
+            if (g.compareColors(g.colors[path[i]],m,BET)) {
+                m = g.colors[path[i]];
+            }
+        }
+        return m;
+    }
+    //-----------------------------------------------------------------------
     void clausify(vec<int>& path, vec<BoolView> &B, vec<Lit>& lits,int from) {
         for (int i=from; i<path.size()-1; i++) {
+            lits.push(B[path[i]].getValLit());
+        }
+    }
+    //-----------------------------------------------------------------------
+    void clausify(vec<int>& path, vec<BoolView> &B, vec<Lit>& lits) {
+        for (int i=0; i<path.size(); i++) {
             lits.push(B[path[i]].getValLit());
         }
     }
@@ -135,6 +151,76 @@ public:
         return CF_DONE;
     }
     //-----------------------------------------------------------------------
+    int filterBasicStack() {
+        vec<int> pathV,pathE;
+        std::unique_ptr<int[]> es = std::make_unique<int[]>(g.nvertices);
+
+        int v = g.start;
+        int e;
+        int index = -1;
+        while (true) {
+            for(es[v]=0; es[v]<g.outs[v].size(); es[v]++) {
+                e = g.outs[v][es[v]];
+                if (E[e].isTrue())  break;
+                if (E[e].isFalse()) continue;
+                if (pathE.size()>0 && E[pathE.last()].isFixed()) break;
+                continue;
+            }
+            if (es[v] == g.outs[v].size()) break;
+            es[v]++;
+            int w = g.targets[e];
+            index = findVertex(w,pathV);
+            if (index>=0) break;
+            pathV.push(v);
+            pathE.push(e);
+            v = w;
+        }
+        //-------------------------------------------------------
+        while (pathV.size()>0) {
+
+            if (index>=0) {
+                if (bestcolor(index,pathV,v)%2 == opponent(playerSAT)) {
+                    vec<Lit> lits;
+                    lits.push();
+                    clausify(pathE,E,lits);
+                    Clause* reason = Reason_new(lits);
+                    if (! E[e].setVal(false,reason)) {
+                        return CF_CONFLICT;
+                    }
+                }
+            }
+            index = -1;
+
+            v = pathV.last();
+            pathV.pop();
+            pathE.pop();
+
+            if (pathE.size()>0) es[pathE.last()]=0;
+
+            while (true) {
+                for( ; es[v]<g.outs[v].size(); es[v]) {
+                    e = g.outs[v][es[v]];
+                    es[v]++;
+                    if (E[e].isTrue())  break;
+                    if (E[e].isFalse()) continue;
+                    if (pathE.size()>0 && E[pathE.last()].isFixed()) break;
+                    continue;
+                }
+                if (es[v] == g.outs[v].size()) break;
+                es[v]++;
+                int w = g.targets[e];
+                index = findVertex(w,pathV);
+                if (index>=0) break;
+                pathV.push(v);
+                pathE.push(e);
+                v = w;
+            }
+        }
+
+        return CF_DONE;
+    }
+
+    //-----------------------------------------------------------------------
     int filterMemo(vec<int>& pathV, vec<int>& pathE, int v, 
         int lastEdge, bool definedEdge,s_memo* memo) 
     {
@@ -204,11 +290,11 @@ public:
                 return false;
             break;
         case 1:
+            // if (filterBasicStack() == CF_CONFLICT) 
             if (filterBasic(pathV,pathE,g.start,-1,true) == CF_CONFLICT)
                 return false;
             break;
         case 2:
-            // std::vector<s_memo> memo(g.nedges,{-1,-1});
             std::unique_ptr<s_memo[]> memo(new s_memo[g.nedges]);
             std::fill_n(memo.get(), g.nedges, s_memo{-1,-1});
             if (filterMemo(pathV,pathE,g.start,-1,true,memo.get()) == CF_CONFLICT)
