@@ -276,8 +276,7 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
     
         owners.resize(nvertices/2,0);
         owners.resize(nvertices,1);
-        std::shuffle(owners.begin(), owners.end(), g);  // Unsort (shuffle) the vector
-    
+        std::shuffle(owners.begin(), owners.end(), g);  
         std::uniform_int_distribution<> rndcolors(0, vals[1]);
     
         for(int i=0; i<nvertices; i++) {
@@ -309,7 +308,16 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
 
         assert(start >= 0 && start < nvertices && "Starting vertex must be within the valid range");
 
-        owners  .resize(nvertices,ODD);
+        // ---------------------------------------
+
+        std::random_device rd;
+        std::mt19937 g(rd());
+        owners.resize(nvertices/2,0);
+        owners.resize(nvertices,1);
+        std::shuffle(owners.begin(), owners.end(), g);  // Unsort (shuffle) the vector
+
+        // owners  .resize(nvertices,ODD);
+
         colors  .resize(nvertices);
         sources .resize(nedges);
         targets .resize(nedges);
