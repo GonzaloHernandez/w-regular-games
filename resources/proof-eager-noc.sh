@@ -8,10 +8,10 @@ e2=10
 while true; do
     all_dots=true
 
-    ./ex3 --rand $nv $np $e1 $e2 --export-gm temp.gm
+    ./noc --rand $nv $np $e1 $e2 --export-gm temp.gm
 
     for ((i=0; i<nv; i++)); do
-        output=$(./ex3 --gm temp.gm --min --noc-odd --filter-basic --proof --start "$i")
+        output=$(./noc --gm temp.gm --min --noc-odd --filter-eager --proof --start "$i")
         
         if [ "$output" = "." ]; then
             printf "."

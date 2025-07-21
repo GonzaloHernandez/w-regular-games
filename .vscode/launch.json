@@ -32,7 +32,7 @@
             "name": "C++ Debug experments 3",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/ex3",
+            "program": "${workspaceFolder}/build/noc",
             "args": [   
                 // "--gm", "${env:HOME}/gm/recursiveladder-1000.gm",
                 // "--gm", "/home/chalo/ce.gm",
@@ -57,7 +57,7 @@
                 // "--zra",
                 // "--zchaff"
                 // "--help"
-                "--filter-basic"
+                "--filter-eager"
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

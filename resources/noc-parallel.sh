@@ -1,16 +1,16 @@
 #!/bin/bash
 
 if [ $# -eq 0 ]; then
-    ./ex3 --help
+    ./noc --help
     exit 1
 fi
 
 user_args=("$@")
 
-./ex3 --noc-even "${user_args[@]}" &
+./noc --noc-even "${user_args[@]}" &
 PID1=$!
 
-./ex3 --noc-odd "${user_args[@]}" &
+./noc --noc-odd "${user_args[@]}" &
 PID2=$!
 
 wait -n

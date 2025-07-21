@@ -7,7 +7,6 @@
 #endif
 
 #include "iostream"
-// #include "array"
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
 #include "stack"
@@ -87,7 +86,7 @@ public:
         }
     }
     //-----------------------------------------------------------------------
-    int checker(vec<int> pathV, vec<int> pathE, int v, int lastEdge) 
+    int checker(vec<int>& pathV, vec<int>& pathE, int v, int lastEdge) 
     {
         int index = findVertex(v,pathV);
         if (index >= 0) {
@@ -102,23 +101,27 @@ public:
             }
         }
         else {
-            for (auto& e : g.outs[v]) {
-                if (E[e].isTrue()) {
-                    vec<int> newpathV(pathV);
-                    vec<int> newpathE(pathE);
-                    newpathV.push(v);
-                    newpathE.push(e);
-                    int status = checker(newpathV, newpathE, g.targets[e], e);
-                    if (status == CF_CONFLICT) {
-                        return status;
-                    }
+            pathV.push(v);
+            for (int e : g.outs[v]) {
+                if (!E[e].isTrue()) continue;
+
+                int w = g.targets[e];
+                pathE.push(e);
+                int status = checker(pathV, pathE, w, e);
+                pathE.pop();
+
+                if (status == CF_CONFLICT) {
+                    return status;
                 }
             }
+            pathV.pop();
         }
         return CF_DONE;
     }
+
+
     //-----------------------------------------------------------------------
-    int filterBasic(vec<int>& pathV, vec<int>& pathE, int v, 
+    int filterEager(vec<int>& pathV, vec<int>& pathE, int v, 
         int lastEdge, bool definedEdge) 
     {
         int index = findVertex(v,pathV);
@@ -140,7 +143,7 @@ public:
 
                 int w = g.targets[e];
                 pathE.push(e);
-                int status = filterBasic(pathV, pathE, w, e, E[e].isTrue());
+                int status = filterEager(pathV, pathE, w, e, E[e].isTrue());
                 pathE.pop();
                 if (status == CF_CONFLICT) {
                     return status;
@@ -151,7 +154,33 @@ public:
         return CF_DONE;
     }
     //-----------------------------------------------------------------------
-    int filterBasicStack() {
+
+    int filterEagerStack() {
+        vec<int>                pathV;
+        vec<int>                pathE;
+        int                     v = g.start;
+        std::unique_ptr<int[]>  es = std::make_unique<int[]>(g.nvertices);
+
+        auto nextEdge = [this,&es, &pathE](int v) -> int {
+            for(es[v]=0; es[v]<g.outs[v].size(); es[v]++) {
+                int e = g.outs[v][es[v]];
+                if (E[e].isTrue())  return e;
+                if (E[e].isFalse()) return -1;
+                if (pathE.size()>0 && E[pathE.last()].isFixed()) return e;
+                return -1;
+            }
+        };
+
+        while (true) {
+            int e = nextEdge(v);
+            
+        }
+    }
+
+    //-----------------------------------------------------------------------
+
+
+    int filterEagerStack_v0() {
         vec<int> pathV,pathE;
         std::unique_ptr<int[]> es = std::make_unique<int[]>(g.nvertices);
 
@@ -219,7 +248,6 @@ public:
 
         return CF_DONE;
     }
-
     //-----------------------------------------------------------------------
     int filterMemo(vec<int>& pathV, vec<int>& pathE, int v, 
         int lastEdge, bool definedEdge,s_memo* memo) 
@@ -290,8 +318,8 @@ public:
                 return false;
             break;
         case 1:
-            // if (filterBasicStack() == CF_CONFLICT) 
-            if (filterBasic(pathV,pathE,g.start,-1,true) == CF_CONFLICT)
+            // if (filterEagerStack() == CF_CONFLICT) 
+            if (filterEager(pathV,pathE,g.start,-1,true) == CF_CONFLICT)
                 return false;
             break;
         case 2:

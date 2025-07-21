@@ -43,7 +43,7 @@
                 "${workspaceFolder}/various/fra.cpp",
                 "${workspaceFolder}/experiments/ex3.cpp",
                 "-o",
-                "${workspaceFolder}/build/ex3",
+                "${workspaceFolder}/build/noc",
                 "-I${env:HOME}/.local/include",
                 "-L${env:HOME}/.local/lib",
                 // "-lchuffed_fzn",
