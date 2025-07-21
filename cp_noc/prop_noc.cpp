@@ -158,7 +158,6 @@ public:
     int filterEagerStack() {
         vec<int>                pathV;
         vec<int>                pathE;
-        int                     v = g.start;
         std::unique_ptr<int[]>  es = std::make_unique<int[]>(g.nvertices);
 
         auto nextEdge = [this,&es, &pathE](int v) -> int {
@@ -171,10 +170,32 @@ public:
             }
         };
 
-        while (true) {
+        int index;
+        int v = g.start;
+        int e;
+        while ((index = findVertex(v, pathV)) >= 0) {
             int e = nextEdge(v);
-            
+            pathV.push(v);
+            pathE.push(e);
+            if (e < 0) break;
         }
+        while (pathV.size()>0) {
+            v = pathV.last();   pathV.pop();
+            e = pathE.last();   pathE.pop();
+            if (e >= 0) {
+                return false;
+            }
+            e = nextEdge(v);
+            if (e < 0) continue;
+            v = g.targets[e];
+            while ((index = findVertex(v, pathV)) >= 0) {
+                int e = nextEdge(v);
+                pathV.push(v);
+                pathE.push(e);
+                if (e < 0) break;
+            }
+        }
+        return true;
     }
 
     //-----------------------------------------------------------------------
