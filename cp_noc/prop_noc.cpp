@@ -137,29 +137,29 @@ public:
             }
         }
         else if (definedEdge) {
-            pathV.push(v);
+            pathV.push(v); std::cout << "V";
             for (int e : g.outs[v]) {
                 if (E[e].isFalse()) continue;
 
                 int w = g.targets[e];
-                pathE.push(e);
+                pathE.push(e); std::cout << "E";
                 int status = filterEager(pathV, pathE, w, e, E[e].isTrue());
-                pathE.pop();
+                pathE.pop(); std::cout << "e";
                 if (status == CF_CONFLICT) {
                     return status;
                 }
             }
-            pathV.pop();
+            pathV.pop(); std::cout << "v";
         }
         return CF_DONE;
     }
     //-----------------------------------------------------------------------
 
     int filterEagerStack() {
-        vec<int>                pathV;
-        vec<int>                pathE;
-        std::unique_ptr<int[]>  es = std::make_unique<int[]>(g.nvertices);
-        int                     v,e;
+        vec<int>    pathV;
+        vec<int>    pathE;
+        vec<int>    es(g.nvertices,0);
+        int         v,e;
         //----------------------------------------------------------
         auto nextEdge = [&](int v_) -> int {
             int limit = g.outs[v_].size();
@@ -169,7 +169,7 @@ public:
                 if (E[e_].isFalse())            continue;
                 if (pathE.size()==0)            return e_;
                 if (!E[pathE.last()].isFixed()) return -1;
-                if (E[e_].isTrue())             return e_;
+                return e_;
             }
             return -1;
         };
@@ -177,9 +177,9 @@ public:
         auto dfsWalk = [&]() -> int {
             int c;
             while (true) {
-                pathV.push(v);
-                pathE.push(e);
                 if (e < 0) break;
+                pathV.push(v); std::cout << "V";
+                pathE.push(e); std::cout << "E";
                 c = findVertex(g.targets[e], pathV);
                 if (c >=0) break;
                 v = g.targets[e];
@@ -207,8 +207,8 @@ public:
         if (dfsWalk() == CF_CONFLICT) return CF_CONFLICT;
  
         while (pathV.size()>0) {
-            v = pathV.last();
-            e = pathE.last();
+            v = pathV.last(); pathV.pop(); std::cout << "v";
+            e = pathE.last(); pathE.pop(); std::cout << "e";
 
             e = nextEdge(v);
             if (e < 0) continue;
