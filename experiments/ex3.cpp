@@ -23,11 +23,11 @@ struct options {
     std::vector<int>    starts          = {0};
     std::string         game_filename   = "";
     std::string         export_filename = "";
-    int                 export_type     = 0; // 0=not DZN GM DIM
-    int                 solver          = 0; // 1=CP-NOC 2=CP-FRA 3=SAT-zchaff 4=SAT-cadical 5=ZRA 6=FRA 7=SCC
-    int                 checker         = 0; // 0=none 1=SCC
-    int                 filter          = 0; // 0=none 1=Eager 2=Memo
-    int                 proof           = 0; // 0=no 1=yes 2=eager
+    int                 export_type     = 0;    // 0=not DZN GM DIM
+    int                 solver          = 0;    // 1=CP-NOC 2=CP-FRA 3=SAT-zchaff 4=SAT-cadical 5=ZRA 6=FRA 7=SCC
+    int                 checker         = 0;    // 0=none 1=SCC
+    int                 filter          = -1;   // 0=Stack 1=Eager 2=Memo
+    int                 proof           = 0;    // 0=no 1=yes 2=eager
 } options;
 
 //--------------------------------------------------------------------------------------
@@ -280,6 +280,7 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--verbose")==0)            { options.print_verbose  = true; }
 
         else if (strcmp(argv[i],"--checker-scc")==0)    { options.checker = 1; }
+        else if (strcmp(argv[i],"--filter-stack")==0)   { options.filter  = 0; }
         else if (strcmp(argv[i],"--filter-eager")==0)   { options.filter  = 1; }
         else if (strcmp(argv[i],"--filter-memo")==0)    { options.filter  = 2; options.checker = 1;}
 
@@ -313,6 +314,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --proof                    : Compare results using Zielonka\n";
             std::cout << "  --proof-eager              : Looking for counterexample\n";
             std::cout << "  --checker-scc              : Checker by CP-NOC\n";
+            std::cout << "  --filter-stack             : Filter by CP-NOC\n";
             std::cout << "  --filter-eager             : Filter by CP-NOC\n";
             std::cout << "  --filter-memo              : Filter by CP-NOC\n";
             return false;

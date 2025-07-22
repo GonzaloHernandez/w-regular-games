@@ -184,7 +184,7 @@ public:
 
         // Every infinite ODD or EVEN play must be avoided.
         if (checker==1) new CheckerSCC(g,V,E,playerSAT);
-        if (filter > 0) new NoOpponentCycle(g,E,filter,playerSAT);
+        if (filter >=0) new NoOpponentCycle(g,E,filter,playerSAT);
 
         //------------------------------------------------------------
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-nv=15
-np=10
+nv=20
+np=5
 e1=1
 e2=10
 
@@ -11,7 +11,7 @@ while true; do
     ./noc --rand $nv $np $e1 $e2 --export-gm temp.gm
 
     for ((i=0; i<nv; i++)); do
-        output=$(./noc --gm temp.gm --min --noc-odd --filter-eager --proof --start "$i")
+        output=$(./noc --gm temp.gm --max --noc-even --filter-stack --proof --start "$i")
         
         if [ "$output" = "." ]; then
             printf "."

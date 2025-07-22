@@ -159,116 +159,65 @@ public:
         vec<int>                pathV;
         vec<int>                pathE;
         std::unique_ptr<int[]>  es = std::make_unique<int[]>(g.nvertices);
-
-        auto nextEdge = [this,&es, &pathE](int v) -> int {
-            for(es[v]=0; es[v]<g.outs[v].size(); es[v]++) {
-                int e = g.outs[v][es[v]];
-                if (E[e].isTrue())  return e;
-                if (E[e].isFalse()) return -1;
-                if (pathE.size()>0 && E[pathE.last()].isFixed()) return e;
-                return -1;
+        int                     v,e;
+        //----------------------------------------------------------
+        auto nextEdge = [&](int v_) -> int {
+            int limit = g.outs[v_].size();
+            while(es[v_] < limit) {
+                int e_ = g.outs[v_][es[v_]];
+                es[v_]++;
+                if (E[e_].isFalse())            continue;
+                if (pathE.size()==0)            return e_;
+                if (!E[pathE.last()].isFixed()) return -1;
+                if (E[e_].isTrue())             return e_;
             }
+            return -1;
         };
-
-        int index;
-        int v = g.start;
-        int e;
-        while ((index = findVertex(v, pathV)) >= 0) {
-            int e = nextEdge(v);
-            pathV.push(v);
-            pathE.push(e);
-            if (e < 0) break;
-        }
-        while (pathV.size()>0) {
-            v = pathV.last();   pathV.pop();
-            e = pathE.last();   pathE.pop();
-            if (e >= 0) {
-                return false;
-            }
-            e = nextEdge(v);
-            if (e < 0) continue;
-            v = g.targets[e];
-            while ((index = findVertex(v, pathV)) >= 0) {
-                int e = nextEdge(v);
+        //----------------------------------------------------------
+        auto dfsWalk = [&]() -> int {
+            int c;
+            while (true) {
                 pathV.push(v);
                 pathE.push(e);
                 if (e < 0) break;
+                c = findVertex(g.targets[e], pathV);
+                if (c >=0) break;
+                v = g.targets[e];
+                es[v] = 0;
+                e = nextEdge(v);
             }
-        }
-        return true;
-    }
-
-    //-----------------------------------------------------------------------
-
-
-    int filterEagerStack_v0() {
-        vec<int> pathV,pathE;
-        std::unique_ptr<int[]> es = std::make_unique<int[]>(g.nvertices);
-
-        int v = g.start;
-        int e;
-        int index = -1;
-        while (true) {
-            for(es[v]=0; es[v]<g.outs[v].size(); es[v]++) {
-                e = g.outs[v][es[v]];
-                if (E[e].isTrue())  break;
-                if (E[e].isFalse()) continue;
-                if (pathE.size()>0 && E[pathE.last()].isFixed()) break;
-                continue;
-            }
-            if (es[v] == g.outs[v].size()) break;
-            es[v]++;
-            int w = g.targets[e];
-            index = findVertex(w,pathV);
-            if (index>=0) break;
-            pathV.push(v);
-            pathE.push(e);
-            v = w;
-        }
-        //-------------------------------------------------------
-        while (pathV.size()>0) {
-
-            if (index>=0) {
-                if (bestcolor(index,pathV,v)%2 == opponent(playerSAT)) {
+            if (e>=0) {
+                if (bestcolor(c,pathV,v)%2 == opponent(playerSAT)) {
                     vec<Lit> lits;
                     lits.push();
-                    clausify(pathE,E,lits);
+                    clausify(pathE,E,lits,0);
                     Clause* reason = Reason_new(lits);
                     if (! E[e].setVal(false,reason)) {
                         return CF_CONFLICT;
                     }
                 }
             }
-            index = -1;
+            return CF_DONE;
+        };
+        //----------------------------------------------------------
 
+        v = g.start;
+        e = nextEdge(v);
+
+        if (dfsWalk() == CF_CONFLICT) return CF_CONFLICT;
+ 
+        while (pathV.size()>0) {
             v = pathV.last();
-            pathV.pop();
-            pathE.pop();
+            e = pathE.last();
 
-            if (pathE.size()>0) es[pathE.last()]=0;
-
-            while (true) {
-                for( ; es[v]<g.outs[v].size(); es[v]) {
-                    e = g.outs[v][es[v]];
-                    es[v]++;
-                    if (E[e].isTrue())  break;
-                    if (E[e].isFalse()) continue;
-                    if (pathE.size()>0 && E[pathE.last()].isFixed()) break;
-                    continue;
-                }
-                if (es[v] == g.outs[v].size()) break;
-                es[v]++;
-                int w = g.targets[e];
-                index = findVertex(w,pathV);
-                if (index>=0) break;
-                pathV.push(v);
-                pathE.push(e);
-                v = w;
-            }
+            e = nextEdge(v);
+            if (e < 0) continue;
+            
+            if (dfsWalk() == CF_CONFLICT) return CF_CONFLICT;
         }
-
         return CF_DONE;
     }
+
     //-----------------------------------------------------------------------
     int filterMemo(vec<int>& pathV, vec<int>& pathE, int v, 
         int lastEdge, bool definedEdge,s_memo* memo) 
@@ -335,7 +284,8 @@ public:
 
         switch (filtertype) {
         case 0:
-            if (checker(pathV,pathE,g.start,-1) == CF_CONFLICT)
+            // if (checker(pathV,pathE,g.start,-1) == CF_CONFLICT)
+            if (filterEagerStack() == CF_CONFLICT)
                 return false;
             break;
         case 1:
