@@ -137,19 +137,19 @@ public:
             }
         }
         else if (definedEdge) {
-            pathV.push(v); std::cout << "V";
+            pathV.push(v);
             for (int e : g.outs[v]) {
                 if (E[e].isFalse()) continue;
 
                 int w = g.targets[e];
-                pathE.push(e); std::cout << "E";
+                pathE.push(e);
                 int status = filterEager(pathV, pathE, w, e, E[e].isTrue());
-                pathE.pop(); std::cout << "e";
+                pathE.pop();
                 if (status == CF_CONFLICT) {
                     return status;
                 }
             }
-            pathV.pop(); std::cout << "v";
+            pathV.pop();
         }
         return CF_DONE;
     }
@@ -178,8 +178,8 @@ public:
             int c;
             while (true) {
                 if (e < 0) break;
-                pathV.push(v); std::cout << "V";
-                pathE.push(e); std::cout << "E";
+                pathV.push(v);
+                pathE.push(e);
                 c = findVertex(g.targets[e], pathV);
                 if (c >=0) break;
                 v = g.targets[e];
@@ -207,8 +207,8 @@ public:
         if (dfsWalk() == CF_CONFLICT) return CF_CONFLICT;
  
         while (pathV.size()>0) {
-            v = pathV.last(); pathV.pop(); std::cout << "v";
-            e = pathE.last(); pathE.pop(); std::cout << "e";
+            v = pathV.last(); pathV.pop();
+            e = pathE.last(); pathE.pop();
 
             e = nextEdge(v);
             if (e < 0) continue;
