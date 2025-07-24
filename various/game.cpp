@@ -424,9 +424,9 @@ void Game::exportFile(int type, std::string filename) {
 
         file << "nedges    = " << nedges << ";" << std::endl;
         file << "sources   = ["; 
-        for(int i=0; i<sources.size(); i++) file<<(i?",":"")<<sources[i]; file<<"];"<<std::endl;
+        for(int i=0; i<sources.size(); i++) file<<(i?",":"")<<sources[i]+1; file<<"];"<<std::endl;
         file << "targets   = ["; 
-        for(int i=0; i<targets.size(); i++) file<<(i?",":"")<<targets[i]; file<<"];"<<std::endl;
+        for(int i=0; i<targets.size(); i++) file<<(i?",":"")<<targets[i]+1; file<<"];"<<std::endl;
         break;
 
     case GM:
