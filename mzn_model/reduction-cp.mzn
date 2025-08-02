@@ -48,20 +48,20 @@ constraint
 		exists(e in edges where targets[e]==w)(E[e]) -> V[w]
 	);
 
-include "cyclefilter.mzn";
-
+include "progressmeasure.mzn";
 constraint
 	globalmeasureprogress(owners,colors,sources,targets,V,E);
 
+% include "cyclefilter.mzn";
 % constraint
-% 	cycle_filter(owners,colors,sources,targets,V,E,[start]);
+	% cycle_filter(owners,colors,sources,targets,V,E,[start]);
 
 vertices : start = 1 ;
 
 % -------------------------------------------------------------------------------------
 
 array [int]	of int : Va ::output_only ::output = [v | v in vertices	where fix(V[v])];
-array [int]	of int : Ea ::output_only ::output = [e | e in edges		where fix(E[e])];
+array [int]	of int : Ea ::output_only ::output = [e | e in edges	where fix(E[e])];
 
 % solve ::bool_search(V++E,input_order,indomain_max) satisfy ; 
 

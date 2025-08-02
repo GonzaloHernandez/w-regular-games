@@ -255,19 +255,19 @@ bool parseMyOptions(int argc, char *argv[]) {
             }
             so.nof_solutions = ns;
         }
-        else if (strcmp(argv[i],"--max")==0)            { options.reward = MAX; }
-        else if (strcmp(argv[i],"--min")==0)            { options.reward = MIN; }
+        else if (strcmp(argv[i],"--max")==0)                { options.reward = MAX; }
+        else if (strcmp(argv[i],"--min")==0)                { options.reward = MIN; }
 
-        else if (strcmp(argv[i],"--testing")==0)        { options.solver = -1; }
-        else if (strcmp(argv[i],"--noc")==0)            { options.solver = 1; }
-        else if (strcmp(argv[i],"--noc-even")==0)       { options.solver = 1; }
-        else if (strcmp(argv[i],"--noc-odd")==0)        { options.solver = 8; }
-        else if (strcmp(argv[i],"--cp-fra")==0)         { options.solver = 2; }
-        else if (strcmp(argv[i],"--zchaff")==0)         { options.solver = 3; }
-        else if (strcmp(argv[i],"--cadical")==0)        { options.solver = 4; }
-        else if (strcmp(argv[i],"--zra")==0)            { options.solver = 5; }
-        else if (strcmp(argv[i],"--fra")==0)            { options.solver = 6; }
-        else if (strcmp(argv[i],"--scc")==0)            { options.solver = 7; }
+        else if (strcmp(argv[i],"--testing")==0)            { options.solver = -1; }
+        else if (strcmp(argv[i],"--noc")==0)                { options.solver = 1; }
+        else if (strcmp(argv[i],"--noc-even")==0)           { options.solver = 1; }
+        else if (strcmp(argv[i],"--noc-odd")==0)            { options.solver = 8; }
+        else if (strcmp(argv[i],"--cp-fra")==0)             { options.solver = 2; }
+        else if (strcmp(argv[i],"--zchaff")==0)             { options.solver = 3; }
+        else if (strcmp(argv[i],"--cadical")==0)            { options.solver = 4; }
+        else if (strcmp(argv[i],"--zra")==0)                { options.solver = 5; }
+        else if (strcmp(argv[i],"--fra")==0)                { options.solver = 6; }
+        else if (strcmp(argv[i],"--scc")==0)                { options.solver = 7; }
 
         else if (strcmp(argv[i],"--proof")==0)              { options.proof = 1; }
         else if (strcmp(argv[i],"--proof-eager")==0)        { options.proof = 2; }
@@ -279,10 +279,10 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--print-solution")==0)     { options.print_solution = true; }
         else if (strcmp(argv[i],"--verbose")==0)            { options.print_verbose  = true; }
 
-        else if (strcmp(argv[i],"--checker-scc")==0)    { options.checker = 1; }
-        else if (strcmp(argv[i],"--filter-stack")==0)   { options.filter  = 0; }
-        else if (strcmp(argv[i],"--filter-eager")==0)   { options.filter  = 1; }
-        else if (strcmp(argv[i],"--filter-memo")==0)    { options.filter  = 2; options.checker = 1;}
+        else if (strcmp(argv[i],"--checker-scc")==0)        { options.checker = 1; }
+        else if (strcmp(argv[i],"--filter-stack")==0)       { options.filter  = 0; }
+        else if (strcmp(argv[i],"--filter-eager")==0)       { options.filter  = 1; }
+        else if (strcmp(argv[i],"--filter-memo")==0)        { options.filter  = 2; options.checker = 1;}
 
         else if (strcmp(argv[i],"--help")==0) {
             std::cout << "Usage: " << argv[0] << " [options]\n";
@@ -304,6 +304,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --min                      : Seek to minimize the color\n";
             std::cout << "  --export-dzn <filename>    : Export game to DZN format (not solve)\n";
             std::cout << "  --export-gm <filename>     : Export game to GM format (not solve)\n"; 
+            std::cout << "  --export-dimacs <filename> : Export game to DIMACS format (not solve)\n"; 
             std::cout << "  --noc-even                 : CP-NOC satisfying player EVEN (No-Odd-Cycles)\n";
             std::cout << "  --noc-odd                  : CP-NOC satisfying player ODD (No-Even-Cycles)\n";
             std::cout << "  --fra                      : Solve using FRA\n";

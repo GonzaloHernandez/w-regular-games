@@ -68,7 +68,7 @@ def getPlay(type, path, current) -> list :
 
 # ------------------------------------------------------------------------------------
 
-g = Game('./data/game-SAT.dzn',Game.FIRST0)
+g = Game('./data/SAT.dzn',Game.FIRST0)
 
 type,path = getPlay(ODD,[],0)
 print(path,"EVEN" if type==0 else "ODD")

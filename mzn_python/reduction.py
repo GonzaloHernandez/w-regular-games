@@ -53,7 +53,7 @@ def compute(d,levels,blocks) :
 
 # g = Game(Game.RANDOM,10)
 # g = Game(Game.JURDZINSKI,3,2)
-g = Game('./data/game-jurdzinski-2-2.dzn')
+g = Game('./data/jurd-2-1.dzn')
 
 # print(g)
 g.start = 1

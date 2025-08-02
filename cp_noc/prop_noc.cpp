@@ -86,7 +86,7 @@ public:
         }
     }
     //-----------------------------------------------------------------------
-    int checker(vec<int>& pathV, vec<int>& pathE, int v, int lastEdge) 
+    int checkerDFS(vec<int>& pathV, vec<int>& pathE, int v, int lastEdge) 
     {
         int index = findVertex(v,pathV);
         if (index >= 0) {
@@ -107,7 +107,7 @@ public:
 
                 int w = g.targets[e];
                 pathE.push(e);
-                int status = checker(pathV, pathE, w, e);
+                int status = checkerDFS(pathV, pathE, w, e);
                 pathE.pop();
 
                 if (status == CF_CONFLICT) {
@@ -118,8 +118,6 @@ public:
         }
         return CF_DONE;
     }
-
-
     //-----------------------------------------------------------------------
     int filterEager(vec<int>& pathV, vec<int>& pathE, int v, 
         int lastEdge, bool definedEdge) 
@@ -153,71 +151,6 @@ public:
         }
         return CF_DONE;
     }
-    //-----------------------------------------------------------------------
-
-    int filterEagerStack() {
-        vec<int>    pathV;
-        vec<int>    pathE;
-        vec<int>    es(g.nvertices,0);
-        int         v,e;
-        //----------------------------------------------------------
-        auto nextEdge = [&](int v_) -> int {
-            int limit = g.outs[v_].size();
-            while(es[v_] < limit) {
-                int e_ = g.outs[v_][es[v_]];
-                es[v_]++;
-                if (E[e_].isFalse())            continue;
-                if (pathE.size()==0)            return e_;
-                if (!E[pathE.last()].isFixed()) return -1;
-                return e_;
-            }
-            return -1;
-        };
-        //----------------------------------------------------------
-        auto dfsWalk = [&]() -> int {
-            int c;
-            while (true) {
-                if (e < 0) break;
-                pathV.push(v);
-                pathE.push(e);
-                c = findVertex(g.targets[e], pathV);
-                if (c >=0) break;
-                v = g.targets[e];
-                es[v] = 0;
-                e = nextEdge(v);
-            }
-            if (e>=0) {
-                if (bestcolor(c,pathV,v)%2 == opponent(playerSAT)) {
-                    vec<Lit> lits;
-                    lits.push();
-                    clausify(pathE,E,lits,0);
-                    Clause* reason = Reason_new(lits);
-                    if (! E[e].setVal(false,reason)) {
-                        return CF_CONFLICT;
-                    }
-                }
-            }
-            return CF_DONE;
-        };
-        //----------------------------------------------------------
-
-        v = g.start;
-        e = nextEdge(v);
-
-        if (dfsWalk() == CF_CONFLICT) return CF_CONFLICT;
- 
-        while (pathV.size()>0) {
-            v = pathV.last(); pathV.pop();
-            e = pathE.last(); pathE.pop();
-
-            e = nextEdge(v);
-            if (e < 0) continue;
-            
-            if (dfsWalk() == CF_CONFLICT) return CF_CONFLICT;
-        }
-        return CF_DONE;
-    }
-
     //-----------------------------------------------------------------------
     int filterMemo(vec<int>& pathV, vec<int>& pathE, int v, 
         int lastEdge, bool definedEdge,s_memo* memo) 
@@ -284,12 +217,10 @@ public:
 
         switch (filtertype) {
         case 0:
-            // if (checker(pathV,pathE,g.start,-1) == CF_CONFLICT)
-            if (filterEagerStack() == CF_CONFLICT)
+            if (checkerDFS(pathV,pathE,g.start,-1) == CF_CONFLICT)
                 return false;
             break;
         case 1:
-            // if (filterEagerStack() == CF_CONFLICT) 
             if (filterEager(pathV,pathE,g.start,-1,true) == CF_CONFLICT)
                 return false;
             break;
