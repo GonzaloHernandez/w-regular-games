@@ -27,29 +27,8 @@ public:
         for (int i=0; i<g.owners.size(); i++)  V[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.sources.size(); i++) E[i].attach(this, 1 , EVENT_F );
     }
-    //-----------------------------------------------------------------------
-    // std::vector<int> bestColors(std::vector<int> subgraph) {
-    //     bool first = true;
-    //     std::vector<int> best_priorities;
-    //     for (auto& v : subgraph) {
-    //         if (first) {
-    //             best_priorities.push_back(v);
-    //             first = false;
-    //             continue;
-    //         }
-    //         if (g.compareVertices(v,best_priorities[0],BET)) {
-    //             best_priorities.clear();
-    //             best_priorities.push_back(v);
-    //             continue;
-    //         }
-    //         if (g.compareVertices(v,best_priorities[0],EQU) ) {
-    //             best_priorities.push_back(v);
-    //             continue;
-    //         }
-    //     }
-    //     return best_priorities;
-    // }
 
+    //-----------------------------------------------------------------------
     std::unordered_set<int> bestColors(const std::vector<int>& subgraph) {
         bool first = true;
         std::unordered_set<int> best_priorities;
@@ -74,7 +53,6 @@ public:
     }
 
     //-----------------------------------------------------------------------
-
     bool backtrack() 
     {
         vec<Lit> lits;

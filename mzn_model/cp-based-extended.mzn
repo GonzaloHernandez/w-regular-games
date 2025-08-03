@@ -19,22 +19,22 @@ array [edges]		of var bool	: E;
 
 % -------------------------------------------------------------------
 
-constraint parity_conditions(owners,colors,sources,targets,V,E,start);
+constraint parity_conditions(owners,colors,sources,targets,V,E, 1,0,0);
 
 % -------------------------------------------------------------------
 
-% % Synthesis
-% set of int: steps = 1..nvertices;
-% array [steps] of var vertices union {0} : Vhistory;
-% array [steps] of var vertices union {0} : Ehistory;
-% array [steps] of var vertices union {0} : Vinfinity;
-% array [steps] of var vertices union {0} : Einfinity;
-% array [steps] of var vertices union {0} : Vpath;
-% array [steps] of var vertices union {0} : Epath;
+% Synthesis
+set of int: steps = 1..nvertices;
+array [steps] of var vertices union {0} : Vhistory;
+array [steps] of var vertices union {0} : Ehistory;
+array [steps] of var vertices union {0} : Vinfinity;
+array [steps] of var vertices union {0} : Einfinity;
+array [steps] of var vertices union {0} : Vpath;
+array [steps] of var vertices union {0} : Epath;
 
-% constraint 
-% 	even_play(	steps,sources,targets,E,start,
-% 				Vhistory,Ehistory, Vinfinity,Einfinity, Vpath, Epath );
+constraint 
+	even_play(	steps,sources,targets,E,start,
+				Vhistory,Ehistory, Vinfinity,Einfinity, Vpath, Epath );
 
 % -------------------------------------------------------------------
 
@@ -68,6 +68,6 @@ constraint parity_conditions(owners,colors,sources,targets,V,E,start);
 % -------------------------------------------------------------------
 
 output
-	% ["play = " ++ toStr(Vhistory) ++ toStr(Vinfinity) ++ " \n"] ++ 
-	[toStr(V) ++ "\n" ++ toStr(E)] ++
+	[toStr(V) ++ "\n" ++ toStr(E) ++ " \n"] ++
+	["play = " ++ toStr(Vhistory) ++ toStr(Vinfinity) ++ " \n"] ++ 
 	[]

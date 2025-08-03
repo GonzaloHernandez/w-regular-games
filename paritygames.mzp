@@ -1,23 +1,14 @@
 {
     "openFiles": [
-        "model/cp-based.mzn"
+        "mzn_model/cp-based-extended.mzn"
     ],
     "openTab": 0,
     "projectFiles": [
-        "data/game-SAT.dzn",
-        "data/game-julian.dzn",
-        "data/game-jurdzinski-2-1.dzn",
-        "data/game-jurdzinski-3-2.dzn",
-        "data/game-jurdzinski-3-3.dzn",
-        "data/game-other.dzn",
-        "data/game-umbrella.dzn",
-        "data/game-wiki-min.dzn",
-        "model/cp-based.mzn",
-        "model/paritygames.mzn",
-        "model/progressmeasure.mzn",
-        "model/reduction-sat.mzn"
+        "data/jurd-2-1.dzn",
+        "mzn_model/cp-based-extended.mzn",
+        "mzn_model/paritygames.mzn"
     ],
     "selectedBuiltinConfigId": "sonar",
-    "selectedBuiltinConfigVersion": "0.0.0",
+    "selectedBuiltinConfigVersion": "0.0.1",
     "version": 106
 }

@@ -37,7 +37,7 @@ public:
         fixVertices({g.start},{});
 
         // --------------------------------------------------------------
-        // For every EVEN vertice, exactly one outgoing edge must be activated
+        // For every PLAYER vertice, exactly one outgoing edge must be activated
         for (int v=0; v<g.nvertices; v++) if (g.owners[v] == playerSAT) {
 
             int n = g.outs[v].size();
@@ -111,7 +111,7 @@ public:
         }
 
         // --------------------------------------------------------------
-        // For every ODD vertice, each outgoing edge must be activated
+        // For every OPPONENT vertice, each outgoing edge must be activated
         for (int v=0; v<g.nvertices; v++) if (g.owners[v] == opponent(playerSAT)) {
             // for (int e=0; e<g.nedges; e++) if (g.sources[e]==v) {
             for (int e : g.outs[v]) {
@@ -135,7 +135,7 @@ public:
         }
 
         // --------------------------------------------------------------
-        // Every infinite ODD or EVEN play must be avoided.
+        // Every infinite OPPONENT play must be avoided.
         if (checker==1) new CheckerSCC(g,V,E,playerSAT);
         if (filter >=0) new NoOpponentCycle(g,E,filter,playerSAT);
 
@@ -180,16 +180,6 @@ public:
             clause.push(E[e].getLit(false));
             sat.addClause(clause);
         }
-    }
-
-    //----------------------------------------------------------------
-
-    void fixStartingZero() {
-        for (int i=0; i<g.sources.size(); i++) {
-            g.sources[i]--;
-            g.targets[i]--;
-        }
-        // start--;
     }
 
     //----------------------------------------------------------------
