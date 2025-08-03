@@ -8,7 +8,7 @@ index bf209f7..36c824f 100644
  
 +// w-regular games
 +#include "chuffed/support/game.h"
-+#include "chuffed/support/prop_noc.h"
++#include "chuffed/support/noc.h"
 +
  namespace FlatZinc {
  

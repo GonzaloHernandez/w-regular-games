@@ -20,7 +20,7 @@ array [edges]		of var bool	: E;
 % -------------------------------------------------------------------
 
 constraint
-	parity_conditions(owners,colors,sources,targets,V,E,start);
+	parity_conditions(owners,colors,sources,targets,V,E, 1,0,0);
 
 % -------------------------------------------------------------------
 

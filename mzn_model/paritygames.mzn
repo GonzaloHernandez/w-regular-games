@@ -14,15 +14,6 @@ predicate noc(	array [int] of int		: owners,
 
 % --------------------------------------------------------------------------
 
-predicate dreachability(	int						: nvertices,
-							array [int] of int		: sources,
-							array [int] of int		: targets,
-							array [int] of var bool	: V,
-							array [int] of var bool	: E,
-							int				 		: start );
-
-% --------------------------------------------------------------------------
-
 predicate parity_conditions(	array [int] of int		: owners,
 								array [int] of int		: colors,
 								array [int] of int		: sources,

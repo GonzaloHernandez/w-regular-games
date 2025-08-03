@@ -8,7 +8,7 @@
         "mzn_model/cp-based-extended.mzn",
         "mzn_model/paritygames.mzn"
     ],
-    "selectedBuiltinConfigId": "sonar",
+    "selectedBuiltinConfigId": "chuffed-noc",
     "selectedBuiltinConfigVersion": "0.0.1",
     "version": 106
 }

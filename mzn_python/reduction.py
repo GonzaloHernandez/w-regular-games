@@ -9,13 +9,15 @@ sys.path.insert(1,".")
 from pythonsrc import Game
 from minizinc import Instance, Model, Solver
 
-driver          = ["gecode","chuffed","cpsatlp","sonar"]
+driver          = ["gecode","chuffed","cpsatlp","chuffed-noc"]
 
 def compute(d,levels,blocks) :
 
     solver      = Solver.lookup(driver[d])
-    
-    model       = Model("./mzn_model/reduction-cp.mzn")
+
+    # model       = Model("./mzn_model/reduction-cp.mzn")
+    model       = Model("./mzn_model/reduction-sat.mzn")
+
     instance    = Instance(solver, model)
 
     instance["nvertices"]   = g.nvertices
@@ -57,7 +59,7 @@ g = Game('./data/jurd-2-1.dzn')
 
 # print(g)
 g.start = 1
-d       = 0 #int(arg[1])
+d       = 1 #int(arg[1])
 levels  = 2 #int(arg[2])
 blocks  = 1 #int(arg[3])
 

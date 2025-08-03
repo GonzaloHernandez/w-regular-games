@@ -5,7 +5,6 @@
 #include "iostream"
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
-#include "stack"
 
 struct s_memo {
     int loop;

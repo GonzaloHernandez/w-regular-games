@@ -5,7 +5,6 @@
 #include "iostream"
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
-#include "stack"
 
 struct s_memo {
     int loop;
@@ -123,7 +122,7 @@ public:
     }
     //-----------------------------------------------------------------------
     int filterMemo(vec<int>& pathV, vec<int>& pathE, int v, 
-        int lastEdge, bool definedEdge,s_memo* memo) 
+        int lastEdge, bool definedEdge,vec<s_memo>& memo) 
     {
         int index = findVertex(v,pathV);
         if (index >= 0) {
@@ -195,9 +194,8 @@ public:
                 return false;
             break;
         case 2:
-            std::unique_ptr<s_memo[]> memo(new s_memo[g.nedges]);
-            std::fill_n(memo.get(), g.nedges, s_memo{-1,-1});
-            if (filterMemo(pathV,pathE,g.start,-1,true,memo.get()) == CF_CONFLICT)
+            vec<s_memo> memo(g.nedges);
+            if (filterMemo(pathV,pathE,g.start,-1,true,memo) == CF_CONFLICT)
                 return false;
             break;
         }

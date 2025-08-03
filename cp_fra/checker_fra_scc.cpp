@@ -56,79 +56,34 @@ public:
     }
     //-----------------------------------------------------------------------
     bool propagate() override {
-        for(parity_type PARITY : {EVEN,ODD}) { //Assessing both winning regions
-
-            std::vector<int> region;
-            for (int i=0; i<g.nvertices; i++) {
-                if (!Q[i].isFixed()) return true;
-                
-                if (Q[i].getVal()==PARITY) region.push_back(i);
-
-                view.vs[i] = (Q[i].getVal()==PARITY);
+        // Evalauting regions
+        for (int v=0; v<g.nvertices; v++) {
+            if (!Q[v].isFixed()) return true;
+            parity_type player = (parity_type)Q[v].getVal();
+            if (g.colors[v] == player) {
+                bool found = false;
+                for (auto& e : g.outs[v]) {
+                    int w = g.targets[e];
+                    if (!Q[w].isFixed()) return true;
+                    if (Q[w].getVal() == player) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) return backtrack();
             }
-
-            std::stack<std::vector<int>> stack;
-
-            TarjanSCC tar(g,view);
-            for (auto& s : tar.solve()) stack.push(s);
-
-            while (stack.size()>0) {
-                auto sc = stack.top();
-                stack.pop();
-
-                if (sc.size()==1) {
-                    int v = sc[0];
-                    for(auto& e : g.outs[v]) {
-                        int w = g.targets[e];
-                        if (v==w && g.colors[v]%2 == opponent(PARITY)) {
-                            return backtrack();
-                        }
-                    }
-                    continue;
+            else {
+                for (auto& e : g.outs[v]) {
+                    int w = g.targets[e];
+                    if (!Q[w].isFixed()) return true;
+                    if (Q[w].getVal() == opponent(player)) return backtrack();
                 }
-
-                bool first = true;
-                std::vector<int> bests;
-                for (auto& v : sc) {
-                    if (first) {
-                        bests.push_back(v);
-                        first = false;
-                        continue;
-                    }
-                    if (g.compareVertices(v,bests[0],BET)) {
-                        bests.clear();
-                        bests.push_back(v);
-                        continue;
-                    }
-                    if (g.compareVertices(v,bests[0],EQU) ) {
-                        bests.push_back(v);
-                        continue;
-                    }
-                }
-                if (g.colors[bests[0]]%2 == opponent(PARITY)) {
-                    return backtrack();
-                }
-
-                view.deactiveAll();
-                for (auto& v : sc) {
-                    if (std::find(bests.begin(), bests.end(), v) == bests.end()) {
-                        view.vs[v] = true;
-                    }
-                }
-                for (auto& v : sc) {
-                    if (std::find(bests.begin(), bests.end(), v) == bests.end()) {
-                        for (auto& e : g.outs[v]) { int w = g.targets[e];
-                            if (view.vs[w]) {
-                                view.es[e] = true;
-                            }
-                        }
-                    }
-                }
-
-                TarjanSCC tar(g,view);
-                for (auto& s : tar.solve()) stack.push(s);
             }
         }
+
+        // Evaluating winning condition
+        
+
         return true;
     }
     //-----------------------------------------------------------------------

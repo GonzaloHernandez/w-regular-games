@@ -1,5 +1,5 @@
-int : even  = 0;
-int : odd   = 1;
+include "paritygames.mzn";
+
 int : nvertices;
 int : nedges;
 set of int : vertices	= 1..nvertices;
@@ -13,6 +13,11 @@ array [edges] of int	: targets;
 
 array [vertices]	of var bool	: V;
 array [edges]		of var bool	: E;
+
+vertices : start = 1 ;
+int	: reward = 0;			% 0=look for MIN priority, 1=look for MAX priority
+int : player = 0;			% 0=EVEN player perspective, 1=ODD player perspective
+int : opponent = 1-player;
 
 % -------------------------------------------------------------------------------------
 
@@ -31,32 +36,7 @@ predicate fixEdges(array [int] of edges : es, array [int] of edges: nes) =
 % 	fixEdges([1,3,5,7],[2,4,9,6,8,10,11,12]);
 
 constraint
-	V[start] = true;
-
-constraint   
-	forall(v in vertices where owners[v]==even)(
-		V[v] ->	exists(e in edges where sources[e]==v)(E[e])
-	);
-
-constraint
-	forall(v in vertices where owners[v]==odd)(
-		V[v] ->	forall(e in edges where sources[e]==v)(E[e])
-	);
-
-constraint
-	forall(w in vertices where w != start)(
-		exists(e in edges where targets[e]==w)(E[e]) -> V[w]
-	);
-
-include "progressmeasure.mzn";
-constraint
-	globalmeasureprogress(owners,colors,sources,targets,V,E);
-
-% include "cyclefilter.mzn";
-% constraint
-	% cycle_filter(owners,colors,sources,targets,V,E,[start]);
-
-vertices : start = 1 ;
+	parity_conditions(owners,colors,sources,targets,V,E, 1,0,0);	
 
 % -------------------------------------------------------------------------------------
 
@@ -64,7 +44,6 @@ array [int]	of int : Va ::output_only ::output = [v | v in vertices	where fix(V[
 array [int]	of int : Ea ::output_only ::output = [e | e in edges	where fix(E[e])];
 
 % solve ::bool_search(V++E,input_order,indomain_max) satisfy ; 
-
 
 output
 % 	["V  = \(V) \n"] ++
