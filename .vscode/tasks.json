@@ -46,7 +46,7 @@
                 "${workspaceFolder}/build/noc",
                 "-I${env:HOME}/.local/include",
                 "-L${env:HOME}/.local/lib",
-                // "-lchuffed_fzn",
+                "-lchuffed_fzn",
                 "-lchuffed",
             ],
             "problemMatcher": [
