@@ -468,6 +468,13 @@ void Game::printGame() {
     // std::cout << "start:     " << start << std::endl;
 }
 
+void Game::flipGame() {
+    for(int v=0; v<nvertices; v++) {
+        owners[v] = 1-owners[v];
+        colors[v]++;
+    }
+}
+
 //=====================================================================================
 
 GameView::GameView(Game& g) : g(g) {

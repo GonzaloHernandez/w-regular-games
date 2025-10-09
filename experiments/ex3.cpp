@@ -28,6 +28,8 @@ struct options {
     int                 checker         = 0;    // 0=none 1=SCC
     int                 filter          = -1;   // 0=Stack 1=Eager 2=Memo
     int                 proof           = 0;    // 0=no 1=yes 2=eager
+    int                 flip            = 0;    // 0=no 1=flip 2=flip_to_compare
+    
 } options;
 
 //--------------------------------------------------------------------------------------
@@ -284,6 +286,9 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--filter-eager")==0)       { options.filter  = 1; }
         else if (strcmp(argv[i],"--filter-memo")==0)        { options.filter  = 2; options.checker = 1;}
 
+        else if (strcmp(argv[i],"--flip")==0)               { options.flip  = 1;}
+        else if (strcmp(argv[i],"--flip-compare")==0)       { options.flip  = 2;}
+
         else if (strcmp(argv[i],"--help")==0) {
             std::cout << "Usage: " << argv[0] << " [options]\n";
             std::cout << "Options:\n";
@@ -318,6 +323,8 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --filter-stack             : Filter by CP-NOC\n";
             std::cout << "  --filter-eager             : Filter by CP-NOC\n";
             std::cout << "  --filter-memo              : Filter by CP-NOC\n";
+            std::cout << "  --flip                     : Convert the game into its complement\n";
+            std::cout << "  --flip-compare             : Solve showing dualitity converting the game into its complement \n";
             return false;
         }
         else {
@@ -376,6 +383,9 @@ int main(int argc, char *argv[])
             game = new Game({0,1},{3,2},{0,1},{1,0},EVEN,MIN);
             break;
     }
+
+    if (options.flip == 1) game->flipGame();
+
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> launchinggame = end - start;
 
@@ -604,40 +614,45 @@ int main(int argc, char *argv[])
     // ZRA
 
     else if (game && options.proof==0 && options.solver==5) {
-        start = std::chrono::high_resolution_clock::now();
+        for (int f=0; f<=1; f++) {
+            start = std::chrono::high_resolution_clock::now();
 
-        Zielonka zlk(*game);
-        
-        end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> preptime = end - start;
-
-        if (options.print_verbose) {
-            std::cout << "Preparation time   : " << preptime.count() << std::endl;
-        }
-
-        start = std::chrono::high_resolution_clock::now();
-        auto win = zlk.solve();
-        end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> totaltime = end - start;
-
-        if (options.print_solution || options.print_verbose) {
-            std::cout << "EVEN " << win[0] << std::endl;
-            std::cout << "ODD  " << win[1] << std::endl;
-        }
-
-        for(auto& v0 : options.starts) {
-            auto it = std::find(win[0].begin(), win[0].end(), v0);
-
-            if (options.print_time>=0 || options.print_verbose)
-                std::cout << v0 << ": " << (it != win[0].end()?"EVEN ":"ODD ");
+            Zielonka zlk(*game);
             
-            
-            if (options.print_time!=0 || options.print_verbose) {
-                std::cout   << totaltime.count();
+            end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> preptime = end - start;
+
+            if (options.print_verbose) {
+                std::cout << "Preparation time   : " << preptime.count() << std::endl;
             }
 
-            std::cout << std::endl;
-         
+            start = std::chrono::high_resolution_clock::now();
+            auto win = zlk.solve();
+            end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> totaltime = end - start;
+
+            if (options.print_solution || options.print_verbose) {
+                std::cout << "EVEN " << win[0] << std::endl;
+                std::cout << "ODD  " << win[1] << std::endl;
+            }
+
+            for(auto& v0 : options.starts) {
+                auto it = std::find(win[0].begin(), win[0].end(), v0);
+
+                if (options.print_time>=0 || options.print_verbose)
+                    std::cout << v0 << ": " << (it != win[0].end()?"EVEN ":"ODD ");
+                
+                
+                if (options.print_time!=0 || options.print_verbose) {
+                    std::cout   << totaltime.count();
+                }
+
+                std::cout << std::endl;
+            
+            }
+            if (options.flip < 2) // not compare with flipped game
+                break;
+            game->flipGame();
         }
     }
 

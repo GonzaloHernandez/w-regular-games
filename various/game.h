@@ -63,6 +63,7 @@ public:
     bool compareColors(int c1,int c2,parity_comp rel=BET);
     void exportFile(int type, std::string filename);
     void printGame();
+    void flipGame();
 };
 
 // =======================================================================================
