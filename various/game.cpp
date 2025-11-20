@@ -47,7 +47,9 @@ void Game::parseline_dzn(const std::string& line,std::vector<int>& myvec) {
 void Game::parseline_gm(const std::string& line,std::vector<int>& vinfo, 
                         std::vector<int>& outs, std::string& comment) 
 {
-    std::regex pattern(R"((\d+)\s+(\d+)\s+(\d+)\s+([\d,]+)(?:\s+\"([^"]+)\")?;?)");
+    // std::regex pattern(R"((\d+)\s+(\d+)\s+(\d+)\s+([\d,]+)(?:\s+\"([^"]+)\")?;?)");
+    std::regex pattern(R"((\d+)\s+(\d+)\s+(\d+)\s+([\d,\s]+)(?:\s+\"([^"]+)\")?;?)");
+    
     std::smatch matches;
 
     std::sregex_iterator it(line.begin(), line.end(), pattern);

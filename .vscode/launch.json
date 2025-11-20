@@ -37,13 +37,13 @@
                 // "--gm", "${env:HOME}/gm/recursiveladder-1000.gm",
                 // "--gm", "/home/chalo/ce.gm",
                 // "--dzn", "${workspaceFolder}/data/jurd-2-1.dzn",
-                "--gm", "${workspaceFolder}/build/temp.gm",
+                "--gm", "${workspaceFolder}/build/onebit.gm",
                 // "--jurd","2","1","--min",
                 // "--rand","20","10","1","2",
                 // "--gm","build/temp.gm",
                 // "--dimacs","jurd.cnf",
                 // "--ladder","2",
-                "--start","2",
+                "--start","0",
                 // "--proof",
                 // "--proof-eager",
                 // "--min",
@@ -58,7 +58,7 @@
                 // "--zchaff"
                 // "--help"
                 // "--checker-scc",
-                "--filter-stack"
+                "--filter-eager"
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
