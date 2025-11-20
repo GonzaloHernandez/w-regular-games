@@ -44,30 +44,112 @@ void Game::parseline_dzn(const std::string& line,std::vector<int>& myvec) {
 
 //----------------------------------------------------------------------------------
 
-void Game::parseline_gm(const std::string& line,std::vector<int>& vinfo, 
-                        std::vector<int>& outs, std::string& comment) 
-{
-    // std::regex pattern(R"((\d+)\s+(\d+)\s+(\d+)\s+([\d,]+)(?:\s+\"([^"]+)\")?;?)");
-    std::regex pattern(R"((\d+)\s+(\d+)\s+(\d+)\s+([\d,\s]+)(?:\s+\"([^"]+)\")?;?)");
-    
-    std::smatch matches;
 
-    std::sregex_iterator it(line.begin(), line.end(), pattern);
-    std::sregex_iterator end;
+#include <cstdio>  // For sscanf
+#include <cstring> // For strstr (useful for finding comment start)
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <cctype>
 
-    if (std::regex_match(line, matches, pattern)) {
-        vinfo.push_back(std::stoi(matches[1]));
-        vinfo.push_back(std::stoi(matches[2]));
-        vinfo.push_back(std::stoi(matches[3]));
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <cctype>
 
-        std::stringstream ss(matches[4]);
-        std::string num;
-        while (std::getline(ss, num, ',')) {
-            outs.push_back(std::stoi(num));
-        }
-        comment = matches[5];
+size_t skip_whitespace(const std::string& line, size_t start) {
+    while (start < line.size() && std::isspace(line[start])) {
+        start++;
     }
+    return start;
+}
 
+size_t find_token_end(const std::string& line, size_t start, char delimiter) {
+    size_t end = line.find(delimiter, start);
+    if (end == std::string::npos) {
+        end = line.size();
+    }
+    size_t non_space_end = start;
+    for (size_t i = start; i < end; ++i) {
+        if (!std::isspace(line[i])) {
+            non_space_end = i + 1;
+        }
+    }
+    return non_space_end;
+}
+
+void Game::parseline_gm(const std::string& line, std::vector<int>& vinfo, 
+                        std::vector<int>& outs_targets, std::string& comment) 
+{
+    vinfo.clear();
+    outs_targets.clear();
+    comment.clear();
+
+    size_t current = 0;
+    size_t next;
+    
+    // --- 1. Extract Vertex ID, Priority, Owner (Space-separated) ---
+    for (int i = 0; i < 3; ++i) {
+        current = skip_whitespace(line, current);
+        if (current >= line.size()) return; // Malformed line
+
+        next = find_token_end(line, current, ' ');
+        if (next == current) return; // Empty token
+
+        vinfo.push_back(std::stoi(line.substr(current, next - current)));
+        current = next;
+    }
+    
+    // --- 2. Extract Target Edges (Comma-separated list) ---
+    // Move 'current' past the space separator after the Owner
+    current = skip_whitespace(line, current);
+
+    size_t end_of_targets_block = line.find_first_of("\" \t;", current);
+    if (end_of_targets_block == std::string::npos) {
+        end_of_targets_block = line.size();
+    }
+    
+    // Take the whole block that might contain the targets (e.g., "1,2,3")
+    std::string targets_block = line.substr(current, end_of_targets_block - current);
+    
+    size_t target_start = 0;
+    size_t target_comma;
+
+    // Use string::find for the comma delimiter inside the targets block
+    while ((target_comma = targets_block.find(',', target_start)) != std::string::npos) {
+        std::string num_str = targets_block.substr(target_start, target_comma - target_start);
+        
+        // Trim and convert the number
+        size_t first = num_str.find_first_not_of(" \t");
+        size_t last = num_str.find_last_not_of(" \t");
+        
+        if (first != std::string::npos) {
+            outs_targets.push_back(std::stoi(num_str.substr(first, last - first + 1)));
+        }
+        target_start = target_comma + 1;
+    }
+    
+    // Process the last number (or the only number)
+    std::string num_str = targets_block.substr(target_start);
+    size_t first = num_str.find_first_not_of(" \t");
+    if (first != std::string::npos) {
+        size_t last = num_str.find_last_not_of(" \t");
+        outs_targets.push_back(std::stoi(num_str.substr(first, last - first + 1)));
+    }
+    
+    // Update main position pointer to continue searching for comment
+    current += targets_block.size(); 
+    
+    // --- 3. Extract Optional Comment ---
+    current = skip_whitespace(line, current);
+
+    if (current < line.size() && line[current] == '"') {
+        current++; // Move past the opening quote
+        size_t comment_end = line.find('"', current);
+        if (comment_end != std::string::npos) {
+            comment = line.substr(current, comment_end - current);
+        }
+    }
 }
 
 //----------------------------------------------------------------------------------
@@ -105,6 +187,9 @@ Game::Game( std::vector<int> own,std::vector<int> col,
 Game::Game(int type, std::string filename, int start, reward_type rew) 
 :   nvertices(0), nedges(0), start(start), reward(rew) 
 {
+    std::ios_base::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+
     if (!filename.empty() && filename.back() == '.') {
         switch (type) {
             case DZN:   filename.append("dzn"); break;
