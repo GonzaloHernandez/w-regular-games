@@ -298,15 +298,16 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
 
         int es = 1;
         int os = 0;
+        
         for (int l=1; l<levels; l++) {
             os = ((blocks*3)+1)*(levels-1)+1;
             for (int b=0; b<blocks; b++) {
                 owners.push_back(1);
                 owners.push_back(0);
                 owners.push_back(0);
-                colors.push_back(l*2);
-                colors.push_back(l*2-1);
-                colors.push_back(l*2);
+                colors.push_back((levels-l)*2);
+                colors.push_back((levels-l)*2+1);
+                colors.push_back((levels-l)*2);
 
                 sources.push_back(es);   targets.push_back(es+1);
                 sources.push_back(es);   targets.push_back(es+2);
@@ -323,7 +324,7 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
                 os += 2;
             }
             owners.push_back(1);
-            colors.push_back(l*2);
+            colors.push_back((levels-l)*2);
             es += 1;
         }
         int l = levels;
@@ -331,8 +332,8 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
             owners.push_back(0);
             owners.push_back(1);
 
-            colors.push_back(l*2);
-            colors.push_back(l*2-1);
+            colors.push_back((levels-l)*2);
+            colors.push_back((levels-l)*2+1);
 
             sources.push_back(es);   targets.push_back(es+1);
             sources.push_back(es+1); targets.push_back(es);
@@ -342,7 +343,7 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
             es += 2;
         }
         owners.push_back(0);
-        colors.push_back(l*2);
+        colors.push_back((levels-l)*2);
 
         fixStartingZero();
         outs.resize(nvertices);
