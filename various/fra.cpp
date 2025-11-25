@@ -1,9 +1,9 @@
 #include "fra.h"
 
 struct splay {
-    int loop;
-    int best;
-    int from;
+    int         loop;
+    long long   best;
+    int         from;
     bool touched()  { return loop>=0; }
     bool parity()   { return best%2; }
 };
@@ -56,8 +56,8 @@ bool isBetter(Game& g,int v1,int v2) {
 
 //-----------------------------------------------------------------------------------------------------
 
-int bestcolor(Game& g, int index,const std::vector<int>& path){
-    int m = g.colors[path[index]];
+long long bestcolor(Game& g, int index,const std::vector<int>& path){
+    long long m = g.colors[path[index]];
     for (int i=index+1; i<path.size(); i++) {
         if ((g.reward==MIN && g.colors[path[i]] < m) || (g.reward==MAX && g.colors[path[i]] > m)) {
             m = g.colors[path[i]];
@@ -90,75 +90,9 @@ signed char getPlayBasic(Game& g, std::vector<int> path, int v) {
 
 //-----------------------------------------------------------------------------------------------------
 
-// signed char getPlayMemo(Game& g, std::vector<int> path, int v, signed char* memo) 
-splay getPlayMemo(Game& g, std::vector<int> path, int v, std::vector<splay>& memo) 
-{
-    int index = findVertex(v,path);
-    if (index >= 0) {
-        int best = bestcolor(g,index,path);
-        return {v, best, g.colors[v]};
-    }
-    else {
-        int p = g.owners[v];
-        splay next;
-        for(auto& e : g.outs[v]) {
-            int w = g.targets[e];
-
-            if (memo[e].touched() && findVertex(memo[e].loop,path)>=0) {
-                next = memo[e];
-
-                int index = findVertex(memo[e].loop,path);
-                int until = bestcolor(g,index,path);
-                if ( isBetter(g, until, next.from) ) {
-                    next.best = until;
-                }
-                else {
-                    next.best = next.from;
-                }
-                if (next.parity() != memo[e].parity()) {
-                    next = getPlayMemo(g, path+v, w, memo);
-                }
-            }
-            else {
-                next = getPlayMemo(g, path+v, w, memo);
-            }
-
-            if (next.touched()) {
-
-                if ( isBetter(g, g.colors[v], next.from)) {
-                    next.from = g.colors[v];
-                }
-                memo[e] = next;
-            }
-
-            if (v == next.loop && g.owners[v]!=next.parity()) {
-                next.loop = -1;
-            }
-
-            if (next.parity() == p) 
-                return next;
-        }
-        return next;
-    }
-}
-
-//-----------------------------------------------------------------------------------------------------
-
 signed char getPlay(Game& g, int start, bool basic) {
-    if (basic) {
-        return getPlayBasic(g, {}, start);
-    }
-
-    // std::unique_ptr<signed char[]> memo = std::make_unique<signed char[]>(g.nvertices);
-    // std::fill_n(memo.get(), g.nvertices, 9);
-    // auto play = getPlayMemo(g, {}, start, memo.get());
-
-    std::vector<splay> memo(g.nedges,{-1,-1,-1});   
-    auto play = getPlayMemo(g, {}, start, memo);
-
-    return play.parity();
+    return getPlayBasic(g, {}, start);
 }
-
 
 //-----------------------------------------------------------------------------------------------------
 

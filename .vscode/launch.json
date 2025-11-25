@@ -37,7 +37,7 @@
                 // "--gm", "${env:HOME}/gm/recursiveladder-1000.gm",
                 // "--gm", "/home/chalo/ce.gm",
                 // "--dzn", "${workspaceFolder}/data/jurd-2-1.dzn",
-                "--gm", "${workspaceFolder}/build/onebit.gm",
+                "--gm", "${workspaceFolder}/build/flc3.gm",
                 // "--jurd","2","1","--min",
                 // "--rand","20","10","1","2",
                 // "--gm","build/temp.gm",
@@ -50,7 +50,7 @@
                 // "--export-gm","/home/chalo/dbg.gm",
                 // "--verbose"
                 // "--print-solution",
-                // "--print-time",
+                "--print-times",
                 // "--matrix-based",
                 "--noc-even",
                 // "--scc",

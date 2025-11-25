@@ -44,6 +44,23 @@ void Game::parseline_dzn(const std::string& line,std::vector<int>& myvec) {
 
 //----------------------------------------------------------------------------------
 
+void Game::parseline_dzn(const std::string& line,std::vector<long long>& myvec) {
+    std::regex pattern(R"(\[(.*?)\])");
+    std::smatch match;
+
+    if (regex_search(line, match, pattern)) {
+        std::string values = match[1];
+        std::stringstream ss(values);
+        std::string value;
+
+        while (getline(ss, value, ',')) {
+            myvec.push_back(stoll(value));
+        }
+    }
+}
+
+//----------------------------------------------------------------------------------
+
 
 #include <cstdio>  // For sscanf
 #include <cstring> // For strstr (useful for finding comment start)
@@ -78,7 +95,7 @@ size_t find_token_end(const std::string& line, size_t start, char delimiter) {
     return non_space_end;
 }
 
-void Game::parseline_gm(const std::string& line, std::vector<int>& vinfo, 
+void Game::parseline_gm(const std::string& line, std::vector<long long>& vinfo, 
                         std::vector<int>& outs_targets, std::string& comment) 
 {
     vinfo.clear();
@@ -96,7 +113,7 @@ void Game::parseline_gm(const std::string& line, std::vector<int>& vinfo,
         next = find_token_end(line, current, ' ');
         if (next == current) return; // Empty token
 
-        vinfo.push_back(std::stoi(line.substr(current, next - current)));
+        vinfo.push_back(std::stoll(line.substr(current, next - current)));
         current = next;
     }
     
@@ -155,7 +172,7 @@ void Game::parseline_gm(const std::string& line, std::vector<int>& vinfo,
 //----------------------------------------------------------------------------------
 // Default game
 
-Game::Game( std::vector<int> own,std::vector<int> col,
+Game::Game( std::vector<int> own,std::vector<long long> col,
             std::vector<int> sou,std::vector<int> tar, 
             int startv, reward_type rew) 
 :   owners(own), colors(col), sources(sou), targets(tar), 
@@ -243,9 +260,12 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
                 if (line.find("parity") != std::string::npos) {
                     lastvertex = stoi(line.substr(line.find(" ")));
                     verts.resize(lastvertex+1);
+                } else if (line.find("start") != std::string::npos) {
+                    // ignore start line
                 } else {
-                    std::vector<int>    vinfo,outs;
-                    std::string         comment;
+                    std::vector<long long>  vinfo;
+                    std::vector<int>        outs;
+                    std::string             comment;
                     parseline_gm(line,vinfo,outs,comment);
                     verts[vinfo[0]] = counter;
                     outs.insert(outs.begin(),vinfo[0]); // check

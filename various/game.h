@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <random>
 #include <chrono> 
+#include <climits>
 
 enum parity_type    {EVEN,ODD};                         // 0,1
 enum reward_type    {MIN,MAX};                          // 0,1
@@ -29,10 +30,10 @@ public:
     friend std::vector<int> attractor(std::vector<int>& V, int q, Game& g);
     friend int main(int, char*[]);
 public:
-    std::vector<int>    owners;
-    std::vector<int>    colors;
-    std::vector<int>    sources;
-    std::vector<int>    targets;
+    std::vector<int>        owners;
+    std::vector<long long>  colors;
+    std::vector<int>        sources;
+    std::vector<int>        targets;
     std::vector<std::vector<int>>   outs;
     std::vector<std::vector<int>>   ins;
     int nvertices;
@@ -44,14 +45,15 @@ public:
 
     void fixStartingZero();
     void parseline_dzn  (const std::string& line,std::vector<int>& myvec);
-    void parseline_gm   (const std::string& line,std::vector<int>& vinfo, 
+    void parseline_dzn  (const std::string& line,std::vector<long long>& myvec);
+    void parseline_gm   (const std::string& line,std::vector<long long>& vinfo, 
                         std::vector<int>& outs, std::string& comment);
 
     //----------------------------------------------------------------------------------
 
 public:
     
-    Game(   std::vector<int> own,std::vector<int> col,
+    Game(   std::vector<int> own,std::vector<long long> col,
             std::vector<int> sou,std::vector<int> tar, 
             int startv, reward_type rew=MIN);
     Game(int type, std::string filename, int start, reward_type rew=MIN);
