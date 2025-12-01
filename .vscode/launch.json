@@ -35,15 +35,15 @@
             "program": "${workspaceFolder}/build/noc",
             "args": [   
                 // "--gm", "${env:HOME}/gm/recursiveladder-1000.gm",
-                // "--gm", "/home/chalo/ce.gm",
+                "--gm", "~/Cloud/games/mlsolver/FLCTLLimitClosuren\\=7.gm",
                 // "--dzn", "${workspaceFolder}/data/jurd-2-1.dzn",
-                "--gm", "${workspaceFolder}/build/flc3.gm",
+                // "--gm", "${workspaceFolder}/build/flc3.gm",
                 // "--jurd","2","1","--min",
                 // "--rand","20","10","1","2",
                 // "--gm","build/temp.gm",
                 // "--dimacs","jurd.cnf",
                 // "--ladder","2",
-                "--start","0",
+                "--start","24811",
                 // "--proof",
                 // "--proof-eager",
                 // "--min",
@@ -51,14 +51,15 @@
                 // "--verbose"
                 // "--print-solution",
                 "--print-times",
+                "--print-statistics",
                 // "--matrix-based",
-                "--noc-even",
+                "--noc-odd",
                 // "--scc",
                 // "--zra",
                 // "--zchaff"
                 // "--help"
-                // "--checker-scc",
-                "--filter-eager"
+                "--checker-dfs",
+                // "--filter-smart"
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

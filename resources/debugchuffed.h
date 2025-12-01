@@ -12,10 +12,10 @@
 // --------------------------------------------------------------------------------
 
 inline std::ostream& operator<<(std::ostream& os, const BoolView& obj) {
-    os << "B" << (!sign(obj)?"~":"") << var(obj);
-    if (!obj.isFixed())      os << "_";
-    else if (obj.isTrue())   os << "1";
-    else                     os << "0";
+    // os << "B" << (!sign(obj)?"~":"");
+    if (!obj.isFixed())      os << "?";
+    else if (obj.isTrue())   os << "+";
+    else                     os << "-";
 
     return os;
 }
@@ -133,14 +133,27 @@ inline std::string dbg_v2_lit(vec<vec<Lit>>& obj) {
     return vec2(obj).str();
 }
 
+
+inline std::string dbg_boolview(const BoolView& obj) {
+    std::stringstream ss;
+    ss << obj;
+    return ss.str();
+}
+
 // --------------------------------------------------------------------------------
 
 inline void launchdebugchuffed() {
     vec<BoolView> bs;
     vec<int> vi;
 
+    BoolView b = BoolView();
+
     dbg(vi);
+
+    dbg_boolview(b);
+
     dbg_v1_boolview(bs);
+
     dbg_v2_watchelem(sat.watches);
     dbg_v2_lit(sat.trail);
     dbg_v1_clause(sat.clauses);

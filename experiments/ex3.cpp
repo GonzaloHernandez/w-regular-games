@@ -15,6 +15,7 @@
 struct options {
     bool print_game         = false; 
     bool print_solution     = false; 
+    bool print_statistics   = false; 
     bool print_verbose      = false; 
     int  print_time         = 0;   // 0=Default 1=Solving Time 2=All times
     int  game_type          = 0;    // enum game_type {DEF,JURD,RAND,MLADDER,DZN,GM,DIM}
@@ -25,8 +26,8 @@ struct options {
     std::string         export_filename = "";
     int                 export_type     = 0;    // 0=not DZN GM DIM
     int                 solver          = 0;    // 1=CP-NOC 2=CP-FRA 3=SAT-zchaff 4=SAT-cadical 5=ZRA 6=FRA 7=SCC
-    int                 checker         = 0;    // 0=none 1=SCC
-    int                 filter          = -1;   // 0=Stack 1=Eager 2=Memo
+    int                 checker         = 0;    // 0=none 1=SCC 2=DFS
+    int                 filter          = 0;    // 0=none 1=Eager 2=Memo 3=Smart
     int                 proof           = 0;    // 0=no 1=yes 2=eager
     int                 flip            = 0;    // 0=no 1=flip 2=flip_to_compare
     
@@ -273,18 +274,20 @@ bool parseMyOptions(int argc, char *argv[]) {
 
         else if (strcmp(argv[i],"--proof")==0)              { options.proof = 1; }
         else if (strcmp(argv[i],"--proof-eager")==0)        { options.proof = 2; }
-        else if (strcmp(argv[i],"--print-only-times")==0)   { options.print_time     = -2; }
-        else if (strcmp(argv[i],"--print-only-time")==0)    { options.print_time     = -1; }
-        else if (strcmp(argv[i],"--print-time")==0)         { options.print_time     = 1; }
-        else if (strcmp(argv[i],"--print-times")==0)        { options.print_time     = 2; }
-        else if (strcmp(argv[i],"--print-game")==0)         { options.print_game     = true; }
-        else if (strcmp(argv[i],"--print-solution")==0)     { options.print_solution = true; }
-        else if (strcmp(argv[i],"--verbose")==0)            { options.print_verbose  = true; }
+        else if (strcmp(argv[i],"--print-only-times")==0)   { options.print_time        = -2; }
+        else if (strcmp(argv[i],"--print-only-time")==0)    { options.print_time        = -1; }
+        else if (strcmp(argv[i],"--print-time")==0)         { options.print_time        = 1; }
+        else if (strcmp(argv[i],"--print-times")==0)        { options.print_time        = 2; }
+        else if (strcmp(argv[i],"--print-game")==0)         { options.print_game        = true; }
+        else if (strcmp(argv[i],"--print-solution")==0)     { options.print_solution    = true; }
+        else if (strcmp(argv[i],"--print-statistics")==0)   { options.print_statistics  = true; }
+        else if (strcmp(argv[i],"--verbose")==0)            { options.print_verbose     = true; }
 
         else if (strcmp(argv[i],"--checker-scc")==0)        { options.checker = 1; }
-        else if (strcmp(argv[i],"--filter-stack")==0)       { options.filter  = 0; }
+        else if (strcmp(argv[i],"--checker-dfs")==0)        { options.checker = 2; }
         else if (strcmp(argv[i],"--filter-eager")==0)       { options.filter  = 1; }
         else if (strcmp(argv[i],"--filter-memo")==0)        { options.filter  = 2; options.checker = 1;}
+        else if (strcmp(argv[i],"--filter-smart")==0)       { options.filter  = 3;}
 
         else if (strcmp(argv[i],"--flip")==0)               { options.flip  = 1;}
         else if (strcmp(argv[i],"--flip-compare")==0)       { options.flip  = 2;}
@@ -304,6 +307,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --print-times              : Print all times\n";
             std::cout << "  --print-game               : Print game\n";
             std::cout << "  --print-solution           : Print solution (All vertices)\n";
+            std::cout << "  --print-statistics         : Print statistics after solving\n";
             std::cout << "  --verbose                  : Print everything\n";
             std::cout << "  --max                      : Seek to maximize the color\n";
             std::cout << "  --min                      : Seek to minimize the color\n";
@@ -320,9 +324,10 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --proof                    : Compare results using Zielonka\n";
             std::cout << "  --proof-eager              : Looking for counterexample\n";
             std::cout << "  --checker-scc              : Checker by CP-NOC\n";
-            std::cout << "  --filter-stack             : Filter by CP-NOC\n";
+            std::cout << "  --checker-dfs              : Checker by DFS\n";
             std::cout << "  --filter-eager             : Filter by CP-NOC\n";
             std::cout << "  --filter-memo              : Filter by CP-NOC\n";
+            std::cout << "  --filter-smart             : Filter by CP-NOC\n";
             std::cout << "  --flip                     : Convert the game into its complement\n";
             std::cout << "  --flip-compare             : Solve showing dualitity converting the game into its complement \n";
             return false;
@@ -487,7 +492,7 @@ int main(int argc, char *argv[])
 
         std::cout << std::endl;
 
-        if (options.print_verbose) {
+        if (options.print_statistics || options.print_verbose) {
             engine.printStats();
         }
         

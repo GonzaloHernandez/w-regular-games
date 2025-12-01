@@ -62,7 +62,7 @@ public:
             if (bestcolor(index,pathV)%2==opponent(playerSAT)) {
                 vec<Lit> lits;
                 lits.push();
-                clausify(pathE,E,lits,index);
+                clausify(pathE,E,lits,0);
                 Clause* reason = Reason_new(lits);
                 if (! E[lastEdge].setVal(false,reason)) {
                     return CF_CONFLICT;
@@ -180,6 +180,57 @@ public:
         return CF_DONE;
     }
     //-----------------------------------------------------------------------
+    void clausifyExcept(vec<int>& path, vec<BoolView> &B, vec<Lit>& lits,int edgeIgnored) {
+        for (int i=0; i<path.size(); i++) { 
+            if (path[i] == edgeIgnored) continue;
+            lits.push(B[path[i]].getValLit());
+        }
+    }
+    //-----------------------------------------------------------------------
+    int filterSmart(vec<int>& pathV, vec<int>& pathE, int v, 
+        int lastEdge, int undefinedEdge) 
+    {
+        int index = findVertex(v,pathV);
+        if (index >= 0) {
+            if (bestcolor(index,pathV)%2==opponent(playerSAT)) {
+                vec<Lit> lits;
+                lits.push();
+                if (undefinedEdge == -1) {
+                    clausifyExcept(pathE,E,lits,lastEdge);
+                    Clause* reason = Reason_new(lits);
+                    if (! E[lastEdge].setVal(false,reason)) {
+                        return CF_CONFLICT;
+                    }
+                }
+                else {
+                    clausifyExcept(pathE,E,lits,undefinedEdge);
+                    Clause* reason = Reason_new(lits);
+                    if (! E[undefinedEdge].setVal(false,reason)) {
+                        return CF_CONFLICT;
+                    }
+                }
+            }
+        }
+        else {
+            pathV.push(v);
+            for (int e : g.outs[v]) {
+                if (E[e].isFalse()) continue;
+                if (!E[e].isFixed() && undefinedEdge >= 0) break;
+                if (!E[e].isFixed()) undefinedEdge = e;
+
+                int w = g.targets[e];
+                pathE.push(e);
+                int status = filterSmart(pathV, pathE, w, e, undefinedEdge);
+                pathE.pop();
+                if (status == CF_CONFLICT) {
+                    return status;
+                }
+            }
+            pathV.pop();
+        }
+        return CF_DONE;
+    }
+    //-----------------------------------------------------------------------
     bool propagate() override {
         vec<int> pathV;
         vec<int> pathE;
@@ -193,10 +244,15 @@ public:
             if (filterEager(pathV,pathE,g.start,-1,true) == CF_CONFLICT)
                 return false;
             break;
-        case 2:
+        case 2: {
             std::unique_ptr<s_memo[]> memo(new s_memo[g.nedges]);
             std::fill_n(memo.get(), g.nedges, s_memo{-1,-1});
             if (filterMemo(pathV,pathE,g.start,-1,true,memo.get()) == CF_CONFLICT)
+                return false;
+            break;
+        }
+        case 3:
+            if (filterSmart(pathV,pathE,g.start,-1,-1) == CF_CONFLICT)
                 return false;
             break;
         }
