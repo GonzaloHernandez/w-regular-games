@@ -136,9 +136,13 @@ public:
 
         // --------------------------------------------------------------
         // Every infinite OPPONENT play must be avoided.
-        if (checker==1) new CheckerSCC(g,V,E,playerSAT);
-        if (checker==2) new NoOpponentCycle(g,E,0,playerSAT);
-        if (filter > 0) new NoOpponentCycle(g,E,filter,playerSAT);
+        
+        switch(checker) {
+            case 1: new CheckerSCC(g,V,E,playerSAT);        break;
+            case 2: new NoOpponentCycle(g,V,E,0,playerSAT); break;
+            case 3: new NoOpponentCycle(g,V,E,4,playerSAT); break;
+        }
+        if (filter > 0) new NoOpponentCycle(g,V,E,filter,playerSAT);
 
         //------------------------------------------------------------
 

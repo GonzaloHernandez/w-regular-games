@@ -16,6 +16,7 @@ struct s_memo {
 class NoOpponentCycle : public Propagator {
 private:
     Game& g;
+    vec<BoolView> V;
     vec<BoolView> E;
     int filtertype;
     parity_type playerSAT;
@@ -26,10 +27,11 @@ private:
 
 public:
     //-----------------------------------------------------------------------
-    NoOpponentCycle(Game& g, vec<BoolView>& E, int filtertype, parity_type playerSAT)
-    :   g(g), E(E), filtertype(filtertype), playerSAT(playerSAT)
+    NoOpponentCycle(Game& g, vec<BoolView>& V, vec<BoolView>& E, int filtertype, parity_type playerSAT)
+    :   g(g), V(V), E(E), filtertype(filtertype), playerSAT(playerSAT)
     {
-        for (int i=0; i<g.sources.size(); i++) E[i].attach(this, 1 , EVENT_F );
+        for (int i=0; i<g.nvertices;i++) V[i].attach(this, 1 , EVENT_F );
+        for (int i=0; i<g.nedges;   i++) E[i].attach(this, 1 , EVENT_F );
     }
     //-----------------------------------------------------------------------
     int findVertex(int vertex,vec<int>& path) {
@@ -54,15 +56,67 @@ public:
             lits.push(B[path[i]].getValLit());
         }
     }
+
+    struct state{
+        int v;
+        int i;
+    };
+
+    int checkerDFSIterative(int v) {
+        vec<int>    pathV;
+        vec<int>    pathE;
+        vec<state>  stack;
+        stack.push({v,0});
+        int e = -1;
+        while (stack.size()>0) {
+            state& s = stack.last();
+            if (s.i == 0) {
+                int index = findVertex(s.v,pathV);
+                if (index >= 0) {
+                    if (bestcolor(index,pathV)%2==opponent(playerSAT)) {
+                        if (pathE.size()>0) {
+                            vec<Lit> lits;
+                            lits.push();
+                            clausify(pathE,E,lits,0);
+                            Clause* reason = Reason_new(lits);
+                            if (! E[e].setVal(false,reason)) {
+                                return CF_CONFLICT;
+                            }
+                        }
+                    }
+                    stack.pop();
+                    if (pathE.size()>0) pathE.pop();
+                    continue;
+                }
+                pathV.push(s.v);
+            }
+
+            if (s.i < g.outs[s.v].size()) {
+                e = g.outs[s.v][s.i++];
+                if (!E[e].isTrue()) continue;
+
+                int w = g.targets[e];
+                pathE.push(e);
+                stack.push({w,0});
+                continue;
+            }
+            else {
+                if (pathE.size()>0) pathE.pop();
+            }
+            stack.pop();
+            if (pathV.size()>0) pathV.pop();
+        }
+        return CF_DONE;
+    }
     //-----------------------------------------------------------------------
-    int checkerDFS(vec<int>& pathV, vec<int>& pathE, int v, int lastEdge) 
+    int checkerDFSRecursive(vec<int>& pathV, vec<int>& pathE, int v, int lastEdge) 
     {
         int index = findVertex(v,pathV);
         if (index >= 0) {
             if (bestcolor(index,pathV)%2==opponent(playerSAT)) {
                 vec<Lit> lits;
                 lits.push();
-                clausify(pathE,E,lits,0);
+                clausify(pathE,E,lits,index);
                 Clause* reason = Reason_new(lits);
                 if (! E[lastEdge].setVal(false,reason)) {
                     return CF_CONFLICT;
@@ -76,7 +130,7 @@ public:
 
                 int w = g.targets[e];
                 pathE.push(e);
-                int status = checkerDFS(pathV, pathE, w, e);
+                int status = checkerDFSRecursive(pathV, pathE, w, e);
                 pathE.pop();
 
                 if (status == CF_CONFLICT) {
@@ -237,7 +291,7 @@ public:
 
         switch (filtertype) {
         case 0:
-            if (checkerDFS(pathV,pathE,g.start,-1) == CF_CONFLICT)
+            if (checkerDFSRecursive(pathV,pathE,g.start,-1) == CF_CONFLICT)
                 return false;
             break;
         case 1:
@@ -253,6 +307,10 @@ public:
         }
         case 3:
             if (filterSmart(pathV,pathE,g.start,-1,-1) == CF_CONFLICT)
+                return false;
+            break;
+        case 4:
+            if (checkerDFSIterative(g.start) == CF_CONFLICT)
                 return false;
             break;
         }

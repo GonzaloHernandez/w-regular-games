@@ -26,7 +26,7 @@ struct options {
     std::string         export_filename = "";
     int                 export_type     = 0;    // 0=not DZN GM DIM
     int                 solver          = 0;    // 1=CP-NOC 2=CP-FRA 3=SAT-zchaff 4=SAT-cadical 5=ZRA 6=FRA 7=SCC
-    int                 checker         = 0;    // 0=none 1=SCC 2=DFS
+    int                 checker         = 0;    // 0=none 1=SCC 2=DFSRecursive 3=DFSIterative
     int                 filter          = 0;    // 0=none 1=Eager 2=Memo 3=Smart
     int                 proof           = 0;    // 0=no 1=yes 2=eager
     int                 flip            = 0;    // 0=no 1=flip 2=flip_to_compare
@@ -284,7 +284,8 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--verbose")==0)            { options.print_verbose     = true; }
 
         else if (strcmp(argv[i],"--checker-scc")==0)        { options.checker = 1; }
-        else if (strcmp(argv[i],"--checker-dfs")==0)        { options.checker = 2; }
+        else if (strcmp(argv[i],"--checker-dfs-recursive")==0)        { options.checker = 2; }
+        else if (strcmp(argv[i],"--checker-dfs-iterative")==0)        { options.checker = 3; }
         else if (strcmp(argv[i],"--filter-eager")==0)       { options.filter  = 1; }
         else if (strcmp(argv[i],"--filter-memo")==0)        { options.filter  = 2; options.checker = 1;}
         else if (strcmp(argv[i],"--filter-smart")==0)       { options.filter  = 3;}
@@ -324,7 +325,8 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --proof                    : Compare results using Zielonka\n";
             std::cout << "  --proof-eager              : Looking for counterexample\n";
             std::cout << "  --checker-scc              : Checker by CP-NOC\n";
-            std::cout << "  --checker-dfs              : Checker by DFS\n";
+            std::cout << "  --checker-dfs-recursive    : Checker by DFS Recursive\n";
+            std::cout << "  --checker-dfs-iterative    : Checker by DFS Iterative\n";
             std::cout << "  --filter-eager             : Filter by CP-NOC\n";
             std::cout << "  --filter-memo              : Filter by CP-NOC\n";
             std::cout << "  --filter-smart             : Filter by CP-NOC\n";

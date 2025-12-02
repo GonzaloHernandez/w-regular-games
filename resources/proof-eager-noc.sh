@@ -11,7 +11,7 @@ while true; do
     ./noc --rand $nv $np $e1 $e2 --export-gm temp.gm
 
     for ((i=0; i<nv; i++)); do
-        output=$(./noc --gm temp.gm --max --noc-even --filter-eager --proof --start "$i")
+        output=$(./noc --gm temp.gm --max --noc-even --checker-dfs --proof --start "$i")
         
         if [ "$output" = "." ]; then
             printf "."
