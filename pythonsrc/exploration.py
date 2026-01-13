@@ -16,7 +16,7 @@ def explore(path, current) :
     
 # ------------------------------------------------------------------------------------
 
-def explore(pathV, pathE, currentV, lastE) :
+def explorePlays(pathV, pathE, currentV, lastE) :
     if currentV in pathV :
         print(pathV+[currentV])
         print(pathE)
@@ -26,38 +26,39 @@ def explore(pathV, pathE, currentV, lastE) :
         b[lastE] = (currentV,best)
     else :
         for e in g.vedges[currentV] :
-            explore(pathV + [currentV], pathE + [e], g.targets[e], e)
+            explorePlays(pathV + [currentV], pathE + [e], g.targets[e], e)
 
 # ------------------------------------------------------------------------------------
 
-def explorePlays(path, current) :
+def explorePlays2(path, current) :
     try :
         index = path.index(current)
-        mincolor = min([ g.colors[v] for v in path[index:]])
+        bestcolor = max([ g.colors[v] for v in path[index:]])
         for v in path : 
-            if mincolor%2 != g.owners[v] :
+            if bestcolor%2 != g.owners[v] :
                 targets = [g.targets[i] for i in range(g.nedges) if g.sources[i]==v]
                 differ = list(set(targets).difference(set(targets).intersection(set(path))))
                 if len(differ)>0 : 
-                    print(" ",path,[current],mincolor)
+                    print(" ",path,[current],bestcolor)
                     return
-        print("*",path,[current],mincolor)
+        print("*",path,[current],bestcolor)
             
     except ValueError :
         for e in [ {'source':g.sources[i],'target':g.targets[i]} for i in range(g.nedges) ] :
             if e['source'] == current :
-                explorePlays(path + [current], e['target'])
+                explorePlays2(path + [current], e['target'])
     
 # ------------------------------------------------------------------------------------
 
 def getPlay(type, path, current) -> list :
     if current in path :
         h = path.index(current)
-        best = min([ g.colors[v] for v in path[h:]])
+        best = max([ g.colors[v] for v in path[h:]])
         print(path+[current],best)
         return best%2, path
     else :
         if g.owners[current] == type :
+            detourtype,detourpath = type,None
             for e in g.vedges[current] :
                 detourtype,detourpath = getPlay( type, path+[current], g.targets[e] )
                 if detourtype == type :
@@ -68,7 +69,26 @@ def getPlay(type, path, current) -> list :
 
 # ------------------------------------------------------------------------------------
 
-g = Game('./data/SAT.dzn',Game.FIRST0)
+def exploreCalculatingAverages(pathV, pathE, current) :
+    if current in pathV :
+        print('v:',pathV+[current])
+        print('e:',pathE)
+        print('w:', [ g.weights[e] for e in pathE ])
+        print('m:', sum([ g.weights[e] for e in pathE ]) / len(pathE) )
+        print()
+    else :
+        for e in [ {'id':i,'source':g.sources[i],'target':g.targets[i]} for i in range(g.nedges) ] :
+            if e['source'] == current :
+                exploreCalculatingAverages(pathV + [current], pathE + [e['id']],  e['target'])
+                
+# ------------------------------------------------------------------------------------
 
-type,path = getPlay(ODD,[],0)
-print(path,"EVEN" if type==0 else "ODD")
+
+g = Game('./data/mpg-simple.dzn',Game.FIRST1)
+
+# type,path = getPlay(ODD,[],0)
+# print(path,"EVEN" if type==0 else "ODD")
+
+exploreCalculatingAverages([],[],0)
+
+# print(getPlay(ODD,[],0))

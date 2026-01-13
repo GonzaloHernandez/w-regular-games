@@ -198,6 +198,33 @@ Game::Game( std::vector<int> own,std::vector<long long> col,
     }
 }
 
+Game::Game( std::vector<int> own,std::vector<long long> col,
+            std::vector<int> sou,std::vector<int> tar,std::vector<int> wei,
+            int startv, reward_type rew) 
+:   owners(own), colors(col), sources(sou), targets(tar), weights(wei),
+    start(startv), reward(rew) 
+{
+    nvertices   = own.size();
+    nedges      = sou.size();
+
+    assert(start >= 0 && start < nvertices && "Starting vertex must be within the valid range");
+
+    outs.resize(nvertices);
+    ins .resize(nvertices);
+
+    for(int i=0; i<nvertices; i++) {
+        owners[i]=own[i];
+        colors[i]=col[i];
+    }
+    for(int i=0; i<nedges; i++) {
+        sources[i]=sou[i];
+        targets[i]=tar[i];
+        weights[i]=wei[i];
+        outs[sources[i]].push_back(i);
+        ins [targets[i]].push_back(i);
+    }
+}
+
 //----------------------------------------------------------------------------------
 // Imported game from DZN or GM
 
@@ -236,6 +263,8 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
                     parseline_dzn(line,sources);
                 } else if (line.find("targets") != std::string::npos) {
                     parseline_dzn(line,targets);
+                } else if (line.find("weights") != std::string::npos) {
+                    parseline_dzn(line,weights);
                 }
             }
             file.close();
@@ -329,16 +358,16 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
                 colors.push_back((levels-l)*2+1);
                 colors.push_back((levels-l)*2);
 
-                sources.push_back(es);   targets.push_back(es+1);
-                sources.push_back(es);   targets.push_back(es+2);
-                sources.push_back(es+1); targets.push_back(es+2);
-                sources.push_back(es+2); targets.push_back(es);
+                sources.push_back(es);   targets.push_back(es+1);   weights.push_back(0);
+                sources.push_back(es);   targets.push_back(es+2);   weights.push_back(0);
+                sources.push_back(es+1); targets.push_back(es+2);   weights.push_back(0);
+                sources.push_back(es+2); targets.push_back(es);     weights.push_back(0);
 
-                sources.push_back(es+2); targets.push_back(es+3);
-                sources.push_back(es+3); targets.push_back(es+2);
+                sources.push_back(es+2); targets.push_back(es+3);   weights.push_back(0);
+                sources.push_back(es+3); targets.push_back(es+2);   weights.push_back(0);
 
-                sources.push_back(es+2); targets.push_back(os+1);
-                sources.push_back(os+1); targets.push_back(es+2);
+                sources.push_back(es+2); targets.push_back(os+1);   weights.push_back(0);
+                sources.push_back(os+1); targets.push_back(es+2);   weights.push_back(0);
 
                 es += 3;
                 os += 2;
@@ -355,11 +384,11 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
             colors.push_back((levels-l)*2);
             colors.push_back((levels-l)*2+1);
 
-            sources.push_back(es);   targets.push_back(es+1);
-            sources.push_back(es+1); targets.push_back(es);
-            sources.push_back(es+1); targets.push_back(es+2);
-            sources.push_back(es+2); targets.push_back(es+1);
-            
+            sources.push_back(es);   targets.push_back(es+1);   weights.push_back(0);
+            sources.push_back(es+1); targets.push_back(es);     weights.push_back(0);
+            sources.push_back(es+1); targets.push_back(es+2);   weights.push_back(0);
+            sources.push_back(es+2); targets.push_back(es+1);   weights.push_back(0);
+
             es += 2;
         }
         owners.push_back(0);
@@ -403,6 +432,7 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
             for (int i=0; i<es; i++) {
                 sources.push_back(v);
                 targets.push_back(ws[i]);
+                weights.push_back(std::rand() % 11);
                 outs[v].push_back(nedges);
                 ins[ws[i]].push_back(nedges);
                 nedges++;
@@ -429,6 +459,7 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
         colors  .resize(nvertices);
         sources .resize(nedges);
         targets .resize(nedges);
+        weights .resize(nedges);
         outs    .resize(nvertices);
         ins     .resize(nvertices);
 
@@ -444,24 +475,28 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
         for (int i=0; i<bl; i++) {
             sources[e] = i*3+0;
             targets[e] = i*3+1;
+            weights[e] = 0;
             outs[i*3+0].push_back(e);
             ins [i*3+1].push_back(e);
             e++;
 
             sources[e] = i*3+1;
             targets[e] = i*3+2;
+            weights[e] = 0;
             outs[i*3+1].push_back(e);
             ins [i*3+2].push_back(e);
             e++;
 
             sources[e] = i*3+1;
             targets[e] = i*3+3;
+            weights[e] = 0;
             outs[i*3+1].push_back(e);
             ins [i*3+3].push_back(e);
             e++;
 
             sources[e] = i*3+2;
             targets[e] = i*3+3;
+            weights[e] = 0;
             outs[i*3+2].push_back(e);
             ins [i*3+3].push_back(e);
             e++;
@@ -469,6 +504,7 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
 
         sources[e] = bl*3;
         targets[e] = 0;
+        weights[e] = 0;
         outs[bl*3].push_back(e);
         ins [0].push_back(e);
     }
@@ -535,6 +571,8 @@ void Game::exportFile(int type, std::string filename) {
         for(int i=0; i<sources.size(); i++) file<<(i?",":"")<<sources[i]+1; file<<"];"<<std::endl;
         file << "targets   = ["; 
         for(int i=0; i<targets.size(); i++) file<<(i?",":"")<<targets[i]+1; file<<"];"<<std::endl;
+        file << "weights   = ["; 
+        for(int i=0; i<weights.size(); i++) file<<(i?",":"")<<weights[i]; file<<"];"<<std::endl;
         break;
 
     case GM:
@@ -572,6 +610,10 @@ void Game::printGame() {
     std::cout << "targets:   {";
     for(int e=0; e<nedges; e++) 
         std::cout<<targets[e]<<(e<targets.size()-1?",":"");
+    std::cout << "}" << std::endl;
+    std::cout << "weights:   {";
+    for(int e=0; e<nedges; e++) 
+        std::cout<<weights[e]<<(e<weights.size()-1?",":"");
     std::cout << "}" << std::endl;
     // std::cout << "start:     " << start << std::endl;
 }

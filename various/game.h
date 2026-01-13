@@ -34,6 +34,7 @@ public:
     std::vector<long long>  colors;
     std::vector<int>        sources;
     std::vector<int>        targets;
+    std::vector<int>        weights;
     std::vector<std::vector<int>>   outs;
     std::vector<std::vector<int>>   ins;
     int nvertices;
@@ -54,10 +55,13 @@ public:
 public:
     
     Game(   std::vector<int> own,std::vector<long long> col,
-            std::vector<int> sou,std::vector<int> tar, 
-            int startv, reward_type rew=MIN);
-    Game(int type, std::string filename, int start, reward_type rew=MIN);
-    Game(int type, std::vector<int> vals, int start, reward_type rew=MIN);
+            std::vector<int> sou,std::vector<int> tar,
+            int startv, reward_type rew=MAX);
+    Game(   std::vector<int> own,std::vector<long long> col,
+            std::vector<int> sou,std::vector<int> tar,std::vector<int> wei,
+            int startv, reward_type rew=MAX);
+    Game(int type, std::string filename, int start, reward_type rew=MAX);
+    Game(int type, std::vector<int> vals, int start, reward_type rew=MAX);
 
     void setStart(int startv);
     void setReward(reward_type rew);

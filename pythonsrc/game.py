@@ -26,6 +26,7 @@ class Game :
             self.edges      = []
             self.sources    = []
             self.targets    = []
+            self.weights    = []
 
             self.vedges     = [[]]
 
@@ -44,6 +45,7 @@ class Game :
                     elif    key=="nedges"       : self.nedges    = json.loads(value)
                     elif    key=="sources"      : self.sources   = json.loads(value)
                     elif    key=="targets"      : self.targets   = json.loads(value)
+                    elif    key=="weights"      : self.weights   = json.loads(value)
             fixZero = args[1] if len(args)==2 else self.FIRST1
             if fixZero :
                 self.vertices   = [v for v in range(self.nvertices)]

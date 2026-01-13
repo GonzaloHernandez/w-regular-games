@@ -29,15 +29,15 @@
         },
         // --------------------------------------------------------------
         {
-            "name": "C++ Debug experments 3",
+            "name": "C++ Debug experments 4",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/noc",
+            "program": "${workspaceFolder}/build/noc-mpg",
             "args": [   
                 // "--gm", "${env:HOME}/gm/recursiveladder-1000.gm",
                 // "--gm", "~/Cloud/games/mlsolver/FLCTLLimitClosuren\\=7.gm",
-                "--dzn", "${workspaceFolder}/data/jurd-2-1.dzn",
-                // "--gm", "${workspaceFolder}/build/flc3.gm",
+                "--dzn", "${workspaceFolder}/data/mpg-simple.dzn",
+                // "--gm", "${workspaceFolder}/build/jurd-200-200.gm",
                 // "--jurd","2","1","--min",
                 // "--rand","20","10","1","2",
                 // "--gm","build/temp.gm",
@@ -46,20 +46,67 @@
                 // "--start","24811",
                 // "--proof",
                 // "--proof-eager",
-                "--min",
+                // "--min",
                 // "--export-gm","/home/chalo/dbg.gm",
                 // "--verbose"
                 // "--print-solution",
-                "--print-times",
-                "--print-statistics",
+                // "--print-times",
+                // "--print-statistics",
+                "--print-game",
                 // "--matrix-based",
-                "--noc-even",
+                // "--noc-odd",
                 // "--scc",
                 // "--zra",
                 // "--zchaff"
                 // "--help"
-                "--checker-dfs-iterative",
-                // "--filter-smart"
+                // "--checker-dfs-iterative",
+                // "--filter-eager"
+            ],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "externalConsole": false,
+            "MIMode": "gdb",  // lldb for osx / gdb for linux
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]            
+        },   
+        // --------------------------------------------------------------
+        {
+            "name": "C++ Debug experments 3",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/noc",
+            "args": [   
+                // "--gm", "${env:HOME}/gm/recursiveladder-1000.gm",
+                // "--gm", "~/Cloud/games/mlsolver/FLCTLLimitClosuren\\=7.gm",
+                // "--dzn", "${workspaceFolder}/data/jurd-2-1.dzn",
+                "--gm", "${workspaceFolder}/build/jurd-200-200.gm",
+                // "--jurd","2","1","--min",
+                // "--rand","20","10","1","2",
+                // "--gm","build/temp.gm",
+                // "--dimacs","jurd.cnf",
+                // "--ladder","2",
+                // "--start","24811",
+                // "--proof",
+                // "--proof-eager",
+                // "--min",
+                // "--export-gm","/home/chalo/dbg.gm",
+                // "--verbose"
+                // "--print-solution",
+                "--print-times",
+                // "--print-statistics",
+                // "--matrix-based",
+                "--noc-odd",
+                // "--scc",
+                // "--zra",
+                // "--zchaff"
+                // "--help"
+                // "--checker-dfs-iterative",
+                "--filter-eager"
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
