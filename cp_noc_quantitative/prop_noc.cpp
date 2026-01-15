@@ -32,7 +32,7 @@ private:
     vec<BoolView> V;
     vec<BoolView> E;
     parity_type playerSAT;
-    WinningCondition& condition;
+    vec<WinningCondition*> conditions;
 
     const int   CF_DONE     = 1;
     const int   CF_CONFLICT = 2;
@@ -41,9 +41,9 @@ private:
 public:
     //-----------------------------------------------------------------------
     NoOpponentCycle(Game& g, vec<BoolView>& V, vec<BoolView>& E, 
-        parity_type playerSAT, WinningCondition& condition)
+        parity_type playerSAT, vec<WinningCondition*> conditions)
     : g(g), V(V), E(E),
-        playerSAT(playerSAT), condition(condition)
+        playerSAT(playerSAT), conditions(conditions)
     {
         for (int i=0; i<g.nvertices;i++) V[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.nedges;   i++) E[i].attach(this, 1 , EVENT_F );
@@ -62,12 +62,21 @@ public:
         }
     }
     //-----------------------------------------------------------------------
+    bool satisfiedConditions(int index,vec<int>& pathV,vec<int>& pathE) {
+        for (int i=0; i<conditions.size(); i++) {
+            if (not conditions[i]->satisfy(0,pathV,pathE)) {
+                return false;
+            }
+        }
+        return true;
+    }
     int filterEager(vec<int>& pathV, vec<int>& pathE, int v, 
         int lastEdge, bool definedEdge) 
     {
         int index = findVertex(v,pathV);
         if (index >= 0) {
-            if (not condition.satisfy(index,pathV,pathE)) {
+
+            if (not satisfiedConditions(index,pathV,pathE)) {
                 vec<Lit> lits;
                 lits.push();
                 clausify(pathE,E,lits,0);

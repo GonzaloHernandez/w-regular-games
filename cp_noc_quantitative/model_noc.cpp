@@ -56,7 +56,7 @@ public:
         for (int i=index; i<pathE.size(); i++) {
             sum += g.weights[pathE[i]];
         }
-        int avg = sum / (pathE.size() - index);
+        double avg = (double)sum / (double)(pathE.size() - index);
 
         if (playerSAT == EVEN) {
             return avg >= threshold;
@@ -72,15 +72,15 @@ private:
     Game& g;
     vec<BoolView> V;  
     vec<BoolView> E;
-    int condition;
+    std::vector<bool> conditions;
     int threshold;
     int printtype;
     parity_type playerSAT;
 public:
 
-    NOCModel(Game& g, int condition=0, int threshold=1, int printtype=0, 
+    NOCModel(Game& g, std::vector<bool> conditions, int threshold=1, int printtype=0, 
         parity_type playerSAT=EVEN) 
-    :g(g), condition(condition), threshold(threshold), printtype(printtype), 
+    :g(g), conditions(conditions), threshold(threshold), printtype(printtype), 
         playerSAT(playerSAT)
     {
         V.growTo(g.nvertices);
@@ -198,20 +198,21 @@ public:
         // Every infinite OPPONENT play must be avoided regarding codition.
         WinningCondition* cond = nullptr;
 
-        switch (condition) {
-        case 0:
-            cond = new ParityCondition(g,V,E,playerSAT);  break;
-        case 1:
-            cond = new EnergyCondition(g,V,E,playerSAT);  break;
-        case 2:
-            cond = new MeanPayoffCondition(g,V,E,playerSAT);
-            ((MeanPayoffCondition*)cond)->setThreshold(threshold);
-            break;
-        default:
-            cond = new ParityCondition(g,V,E,playerSAT);  break;
+        vec<WinningCondition*> conds;
+
+        if (conditions[0])
+            conds.push(new ParityCondition(g,V,E,playerSAT));
+            
+        if (conditions[1])
+            conds.push(new EnergyCondition(g,V,E,playerSAT));
+
+        if (conditions[2]) {
+            MeanPayoffCondition* cond = new MeanPayoffCondition(g,V,E,playerSAT);
+            cond->setThreshold(threshold);
+            conds.push(cond);
         }
 
-        new NoOpponentCycle(g,V,E,playerSAT,*cond);
+        new NoOpponentCycle(g,V,E,playerSAT,conds);
 
         //------------------------------------------------------------
 

@@ -29,7 +29,7 @@ struct options {
     int                 proof           = 0;    // 0=no 1=yes 2=eager
     int                 flip            = 0;    // 0=no 1=flip 2=flip_to_compare
     int                 threshold       = 1;    // threshold for flip_to_compare
-    int                 condition       = 0;    // 0=parity 1=energy 2=mean-payoff
+    std::vector<bool>   win_conditions  = {false,false,false};    // 0=parity 1=energy 2=mean-payoff
 } options;
 
 //--------------------------------------------------------------------------------------
@@ -277,7 +277,6 @@ bool parseMyOptions(int argc, char *argv[]) {
             options.threshold = th;
         }
 
-
         else if (strcmp(argv[i],"--max")==0)                { options.reward = MAX; }
         else if (strcmp(argv[i],"--min")==0)                { options.reward = MIN; }
 
@@ -306,9 +305,9 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--flip")==0)               { options.flip  = 1;}
         else if (strcmp(argv[i],"--flip-compare")==0)       { options.flip  = 2;}
 
-        else if (strcmp(argv[i],"--parity")==0)             { options.condition = 0; }
-        else if (strcmp(argv[i],"--energy")==0)             { options.condition = 1; }
-        else if (strcmp(argv[i],"--mean-payoff")==0)        { options.condition = 2; }
+        else if (strcmp(argv[i],"--parity")==0)             { options.win_conditions[0] = true; }
+        else if (strcmp(argv[i],"--energy")==0)             { options.win_conditions[1] = true; }
+        else if (strcmp(argv[i],"--mean-payoff")==0)        { options.win_conditions[2] = true; }
 
         else if (strcmp(argv[i],"--help")==0) {
             std::cout << "Usage: " << argv[0] << " [options]\n";
@@ -462,7 +461,7 @@ int main(int argc, char *argv[])
     else if (game && options.proof==0 && (options.solver==1 || options.solver==8)) {
         start = std::chrono::high_resolution_clock::now();
         NOCModel* model = new NOCModel(
-                                *game, options.condition, options.threshold, 
+                                *game, options.win_conditions, options.threshold, 
                                 (options.print_solution || options.print_verbose),
                                 options.solver==1?EVEN:ODD);
 
@@ -731,7 +730,7 @@ int main(int argc, char *argv[])
         Zielonka zlk(*game);
 
         NOCModel* model = new NOCModel(   
-                                *game, options.threshold, 
+                                *game, options.win_conditions, options.threshold, 
                                 (options.print_solution || options.print_verbose),
                                 options.solver==1?EVEN:ODD);
 

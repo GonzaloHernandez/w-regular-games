@@ -44,7 +44,7 @@
                 "${workspaceFolder}/various/fra.cpp",
                 "${workspaceFolder}/experiments/ex4.cpp",
                 "-o",
-                "${workspaceFolder}/build/noc-mpg",
+                "${workspaceFolder}/build/nocq",
                 "-I${env:HOME}/.local/include",
                 "-L${env:HOME}/.local/lib",
                 "-lchuffed_fzn",
