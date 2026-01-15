@@ -4,38 +4,84 @@
 #include "initializer_list"
 
 #include "prop_noc.cpp"
-#include "checker_scc.cpp"
 
-// class ParityCondition : public WinningCondition {
-// public:
-//     bool evaluate(int index,vec<int>& pathV,vec<int>& pathE) override {
-//         int m = g.colors[pathV[index]];
-//         for (int i=index+1; i<pathV.size(); i++) {
-//             if (g.compareColors(g.colors[pathV[i]],m,BET)) {
-//                 m = g.colors[pathV[i]];
-//             }
-//         }
-//         return m%2==playerSAT;
-//     };
-// };
+//===========================================================================
+
+class ParityCondition : public WinningCondition {
+    using WinningCondition::WinningCondition;
+public:
+
+    bool satisfy(int index,vec<int>& pathV,vec<int>& pathE) override {
+        int m = g.colors[pathV[index]];
+        for (int i=index+1; i<pathV.size(); i++) {
+            if (g.compareColors(g.colors[pathV[i]],m,BET)) {
+                m = g.colors[pathV[i]];
+            }
+        }
+        return m%2==playerSAT;
+    };
+};
+
+//===========================================================================
+
+class EnergyCondition : public WinningCondition {
+    using WinningCondition::WinningCondition;
+public:
+
+    bool satisfy(int index,vec<int>& pathV,vec<int>& pathE) override {
+        int sum = 0;
+        for (int i=index; i<pathE.size(); i++) {
+            sum += g.weights[pathE[i]];
+        }
+        
+        if (playerSAT == EVEN) {
+            return sum >= 0;
+        }
+        return sum < 0;
+    };
+};
+
+//===========================================================================
+
+class MeanPayoffCondition : public WinningCondition {
+    using WinningCondition::WinningCondition;
+private:
+    int threshold;
+public:
+
+    void setThreshold(int t) { threshold = t; }
+
+    bool satisfy(int index,vec<int>& pathV,vec<int>& pathE) override {
+        int sum = 0;
+        for (int i=index; i<pathE.size(); i++) {
+            sum += g.weights[pathE[i]];
+        }
+        int avg = sum / (pathE.size() - index);
+
+        if (playerSAT == EVEN) {
+            return avg >= threshold;
+        }
+        return avg < threshold;
+    };
+};
+
+//===========================================================================
 
 class NOCModel : public Problem {
 private:
     Game& g;
     vec<BoolView> V;  
     vec<BoolView> E;
+    int condition;
     int threshold;
-    int checker;
-    int filter;
     int printtype;
     parity_type playerSAT;
-
 public:
 
-    NOCModel(Game& g, int threshold, int checker, int filter, 
-        int printtype=0, parity_type playerSAT=EVEN) 
-    :g(g), threshold(threshold), checker(checker), filter(filter), 
-        printtype(printtype), playerSAT(playerSAT)
+    NOCModel(Game& g, int condition=0, int threshold=1, int printtype=0, 
+        parity_type playerSAT=EVEN) 
+    :g(g), condition(condition), threshold(threshold), printtype(printtype), 
+        playerSAT(playerSAT)
     {
         V.growTo(g.nvertices);
         E.growTo(g.nedges);
@@ -149,14 +195,23 @@ public:
         }
 
         // --------------------------------------------------------------
-        // Every infinite OPPONENT play must be avoided.
-        
-        switch(checker) {
-            case 1: new CheckerSCC(g,V,E,playerSAT);        break;
-            case 2: new NoOpponentCycle(g,V,E,threshold,0,playerSAT); break;
-            case 3: new NoOpponentCycle(g,V,E,threshold,4,playerSAT); break;
+        // Every infinite OPPONENT play must be avoided regarding codition.
+        WinningCondition* cond = nullptr;
+
+        switch (condition) {
+        case 0:
+            cond = new ParityCondition(g,V,E,playerSAT);  break;
+        case 1:
+            cond = new EnergyCondition(g,V,E,playerSAT);  break;
+        case 2:
+            cond = new MeanPayoffCondition(g,V,E,playerSAT);
+            ((MeanPayoffCondition*)cond)->setThreshold(threshold);
+            break;
+        default:
+            cond = new ParityCondition(g,V,E,playerSAT);  break;
         }
-        if (filter > 0) new NoOpponentCycle(g,V,E,threshold,filter,playerSAT);
+
+        new NoOpponentCycle(g,V,E,playerSAT,*cond);
 
         //------------------------------------------------------------
 

@@ -95,73 +95,59 @@ size_t find_token_end(const std::string& line, size_t start, char delimiter) {
     return non_space_end;
 }
 
-void Game::parseline_gm(const std::string& line, std::vector<long long>& vinfo, 
-                        std::vector<int>& outs_targets, std::string& comment) 
+void Game::parseline_gm(const std::string& line, 
+                        std::vector<long long>& vinfo, 
+                        std::vector<int>& outs_targets, 
+                        std::vector<long long>& weights,
+                        std::string& comment) 
 {
     vinfo.clear();
     outs_targets.clear();
+    weights.clear();
     comment.clear();
 
     size_t current = 0;
-    size_t next;
     
     // --- 1. Extract Vertex ID, Priority, Owner (Space-separated) ---
     for (int i = 0; i < 3; ++i) {
         current = skip_whitespace(line, current);
-        if (current >= line.size()) return; // Malformed line
+        if (current >= line.size()) return;
 
-        next = find_token_end(line, current, ' ');
-        if (next == current) return; // Empty token
-
+        size_t next = find_token_end(line, current, ' ');
         vinfo.push_back(std::stoll(line.substr(current, next - current)));
         current = next;
     }
-    
-    // --- 2. Extract Target Edges (Comma-separated list) ---
-    // Move 'current' past the space separator after the Owner
-    current = skip_whitespace(line, current);
 
-    size_t end_of_targets_block = line.find_first_of("\" \t;", current);
-    if (end_of_targets_block == std::string::npos) {
-        end_of_targets_block = line.size();
-    }
-    
-    // Take the whole block that might contain the targets (e.g., "1,2,3")
-    std::string targets_block = line.substr(current, end_of_targets_block - current);
-    
-    size_t target_start = 0;
-    size_t target_comma;
+    // --- Helper Lambda for Comma-Separated Lists ---
+    auto parse_csv_block = [&](std::vector<long long>& target_vec) {
+        current = skip_whitespace(line, current);
+        size_t end_of_block = line.find_first_of(" ;\"", current);
+        if (end_of_block == std::string::npos) end_of_block = line.size();
 
-    // Use string::find for the comma delimiter inside the targets block
-    while ((target_comma = targets_block.find(',', target_start)) != std::string::npos) {
-        std::string num_str = targets_block.substr(target_start, target_comma - target_start);
+        std::string block = line.substr(current, end_of_block - current);
+        std::stringstream ss(block);
+        std::string item;
         
-        // Trim and convert the number
-        size_t first = num_str.find_first_not_of(" \t");
-        size_t last = num_str.find_last_not_of(" \t");
-        
-        if (first != std::string::npos) {
-            outs_targets.push_back(std::stoi(num_str.substr(first, last - first + 1)));
+        while (std::getline(ss, item, ',')) {
+            if (!item.empty()) {
+                target_vec.push_back(std::stoll(item));
+            }
         }
-        target_start = target_comma + 1;
-    }
-    
-    // Process the last number (or the only number)
-    std::string num_str = targets_block.substr(target_start);
-    size_t first = num_str.find_first_not_of(" \t");
-    if (first != std::string::npos) {
-        size_t last = num_str.find_last_not_of(" \t");
-        outs_targets.push_back(std::stoi(num_str.substr(first, last - first + 1)));
-    }
-    
-    // Update main position pointer to continue searching for comment
-    current += targets_block.size(); 
-    
-    // --- 3. Extract Optional Comment ---
-    current = skip_whitespace(line, current);
+        current = end_of_block;
+    };
 
+    // --- 2. Extract Target Edges (First CSV block) ---
+    std::vector<long long> temp_targets;
+    parse_csv_block(temp_targets);
+    for(auto t : temp_targets) outs_targets.push_back(static_cast<int>(t));
+
+    // --- 3. Extract Weights (Second CSV block) ---
+    parse_csv_block(weights);
+
+    // --- 4. Extract Optional Comment ---
+    current = skip_whitespace(line, current);
     if (current < line.size() && line[current] == '"') {
-        current++; // Move past the opening quote
+        current++;
         size_t comment_end = line.find('"', current);
         if (comment_end != std::string::npos) {
             comment = line.substr(current, comment_end - current);
@@ -249,7 +235,7 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
     std::string line;
 
     switch (type) {
-        case DZN:
+        case DZN: {
             while (getline(file, line)) {
                 if (line.find("nvertices") != std::string::npos) {
                     nvertices = stoi(line.substr(line.find("=") + 1));
@@ -271,7 +257,8 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
 
             assert(start >= 0 && start < nvertices && "Starting vertex must be within the valid range");
 
-            fixStartingZero();
+            bool hasZero = (std::find(sources.begin(), sources.end(), 0) != sources.end());
+            if (not hasZero) fixStartingZero();
             outs.resize(nvertices);
             ins .resize(nvertices);
             for(int i=0; i<nedges; i++) {
@@ -279,26 +266,36 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
                 ins [targets[i]].push_back(i);
             }
             break;
-
+        }
         case GM: {
             int lastvertex = 0;
             std::vector<int> verts;
             std::vector<std::vector<int>> tedges;
-            int counter=0;
+            std::vector<std::vector<long long>> tweights; // New: temporary weights storage
+            int counter = 0;
+
             while (getline(file, line)) {
+                if (line.empty()) continue;
                 if (line.find("parity") != std::string::npos) {
+                    // Extracts the max vertex ID to size the mapping vector
                     lastvertex = stoi(line.substr(line.find(" ")));
-                    verts.resize(lastvertex+1);
+                    verts.resize(lastvertex + 1);
                 } else if (line.find("start") != std::string::npos) {
-                    // ignore start line
+                    // ignore
                 } else {
-                    std::vector<long long>  vinfo;
-                    std::vector<int>        outs;
-                    std::string             comment;
-                    parseline_gm(line,vinfo,outs,comment);
-                    verts[vinfo[0]] = counter;
-                    outs.insert(outs.begin(),vinfo[0]); // check
+                    std::vector<long long> vinfo;
+                    std::vector<int> outs;
+                    std::vector<long long> weights;
+                    std::string comment;
+                    
+                    parseline_gm(line, vinfo, outs, weights, comment);
+                    
+                    if (vinfo.empty()) continue; // Skip empty/malformed lines
+
+                    verts[vinfo[0]] = counter; // Map file ID to internal 0..N ID
                     tedges.push_back(outs);
+                    tweights.push_back(weights); // Store weights temporarily
+                    
                     owners.push_back(vinfo[2]);
                     colors.push_back(vinfo[1]);
                     counter++;
@@ -307,25 +304,27 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
             file.close();
 
             nvertices = counter;
-
-            assert(start >= 0 && start < nvertices && "Starting vertex must be within the valid range");
-
             outs.resize(nvertices);
-            ins .resize(nvertices);
+            ins.resize(nvertices);
+            weights.clear(); // Ensure this is a member of your Game class
 
             nedges = 0;
-            for(int s=0; s<nvertices; s++) {
-                for(int t=1; t<tedges[s].size(); t++) {
-                    sources.push_back(verts[tedges[s][0]]);
-                    targets.push_back(verts[tedges[s][t]]);
-                    outs[verts[tedges[s][0]]].push_back(nedges);
-                    ins [verts[tedges[s][t]]].push_back(nedges);
+            for(int s = 0; s < nvertices; s++) {
+                for(int t = 0; t < tedges[s].size(); t++) {
+                    // Map the file's target ID to internal ID using 'verts'
+                    int internal_target = verts[tedges[s][t]];
+                    
+                    sources.push_back(s); 
+                    targets.push_back(internal_target);
+                    
+                    // Store the weight for this specific edge
+                    weights.push_back(tweights[s][t]);
+                    
+                    outs[s].push_back(nedges);
+                    ins[internal_target].push_back(nedges);
                     nedges++;
                 }
             }
-
-            // nedges = sources.size();
-
             break;
         }
     }
@@ -581,6 +580,10 @@ void Game::exportFile(int type, std::string filename) {
             file << v << " " << colors[v] << " " << owners[v] << " ";
             for (int e=0; e<outs[v].size(); e++) {
                 file << (e?",":"") << targets[outs[v][e]];
+            }
+            file << " ";
+            for (int e=0; e<outs[v].size(); e++) {
+                file << (e?",":"") << weights[outs[v][e]];
             }
             file << ";" << std::endl;
         }

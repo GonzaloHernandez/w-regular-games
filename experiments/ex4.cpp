@@ -4,7 +4,7 @@
 #include "../various/zielonka.h"
 #include "../various/satencoder.h"
 
-#include "../cp_noc_mpg/model_noc.cpp"
+#include "../cp_noc_quantitative/model_noc.cpp"
 #include "../cp_fra/model_fra.cpp"
 
 #include "../resources/debugchuffed.h"
@@ -25,12 +25,11 @@ struct options {
     std::string         game_filename   = "";
     std::string         export_filename = "";
     int                 export_type     = 0;    // 0=not DZN GM DIM
-    int                 solver          = 0;    // 1=CP-NOC 2=CP-FRA 3=SAT-zchaff 4=SAT-cadical 5=ZRA 6=FRA 7=SCC
-    int                 checker         = 0;    // 0=none 1=SCC 2=DFSRecursive 3=DFSIterative
-    int                 filter          = 0;    // 0=none 1=Eager 2=Memo 3=Smart
+    int                 solver          = 1;    // 1=CP-NOC 2=CP-FRA 3=SAT-zchaff 4=SAT-cadical 5=ZRA 6=FRA 7=SCC
     int                 proof           = 0;    // 0=no 1=yes 2=eager
     int                 flip            = 0;    // 0=no 1=flip 2=flip_to_compare
     int                 threshold       = 1;    // threshold for flip_to_compare
+    int                 condition       = 0;    // 0=parity 1=energy 2=mean-payoff
 } options;
 
 //--------------------------------------------------------------------------------------
@@ -304,15 +303,12 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--print-statistics")==0)   { options.print_statistics  = true; }
         else if (strcmp(argv[i],"--verbose")==0)            { options.print_verbose     = true; }
 
-        else if (strcmp(argv[i],"--checker-scc")==0)        { options.checker = 1; }
-        else if (strcmp(argv[i],"--checker-dfs-recursive")==0)        { options.checker = 2; }
-        else if (strcmp(argv[i],"--checker-dfs-iterative")==0)        { options.checker = 3; }
-        else if (strcmp(argv[i],"--filter-eager")==0)       { options.filter  = 1; }
-        else if (strcmp(argv[i],"--filter-memo")==0)        { options.filter  = 2; options.checker = 1;}
-        else if (strcmp(argv[i],"--filter-smart")==0)       { options.filter  = 3;}
-
         else if (strcmp(argv[i],"--flip")==0)               { options.flip  = 1;}
         else if (strcmp(argv[i],"--flip-compare")==0)       { options.flip  = 2;}
+
+        else if (strcmp(argv[i],"--parity")==0)             { options.condition = 0; }
+        else if (strcmp(argv[i],"--energy")==0)             { options.condition = 1; }
+        else if (strcmp(argv[i],"--mean-payoff")==0)        { options.condition = 2; }
 
         else if (strcmp(argv[i],"--help")==0) {
             std::cout << "Usage: " << argv[0] << " [options]\n";
@@ -353,6 +349,10 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --filter-smart             : Filter by CP-NOC\n";
             std::cout << "  --flip                     : Convert the game into its complement\n";
             std::cout << "  --flip-compare             : Solve showing dualitity converting the game into its complement \n";
+            std::cout << "  --threshold <value>        : Threshold for flip-compare (default=1)\n";
+            std::cout << "  --parity                   : Parity condition (default)\n";
+            std::cout << "  --energy                   : Energy condition\n";
+            std::cout << "  --mean-payoff              : Mean-Payoff condition\n";
             return false;
         }
         else {
@@ -462,7 +462,7 @@ int main(int argc, char *argv[])
     else if (game && options.proof==0 && (options.solver==1 || options.solver==8)) {
         start = std::chrono::high_resolution_clock::now();
         NOCModel* model = new NOCModel(
-                                *game, options.threshold, options.checker, options.filter, 
+                                *game, options.condition, options.threshold, 
                                 (options.print_solution || options.print_verbose),
                                 options.solver==1?EVEN:ODD);
 
@@ -731,7 +731,7 @@ int main(int argc, char *argv[])
         Zielonka zlk(*game);
 
         NOCModel* model = new NOCModel(   
-                                *game, options.checker, options.filter, 
+                                *game, options.threshold, 
                                 (options.print_solution || options.print_verbose),
                                 options.solver==1?EVEN:ODD);
 

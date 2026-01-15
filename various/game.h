@@ -27,7 +27,6 @@ class Game {
 public:
     friend class SATEncoder;
     friend class CPModel;
-    friend std::vector<int> attractor(std::vector<int>& V, int q, Game& g);
     friend int main(int, char*[]);
 public:
     std::vector<int>        owners;
@@ -35,6 +34,7 @@ public:
     std::vector<int>        sources;
     std::vector<int>        targets;
     std::vector<int>        weights;
+
     std::vector<std::vector<int>>   outs;
     std::vector<std::vector<int>>   ins;
     int nvertices;
@@ -48,7 +48,8 @@ public:
     void parseline_dzn  (const std::string& line,std::vector<int>& myvec);
     void parseline_dzn  (const std::string& line,std::vector<long long>& myvec);
     void parseline_gm   (const std::string& line,std::vector<long long>& vinfo, 
-                        std::vector<int>& outs, std::string& comment);
+                        std::vector<int>& outs, std::vector<long long>& weights,
+                        std::string& comment);
 
     //----------------------------------------------------------------------------------
 

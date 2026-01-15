@@ -6,32 +6,23 @@
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
 
-struct s_memo {
-    int loop;
-    int best;
-    bool touched()  { return loop>=0; }
-    bool parity()   { return best%2; }
+class WinningCondition {
+protected:
+    Game& g;
+    vec<BoolView> V;
+    vec<BoolView> E;
+    parity_type playerSAT;
+
+public:
+    WinningCondition(Game& g, vec<BoolView>& V, vec<BoolView>& E, 
+        parity_type playerSAT=EVEN) 
+    : g(g), V(V), E(E), playerSAT(playerSAT)
+    {
+    }
+    virtual ~WinningCondition() = default;
+    //-----------------------------------------------------------------------
+    virtual bool satisfy(int index,vec<int>& pathV,vec<int>& pathE) = 0;
 };
-
-// class WinningCondition {
-// protected:
-//     Game& g;
-//     vec<BoolView> V;
-//     vec<BoolView> E;
-//     parity_type playerSAT;
-
-// public:
-//     WinningCondition() [
-
-//     ]
-//     WinningCondition(Game& g, vec<BoolView>& V, vec<BoolView>& E, 
-//         parity_type playerSAT=EVEN) 
-//     : g(g), V(V), E(E), playerSAT(playerSAT)
-//     {
-//     }
-//     //-----------------------------------------------------------------------
-//     virtual bool evaluate(int index,vec<int>& pathV,vec<int>& pathE) = 0;
-// };
 
 //===========================================================================
 
@@ -40,9 +31,8 @@ private:
     Game& g;
     vec<BoolView> V;
     vec<BoolView> E;
-    int threshold;
-    int filtertype;
     parity_type playerSAT;
+    WinningCondition& condition;
 
     const int   CF_DONE     = 1;
     const int   CF_CONFLICT = 2;
@@ -50,10 +40,10 @@ private:
 
 public:
     //-----------------------------------------------------------------------
-    NoOpponentCycle(Game& g, vec<BoolView>& V, vec<BoolView>& E, int threshold,
-        int filtertype, parity_type playerSAT)
-    : g(g), V(V), E(E), threshold(threshold),
-        filtertype(filtertype), playerSAT(playerSAT)
+    NoOpponentCycle(Game& g, vec<BoolView>& V, vec<BoolView>& E, 
+        parity_type playerSAT, WinningCondition& condition)
+    : g(g), V(V), E(E),
+        playerSAT(playerSAT), condition(condition)
     {
         for (int i=0; i<g.nvertices;i++) V[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.nedges;   i++) E[i].attach(this, 1 , EVENT_F );
@@ -66,65 +56,18 @@ public:
         return -1;
     }
     //-----------------------------------------------------------------------
-    // Winning condition for parity games
-    // bool condition(int index,vec<int>& pathV,vec<int>& pathE) {
-    //     int m = g.colors[pathV[index]];
-    //     for (int i=index+1; i<pathV.size(); i++) {
-    //         if (g.compareColors(g.colors[pathV[i]],m,BET)) {
-    //             m = g.colors[pathV[i]];
-    //         }
-    //     }
-    //     return m%2==opponent(playerSAT);
-    // }
-    
-    //-----------------------------------------------------------------------
-    // Winning condition for energy games
-    // bool condition(int index,vec<int>& pathV,vec<int>& pathE) {
-    //     int sum = 0;
-    //     for (int i=index; i<pathE.size(); i++) {
-    //         sum += g.weights[pathE[i]];
-    //     }
-        
-    //     if (playerSAT == EVEN) {
-    //         return sum < 0; // Reject if the average benefits to opponent(EVEN)
-    //     }
-    //     return sum >= 0;
-    // }
-
-    //-----------------------------------------------------------------------
-    // Winning condition for mean-payoff games
-    bool condition(int index,vec<int>& pathV,vec<int>& pathE) {
-        int sum = 0;
-        for (int i=index; i<pathE.size(); i++) {
-            sum += g.weights[pathE[i]];
-        }
-        int avg = sum / (pathE.size() - index);
-
-        if (playerSAT == EVEN) {
-            return avg < threshold; // Reject if the average benefits to opponent(EVEN)
-        }
-        return avg >= threshold;
-    }
-
-    //-----------------------------------------------------------------------
     void clausify(vec<int>& path, vec<BoolView> &B, vec<Lit>& lits,int from) {
         for (int i=from; i<path.size()-1; i++) {
             lits.push(B[path[i]].getValLit());
         }
     }
-
-    struct state{
-        int v;
-        int i;
-    };
-
     //-----------------------------------------------------------------------
     int filterEager(vec<int>& pathV, vec<int>& pathE, int v, 
         int lastEdge, bool definedEdge) 
     {
         int index = findVertex(v,pathV);
         if (index >= 0) {
-            if (not condition(index,pathV,pathE)) {
+            if (not condition.satisfy(index,pathV,pathE)) {
                 vec<Lit> lits;
                 lits.push();
                 clausify(pathE,E,lits,0);
@@ -156,12 +99,8 @@ public:
         vec<int> pathV;
         vec<int> pathE;
 
-        switch (filtertype) {
-        case 1:
-            if (filterEager(pathV,pathE,g.start,-1,true) == CF_CONFLICT)
-                return false;
-            break;
-        }
+        if (filterEager(pathV,pathE,g.start,-1,true) == CF_CONFLICT)
+            return false;
 
         return true;
     }
