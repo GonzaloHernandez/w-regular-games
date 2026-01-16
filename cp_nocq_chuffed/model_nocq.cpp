@@ -3,7 +3,7 @@
 #include "chuffed/core/propagator.h"
 #include "initializer_list"
 
-#include "prop_noc.cpp"
+#include "prop_nocq.cpp"
 
 //===========================================================================
 

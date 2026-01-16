@@ -4,7 +4,8 @@
 #include "../various/zielonka.h"
 #include "../various/satencoder.h"
 
-#include "../cp_noc_quantitative/model_noc.cpp"
+#include "../cp_nocq_chuffed/model_nocq.cpp"
+#include "../cp_nocq_gecode/nocq.cpp"
 #include "../cp_fra/model_fra.cpp"
 
 #include "../resources/debugchuffed.h"
@@ -25,7 +26,8 @@ struct options {
     std::string         game_filename   = "";
     std::string         export_filename = "";
     int                 export_type     = 0;    // 0=not DZN GM DIM
-    int                 solver          = 1;    // 1=CP-NOC 2=CP-FRA 3=SAT-zchaff 4=SAT-cadical 5=ZRA 6=FRA 7=SCC
+    std::string         solver          = "";   // CP-NOC-EVEN CP-NOC-ODD CP-FRA SAT-zchaff SAT-cadical ZRA FRA SCC
+    std::string         cpengine        = "chuffed";    // chuffed or gecode
     int                 proof           = 0;    // 0=no 1=yes 2=eager
     int                 flip            = 0;    // 0=no 1=flip 2=flip_to_compare
     int                 threshold       = 1;    // threshold for flip_to_compare
@@ -280,16 +282,18 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--max")==0)                { options.reward = MAX; }
         else if (strcmp(argv[i],"--min")==0)                { options.reward = MIN; }
 
-        else if (strcmp(argv[i],"--testing")==0)            { options.solver = -1; }
-        else if (strcmp(argv[i],"--noc")==0)                { options.solver = 1; }
-        else if (strcmp(argv[i],"--noc-even")==0)           { options.solver = 1; }
-        else if (strcmp(argv[i],"--noc-odd")==0)            { options.solver = 8; }
-        else if (strcmp(argv[i],"--cp-fra")==0)             { options.solver = 2; }
-        else if (strcmp(argv[i],"--zchaff")==0)             { options.solver = 3; }
-        else if (strcmp(argv[i],"--cadical")==0)            { options.solver = 4; }
-        else if (strcmp(argv[i],"--zra")==0)                { options.solver = 5; }
-        else if (strcmp(argv[i],"--fra")==0)                { options.solver = 6; }
-        else if (strcmp(argv[i],"--scc")==0)                { options.solver = 7; }
+        else if (strcmp(argv[i],"--testing")==0)            { options.solver = "testing"; }
+        else if (strcmp(argv[i],"--noc")==0)                { options.solver = "noc-even"; }
+        else if (strcmp(argv[i],"--noc-even")==0)           { options.solver = "noc-even"; }
+        else if (strcmp(argv[i],"--noc-odd")==0)            { options.solver = "noc-odd"; }
+        else if (strcmp(argv[i],"--cp-fra")==0)             { options.solver = "cp-fra"; }
+        else if (strcmp(argv[i],"--zchaff")==0)             { options.solver = "zchaff"; }
+        else if (strcmp(argv[i],"--cadical")==0)            { options.solver = "cadical"; }
+        else if (strcmp(argv[i],"--zra")==0)                { options.solver = "zra"; }
+        else if (strcmp(argv[i],"--fra")==0)                { options.solver = "fra"; }
+        else if (strcmp(argv[i],"--scc")==0)                { options.solver = "scc"; }
+        else if (strcmp(argv[i],"--chuffed")==0)            { options.cpengine = "chuffed"; }
+        else if (strcmp(argv[i],"--gecode")==0)             { options.cpengine = "gecode"; }
 
         else if (strcmp(argv[i],"--proof")==0)              { options.proof = 1; }
         else if (strcmp(argv[i],"--proof-eager")==0)        { options.proof = 2; }
@@ -333,6 +337,8 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --export-dimacs <filename> : Export game to DIMACS format (not solve)\n"; 
             std::cout << "  --noc-even                 : CP-NOC satisfying player EVEN (No-Odd-Cycles)\n";
             std::cout << "  --noc-odd                  : CP-NOC satisfying player ODD (No-Even-Cycles)\n";
+            std::cout << "  --chuffed                  : CP Solver (Chuffed)\n";
+            std::cout << "  --gecode                   : CP Solver (Gecode)\n";
             std::cout << "  --fra                      : Solve using FRA\n";
             std::cout << "  --cp-fra                   : Solve using CP-FRA\n";
             std::cout << "  --sat-encoding             : Encode on DIMACS\n";
@@ -451,19 +457,20 @@ int main(int argc, char *argv[])
 
     //----------------------------------------------------------------------------------
     // For testing purposes
-
-    if (options.solver==(-1)) {
+    if (options.solver=="testing") {
     }
 
     //----------------------------------------------------------------------------------
-    // CP-NOC
+    // CP-NOC-Chuffed
 
-    else if (game && options.proof==0 && (options.solver==1 || options.solver==8)) {
+    else if (game && options.proof==0 && 
+        options.solver.substr(0, 3) == "noc" && options.cpengine=="chuffed") 
+    {
         start = std::chrono::high_resolution_clock::now();
         NOCModel* model = new NOCModel(
                                 *game, options.win_conditions, options.threshold, 
                                 (options.print_solution || options.print_verbose),
-                                options.solver==1?EVEN:ODD);
+                                options.solver=="noc-even"?EVEN:ODD);
 
         so.print_sol = options.print_solution || options.print_verbose;
         end = std::chrono::high_resolution_clock::now();
@@ -494,7 +501,7 @@ int main(int argc, char *argv[])
             std::cout << "Mem used           : " << memUsed() << std::endl;
         }
 
-        if (options.solver==1) {
+        if (options.solver=="noc-even") {
             if (options.print_time>=0 || options.print_verbose)
                 std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
         }
@@ -521,10 +528,72 @@ int main(int argc, char *argv[])
         delete model;
     }
 
+
+    //----------------------------------------------------------------------------------
+    // CP-NOC-Gecode
+
+    else if (game && options.proof==0 && 
+        options.solver.substr(0, 3) == "noc" && options.cpengine=="gecode") 
+    {
+        start = std::chrono::high_resolution_clock::now();
+        NocModelGecode* model = new NocModelGecode(
+                                *game, options.win_conditions, options.threshold, 
+                                options.solver=="noc-even"?EVEN:ODD);
+
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> preptime = end - start;            
+
+        if (options.print_time>1) {
+            std::cout << "Init time          : " << preptime.count() << std::endl;
+        }
+
+        start = std::chrono::high_resolution_clock::now();
+
+        Gecode::DFS<NocModelGecode> dfs(model);
+        delete model;
+        while (NocModelGecode* solution = dfs.next()) {
+            solution->print();
+            delete solution;
+        }
+
+        end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> totaltime = end - start;
+
+        if (options.print_time>1 || options.print_verbose) {
+            std::cout << "Solving time       : " << totaltime.count() << std::endl;
+            std::cout << "Mem used           : " << memUsed() << std::endl;
+        }
+
+        if (options.solver=="noc-even") {
+            if (options.print_time>=0 || options.print_verbose)
+                std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
+        }
+        else {
+            if (options.print_time>=0 || options.print_verbose)
+                std::cout << game->start << ": " << (engine.solutions>0?"ODD ":"EVEN ");
+        }
+
+        if (options.print_time<=-2 || options.print_verbose) {
+            std::cout   << preptime.count() << "\t";
+        }
+
+        if (options.print_time!=0 || options.print_verbose) {
+            std::cout   << totaltime.count();
+        }        
+
+        std::cout << std::endl;
+
+        if (options.print_statistics || options.print_verbose) {
+            engine.printStats();
+        }
+        
+        
+    }
+
     //----------------------------------------------------------------------------------
     // CP-FRA
 
-    else if (game && options.proof==0 && options.solver==2) {
+    else if (game && options.proof==0 && options.solver=="fra") {
 
         std::cout << "Warning: This method is not finished" << std::endl;
 
@@ -576,7 +645,7 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
     // SAT-zchaff
 
-    else if (options.proof==0 && options.solver==3) {
+    else if (options.proof==0 && options.solver=="zchaff") {
         std::string output;
         if (options.game_type == DIM) {
             std::string command =   "./zchaff " + options.game_filename + 
@@ -608,7 +677,7 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
     // SAT-Cadical
 
-    else if (options.proof==0 && options.solver==4) {
+    else if (options.proof==0 && options.solver=="cadical") {
         std::string output;
         if (options.game_type == DIM) {
             std::string command =   "./cadical " + options.game_filename + 
@@ -640,7 +709,7 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
     // ZRA
 
-    else if (game && options.proof==0 && options.solver==5) {
+    else if (game && options.proof==0 && options.solver=="zra") {
         for (int f=0; f<=1; f++) {
             start = std::chrono::high_resolution_clock::now();
 
@@ -686,7 +755,7 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
     // FRA
 
-    else if (game && options.proof==0 && options.solver==6) {
+    else if (game && options.proof==0 && options.solver=="fra") {
         if (options.print_solution || options.print_verbose) {
             options.starts.resize(game->nvertices);
             std::iota(options.starts.begin(), options.starts.end(), 0);
@@ -713,7 +782,7 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
     // SCC
 
-    else if (game && options.proof==0 && options.solver==7) { 
+    else if (game && options.proof==0 && options.solver=="scc") { 
         GameView view(*game);
         TarjanSCC tscc(*game,view);
         auto sccs = tscc.solve();
@@ -725,14 +794,14 @@ int main(int argc, char *argv[])
     //==================================================================================
     //CP-NOC + Zielonka (proof)
 
-    else if (game && options.proof==1 && (options.solver==1 || options.solver==8)) { 
+    else if (game && options.proof==1 && (options.solver=="noc-even" || options.solver=="noc-odd")) { 
         start = std::chrono::high_resolution_clock::now();
         Zielonka zlk(*game);
 
         NOCModel* model = new NOCModel(   
                                 *game, options.win_conditions, options.threshold, 
                                 (options.print_solution || options.print_verbose),
-                                options.solver==1?EVEN:ODD);
+                                options.solver=="noc-even"?EVEN:ODD);
 
         so.print_sol = options.print_solution || options.print_verbose;
 
@@ -769,12 +838,12 @@ int main(int argc, char *argv[])
             std::cout << "Solving time (CP)  : " << totaltime2.count() << std::endl;
         }
 
-        if (((engine.solutions>0 && options.solver==1) || (engine.solutions==0 && options.solver==8)) && 
+        if (((engine.solutions>0 && options.solver=="noc-even") || (engine.solutions==0 && options.solver=="noc-odd")) && 
             std::find(win[0].begin(), win[0].end(), game->start) != win[0].end()) 
         {
             std::cout << ".";
         }
-        else if (((engine.solutions==0 && options.solver==1) || (engine.solutions>0 && options.solver==8)) && 
+        else if (((engine.solutions==0 && options.solver=="noc-even") || (engine.solutions>0 && options.solver=="noc-odd")) && 
             std::find(win[1].begin(), win[1].end(), game->start) != win[1].end()) 
         {
             std::cout << ".";

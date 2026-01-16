@@ -331,7 +331,7 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
 }
 
 //----------------------------------------------------------------------------------
-// Jurdzinski game
+// Jurdzinski/Random/Mladder game
 
 Game::Game(int type, std::vector<int> vals, int start, reward_type rew) 
 :   start(start), reward(rew)  
@@ -451,7 +451,7 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
         std::mt19937 g(rd());
         owners.resize(nvertices/2,0);
         owners.resize(nvertices,1);
-        std::shuffle(owners.begin(), owners.end(), g);  // Unsort (shuffle) the vector
+        std::shuffle(owners.begin(), owners.end(), g); 
 
         // owners  .resize(nvertices,ODD);
 
