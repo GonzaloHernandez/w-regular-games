@@ -4,9 +4,8 @@
 #include "../various/zielonka.h"
 #include "../various/satencoder.h"
 
-#include "../cp_nocq_chuffed/model_nocq.cpp"
-#include "../cp_nocq_gecode/nocq.cpp"
-#include "../cp_fra/model_fra.cpp"
+#include "../cp_nocq/nocq_chuffed.cpp"
+#include "../cp_nocq/nocq_gecode.cpp"
 
 #include "../resources/debugchuffed.h"
 #include "../resources/debugstd.h"
@@ -26,7 +25,7 @@ struct options {
     std::string         game_filename   = "";
     std::string         export_filename = "";
     int                 export_type     = 0;    // 0=not DZN GM DIM
-    std::string         solver          = "";   // CP-NOC-EVEN CP-NOC-ODD CP-FRA SAT-zchaff SAT-cadical ZRA FRA SCC
+    std::string         solver          = "";   // CP-NOC-EVEN CP-NOC-ODD SAT-zchaff SAT-cadical ZRA FRA SCC
     std::string         cpengine        = "chuffed";    // chuffed or gecode
     int                 proof           = 0;    // 0=no 1=yes 2=eager
     int                 flip            = 0;    // 0=no 1=flip 2=flip_to_compare
@@ -286,7 +285,6 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--noc")==0)                { options.solver = "noc-even"; }
         else if (strcmp(argv[i],"--noc-even")==0)           { options.solver = "noc-even"; }
         else if (strcmp(argv[i],"--noc-odd")==0)            { options.solver = "noc-odd"; }
-        else if (strcmp(argv[i],"--cp-fra")==0)             { options.solver = "cp-fra"; }
         else if (strcmp(argv[i],"--zchaff")==0)             { options.solver = "zchaff"; }
         else if (strcmp(argv[i],"--cadical")==0)            { options.solver = "cadical"; }
         else if (strcmp(argv[i],"--zra")==0)                { options.solver = "zra"; }
@@ -340,7 +338,6 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --chuffed                  : CP Solver (Chuffed)\n";
             std::cout << "  --gecode                   : CP Solver (Gecode)\n";
             std::cout << "  --fra                      : Solve using FRA\n";
-            std::cout << "  --cp-fra                   : Solve using CP-FRA\n";
             std::cout << "  --sat-encoding             : Encode on DIMACS\n";
             std::cout << "  --sat-zchaff               : Solve using zChaff\n";
             std::cout << "  --sat-cadical              : Solve using Cadical\n";
@@ -528,7 +525,6 @@ int main(int argc, char *argv[])
         delete model;
     }
 
-
     //----------------------------------------------------------------------------------
     // CP-NOC-Gecode
 
@@ -551,9 +547,11 @@ int main(int argc, char *argv[])
 
         Gecode::DFS<NocModelGecode> dfs(model);
         delete model;
-        while (NocModelGecode* solution = dfs.next()) {
-            solution->print();
-            delete solution;
+        NocModelGecode* solution = dfs.next();
+
+        if (options.print_solution || options.print_verbose) {
+            if (solution) solution->print();
+            else std::cout << "UNSATISFIABLE" << std::endl;
         }
 
         end = std::chrono::high_resolution_clock::now();
@@ -561,16 +559,16 @@ int main(int argc, char *argv[])
 
         if (options.print_time>1 || options.print_verbose) {
             std::cout << "Solving time       : " << totaltime.count() << std::endl;
-            std::cout << "Mem used           : " << memUsed() << std::endl;
+            std::cout << "Mem used           : " << "???" << std::endl;
         }
 
         if (options.solver=="noc-even") {
             if (options.print_time>=0 || options.print_verbose)
-                std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
+                std::cout << game->start << ": " << (solution?"EVEN ":"ODD ");
         }
         else {
             if (options.print_time>=0 || options.print_verbose)
-                std::cout << game->start << ": " << (engine.solutions>0?"ODD ":"EVEN ");
+                std::cout << game->start << ": " << (!solution?"ODD ":"EVEN ");
         }
 
         if (options.print_time<=-2 || options.print_verbose) {
@@ -584,64 +582,14 @@ int main(int argc, char *argv[])
         std::cout << std::endl;
 
         if (options.print_statistics || options.print_verbose) {
-            engine.printStats();
+            // engine.printStats();
+            std::cout << "Statistics";
         }
         
+        if (solution) delete solution;
         
     }
 
-    //----------------------------------------------------------------------------------
-    // CP-FRA
-
-    else if (game && options.proof==0 && options.solver=="fra") {
-
-        std::cout << "Warning: This method is not finished" << std::endl;
-
-        start = std::chrono::high_resolution_clock::now();
-        FRAModel* model;
-        model = new FRAModel(*game);
-        so.nof_solutions = 1;
-        so.print_sol = (options.print_solution || options.print_verbose)?true:false;
-        end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> preptime = end - start;            
-
-        start = std::chrono::high_resolution_clock::now();
-
-        if (options.print_solution || options.print_verbose) {
-            engine.solve(model);
-        }
-        else {
-            std::streambuf* old_buf = std::cout.rdbuf();
-            std::ofstream null_stream("/dev/null");
-            std::cout.rdbuf(null_stream.rdbuf());
-            engine.solve(model);
-            std::cout.rdbuf(old_buf);
-        }
-
-        end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> totaltime = end - start;
-        
-        if (options.print_time>1 || options.print_verbose) {
-            std::cout << "Init time          : " << preptime.count() << std::endl;
-            std::cout << "Solving time       : " << totaltime.count() << std::endl;
-            std::cout << "Mem used           : " << memUsed() << std::endl;
-        }   
-        if (options.print_time>=0 || options.print_verbose)
-            std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
-
-        if (options.print_time<=-2 || options.print_verbose) {
-            std::cout   << preptime.count() << "\t";
-        }
-
-        if (options.print_time!=0 || options.print_verbose) {
-            std::cout   << totaltime.count();
-        }        
-
-        std::cout << std::endl;
-        
-        delete model;
-    }
-    
     //----------------------------------------------------------------------------------
     // SAT-zchaff
 

@@ -3,67 +3,119 @@
 #include "chuffed/core/propagator.h"
 #include "initializer_list"
 
-#include "prop_nocq.cpp"
+#ifndef WINNING_CONDITIONS_H
+#include "winning_conditions.h"
+#endif
 
 //===========================================================================
 
-class ParityCondition : public WinningCondition {
-    using WinningCondition::WinningCondition;
-public:
+class NoOpponentCycle : public Propagator {
+private:
+    Game& g;
+    vec<BoolView> V;
+    vec<BoolView> E;
+    parity_type playerSAT;
+    vec<WinningCondition*> conditions;
 
-    bool satisfy(int index,vec<int>& pathV,vec<int>& pathE) override {
-        int m = g.colors[pathV[index]];
-        for (int i=index+1; i<pathV.size(); i++) {
-            if (g.compareColors(g.colors[pathV[i]],m,BET)) {
-                m = g.colors[pathV[i]];
+    const int   CF_DONE     = 1;
+    const int   CF_CONFLICT = 2;
+    const int   CF_STAY     = 3;
+
+public:
+    //-----------------------------------------------------------------------
+    NoOpponentCycle(Game& g, vec<BoolView>& V, vec<BoolView>& E, 
+        parity_type playerSAT, vec<WinningCondition*> conditions)
+    : g(g), V(V), E(E),
+        playerSAT(playerSAT), conditions(conditions)
+    {
+        for (int i=0; i<g.nvertices;i++) V[i].attach(this, 1 , EVENT_F );
+        for (int i=0; i<g.nedges;   i++) E[i].attach(this, 1 , EVENT_F );
+    }
+    //-----------------------------------------------------------------------
+    int findVertex(int vertex,vec<int>& path) {
+        for (int i=0; i<path.size(); i++) {
+            if (path[i] == vertex) return i;
+        }
+        return -1;
+    }
+    //-----------------------------------------------------------------------
+    void clausify(vec<int>& path, vec<BoolView> &B, vec<Lit>& lits,int from) {
+        for (int i=from; i<path.size()-1; i++) {
+            lits.push(B[path[i]].getValLit());
+        }
+    }
+    //-----------------------------------------------------------------------
+    bool satisfiedConditions(int index,vec<int>& pathV,vec<int>& pathE) {
+        if (playerSAT==EVEN) {
+            for (int i=0; i<conditions.size(); i++) {
+                if (not conditions[i]->satisfy(0,pathV,pathE)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        else {
+            for (int i=0; i<conditions.size(); i++) {
+                if (conditions[i]->satisfy(0,pathV,pathE)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+    int filterEager(vec<int>& pathV, vec<int>& pathE, int v, 
+        int lastEdge, bool definedEdge) 
+    {
+        int index = findVertex(v,pathV);
+        if (index >= 0) {
+
+            if (not satisfiedConditions(index,pathV,pathE)) {
+                vec<Lit> lits;
+                lits.push();
+                clausify(pathE,E,lits,0);
+                Clause* reason = Reason_new(lits);
+                if (! E[lastEdge].setVal(false,reason)) {
+                    return CF_CONFLICT;
+                }
             }
         }
-        return m%2==playerSAT;
-    };
+        else if (definedEdge) {
+            pathV.push(v);
+            for (int e : g.outs[v]) {
+                if (E[e].isFalse()) continue;
+
+                int w = g.targets[e];
+                pathE.push(e);
+                int status = filterEager(pathV, pathE, w, e, E[e].isTrue());
+                pathE.pop();
+                if (status == CF_CONFLICT) {
+                    return status;
+                }
+            }
+            pathV.pop();
+        }
+        return CF_DONE;
+    }
+    //-----------------------------------------------------------------------
+    bool propagate() override {
+        vec<int> pathV;
+        vec<int> pathE;
+
+        if (filterEager(pathV,pathE,g.start,-1,true) == CF_CONFLICT)
+            return false;
+
+        return true;
+    }
+    //-----------------------------------------------------------------------
+    void wakeup(int i, int) override {
+        pushInQueue();
+    }
+    //-----------------------------------------------------------------------
+    void clearPropState() override {
+        in_queue = false;
+    }
 };
 
-//===========================================================================
-
-class EnergyCondition : public WinningCondition {
-    using WinningCondition::WinningCondition;
-public:
-
-    bool satisfy(int index,vec<int>& pathV,vec<int>& pathE) override {
-        int sum = 0;
-        for (int i=index; i<pathE.size(); i++) {
-            sum += g.weights[pathE[i]];
-        }
-        
-        if (playerSAT == EVEN) {
-            return sum >= 0;
-        }
-        return sum < 0;
-    };
-};
-
-//===========================================================================
-
-class MeanPayoffCondition : public WinningCondition {
-    using WinningCondition::WinningCondition;
-private:
-    int threshold;
-public:
-
-    void setThreshold(int t) { threshold = t; }
-
-    bool satisfy(int index,vec<int>& pathV,vec<int>& pathE) override {
-        int sum = 0;
-        for (int i=index; i<pathE.size(); i++) {
-            sum += g.weights[pathE[i]];
-        }
-        double avg = (double)sum / (double)(pathE.size() - index);
-
-        if (playerSAT == EVEN) {
-            return avg >= threshold;
-        }
-        return avg < threshold;
-    };
-};
 
 //===========================================================================
 
@@ -201,13 +253,13 @@ public:
         vec<WinningCondition*> conds;
 
         if (conditions[0])
-            conds.push(new ParityCondition(g,V,E,playerSAT));
+            conds.push(new ParityCondition(g,playerSAT));
             
         if (conditions[1])
-            conds.push(new EnergyCondition(g,V,E,playerSAT));
+            conds.push(new EnergyCondition(g,playerSAT));
 
         if (conditions[2]) {
-            MeanPayoffCondition* cond = new MeanPayoffCondition(g,V,E,playerSAT);
+            MeanPayoffCondition* cond = new MeanPayoffCondition(g,playerSAT);
             cond->setThreshold(threshold);
             conds.push(cond);
         }

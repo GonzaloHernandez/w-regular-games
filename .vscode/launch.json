@@ -54,7 +54,7 @@
                 // "--print-statistics",
                 // "--print-game",
                 // "--matrix-based",
-                // "--noc-odd",
+                "--noc-even",
                 // "--scc",
                 // "--zra",
                 // "--zchaff"
@@ -62,8 +62,9 @@
                 // "--checker-dfs-iterative",
                 // "--filter-eager"
                 "--parity",
-                "--mean-payoff",
-                "--threshold","3"
+                "--energy",
+                "--threshold","3",
+                "--gecode"
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
