@@ -130,8 +130,8 @@ private:
     parity_type playerSAT;
 public:
 
-    NOCModel(Game& g, std::vector<bool> conditions, int threshold=1, int printtype=0, 
-        parity_type playerSAT=EVEN) 
+    NOCModel(Game& g, std::vector<bool> conditions, int threshold=1, 
+        int printtype=0, parity_type playerSAT=EVEN) 
     :g(g), conditions(conditions), threshold(threshold), printtype(printtype), 
         playerSAT(playerSAT)
     {
@@ -151,7 +151,7 @@ public:
         fixVertices({g.start},{});
 
         // --------------------------------------------------------------
-        // For every PLAYER vertice, exactly one outgoing edge must be activated
+        // For every active PLAYER vertex, exactly one outgoing edge must be activated
         for (int v=0; v<g.nvertices; v++) if (g.owners[v] == playerSAT) {
 
             int n = g.outs[v].size();
@@ -225,7 +225,7 @@ public:
         }
 
         // --------------------------------------------------------------
-        // For every OPPONENT vertice, each outgoing edge must be activated
+        // For every active OPPONENT vertice, each outgoing edge must be activated
         for (int v=0; v<g.nvertices; v++) if (g.owners[v] == opponent(playerSAT)) {
             for (int e : g.outs[v]) {
                 vec<Lit> clause;
@@ -236,7 +236,7 @@ public:
         }
 
         // --------------------------------------------------------------
-        // For every activated edge, the target vertex must be activated
+        // For every active edge, the target vertex must be activated
         for (int w=0; w<g.nvertices; w++) if (w != g.start) {
             for (int e : g.ins[w]) {
                 vec<Lit> clause;
@@ -252,16 +252,20 @@ public:
 
         vec<WinningCondition*> conds;
 
-        if (conditions[0])
-            conds.push(new ParityCondition(g,playerSAT));
+        if (conditions[0]) {
+            ParityCondition* c = new ParityCondition(g,playerSAT);
+            conds.push(c);
+        }
             
-        if (conditions[1])
-            conds.push(new EnergyCondition(g,playerSAT));
-
+        if (conditions[1]) {
+            EnergyCondition* c = new EnergyCondition(g,playerSAT);
+            conds.push(c);
+        }
+            
         if (conditions[2]) {
-            MeanPayoffCondition* cond = new MeanPayoffCondition(g,playerSAT);
-            cond->setThreshold(threshold);
-            conds.push(cond);
+            MeanPayoffCondition* c = new MeanPayoffCondition(g,playerSAT);
+            c->setThreshold(threshold);
+            conds.push(c);
         }
 
         new NoOpponentCycle(g,V,E,playerSAT,conds);

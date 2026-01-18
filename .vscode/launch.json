@@ -36,9 +36,9 @@
             "args": [   
                 // "--gm", "${env:HOME}/gm/recursiveladder-1000.gm",
                 // "--gm", "~/Cloud/games/mlsolver/FLCTLLimitClosuren\\=7.gm",
-                "--dzn", "${workspaceFolder}/data/mpg-simple.dzn",
+                // "--dzn", "${workspaceFolder}/data/mpg-simple.dzn",
                 // "--gm", "${workspaceFolder}/build/jurd-200-200.gm",
-                // "--jurd","2","1","--min",
+                "--jurd","2","1","--max",
                 // "--rand","20","10","1","2",
                 // "--gm","build/temp.gm",
                 // "--dimacs","jurd.cnf",
@@ -62,9 +62,10 @@
                 // "--checker-dfs-iterative",
                 // "--filter-eager"
                 "--parity",
-                "--energy",
+                // "--energy",
                 "--threshold","3",
-                "--gecode"
+                "--chuffed",
+                // "--gecode"
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,

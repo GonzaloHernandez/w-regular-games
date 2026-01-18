@@ -346,9 +346,6 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --checker-scc              : Checker by CP-NOC\n";
             std::cout << "  --checker-dfs-recursive    : Checker by DFS Recursive\n";
             std::cout << "  --checker-dfs-iterative    : Checker by DFS Iterative\n";
-            std::cout << "  --filter-eager             : Filter by CP-NOC\n";
-            std::cout << "  --filter-memo              : Filter by CP-NOC\n";
-            std::cout << "  --filter-smart             : Filter by CP-NOC\n";
             std::cout << "  --flip                     : Convert the game into its complement\n";
             std::cout << "  --flip-compare             : Solve showing dualitity converting the game into its complement \n";
             std::cout << "  --threshold <value>        : Threshold for flip-compare (default=1)\n";

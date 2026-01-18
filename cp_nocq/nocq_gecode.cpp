@@ -41,14 +41,14 @@ public:
     // --------------------------------------------------------------
     NoOpponentCycleGecode(Gecode::Space& home, NoOpponentCycleGecode& source) 
     : Gecode::Propagator(home,source), g(source.g),
-        playerSAT(source.playerSAT), conditions(conditions)
+        playerSAT(source.playerSAT), conditions(source.conditions)
     {
         V.update(home, source.V);
         E.update(home, source.E);
     }
     // --------------------------------------------------------------
     virtual Gecode::PropCost cost(const Gecode::Space&, const Gecode::ModEventDelta&) const {
-        return Gecode::PropCost::binary(Gecode::PropCost::LO);
+        return Gecode::PropCost::ternary(Gecode::PropCost::HI);
     }    
     // --------------------------------------------------------------
     virtual Gecode::ExecStatus propagate(Gecode::Space& home, const Gecode::ModEventDelta&) {
@@ -68,6 +68,13 @@ public:
     virtual void reschedule(Gecode::Space& home) {
         V.reschedule(home, *this, Gecode::Int::PC_BOOL_VAL);
         E.reschedule(home, *this, Gecode::Int::PC_BOOL_VAL);
+    }
+    //-----------------------------------------------------------------------
+    virtual size_t dispose(Gecode::Space& home) {
+        V.cancel(home, *this, Gecode::Int::PC_BOOL_VAL);
+        E.cancel(home, *this, Gecode::Int::PC_BOOL_VAL);
+        (void) Propagator::dispose(home);
+        return sizeof(*this);
     }
     //-----------------------------------------------------------------------
     int findVertex(int vertex,vec<int>& path) {
@@ -171,21 +178,20 @@ public:
                 int e = g.outs[v][i];
                 edgeVars[i] = E[e];
             }
-            Gecode::IntVar targetSum(*this, 0, 1);
-            Gecode::channel(*this, V[v], targetSum);
-            Gecode::linear(*this, edgeVars, Gecode::IRT_EQ, targetSum);
+            Gecode::BoolVar sumIsOne(*this, 0, 1);
+            Gecode::linear(*this, edgeVars, Gecode::IRT_EQ, 1, sumIsOne);
+            Gecode::rel(*this, V[v], Gecode::BOT_IMP, sumIsOne, 1);
         }
 
         // --------------------------------------------------------------
         // For every OPPONENT active vertex, each outgoing edge must be activated
         for (int v=0; v<g.nvertices; v++) if (g.owners[v] == opponent(playerSAT)) {
             int n = g.outs[v].size();
-            Gecode::BoolVarArgs edgeVars(n);
             for (int i = 0; i < n; i++) {
                 int e = g.outs[v][i];
-                edgeVars[i] = E[e];
                 Gecode::rel(*this, V[v], Gecode::BOT_IMP, E[e], 1);
             }
+
         }
 
         // --------------------------------------------------------------
@@ -204,16 +210,20 @@ public:
 
         vec<WinningCondition*> conds;
 
-        if (conditions[0])
-            conds.push(new ParityCondition(g,playerSAT));
+        if (conditions[0]) {
+            ParityCondition* c = new ParityCondition(g,playerSAT);
+            conds.push(c);
+        }
             
-        if (conditions[1])
-            conds.push(new EnergyCondition(g,playerSAT));
-
+        if (conditions[1]) {
+            EnergyCondition* c = new EnergyCondition(g,playerSAT);
+            conds.push(c);
+        }
+            
         if (conditions[2]) {
-            MeanPayoffCondition* cond = new MeanPayoffCondition(g,playerSAT);
-            cond->setThreshold(threshold);
-            conds.push(cond);
+            MeanPayoffCondition* c = new MeanPayoffCondition(g,playerSAT);
+            c->setThreshold(threshold);
+            conds.push(c);
         }
 
         noopponentcyclegecode(*this,g,V,E,playerSAT,conds);

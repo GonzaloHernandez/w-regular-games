@@ -62,8 +62,8 @@ void Game::parseline_dzn(const std::string& line,std::vector<long long>& myvec) 
 //----------------------------------------------------------------------------------
 
 
-#include <cstdio>  // For sscanf
-#include <cstring> // For strstr (useful for finding comment start)
+#include <cstdio>  
+#include <cstring> 
 #include <string>
 #include <vector>
 #include <algorithm>
