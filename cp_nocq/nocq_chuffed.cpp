@@ -62,7 +62,6 @@ public:
             }
             return false;
         }
-
     }
     int filterEager(vec<int>& pathV, vec<int>& pathE, int v, 
         int lastEdge, bool definedEdge) 

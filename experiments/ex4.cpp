@@ -17,21 +17,21 @@ struct options {
     bool print_solution     = false; 
     bool print_statistics   = false; 
     bool print_verbose      = false; 
-    int  print_time         = 0;   // 0=Default 1=Solving Time 2=All times
+    int  print_time         = 0;    // 0=Default 1=Solving Time 2=All times
     int  game_type          = 0;    // enum game_type {DEF,JURD,RAND,MLADDER,DZN,GM,GMW,DIM}
     reward_type         reward          = MAX;
     std::vector<int>    vals            = {};
-    std::vector<int>    weights         = {0,0,0};  // lbound ubound force
+    std::vector<int>    weights         = {0,0,0};              // lbound ubound force
     std::vector<int>    starts          = {0};
     std::string         game_filename   = "";
     std::string         export_filename = "";
-    int                 export_type     = 0;    // 0=not DZN GM DIM
-    std::string         solver          = "";   // CP-NOC-EVEN CP-NOC-ODD SAT-zchaff SAT-cadical ZRA FRA SCC
-    std::string         cpengine        = "chuffed";    // chuffed or gecode
-    int                 proof           = 0;    // 0=no 1=yes 2=eager
-    int                 flip            = 0;    // 0=no 1=flip 2=flip_to_compare
-    int                 threshold       = 1;    // threshold for flip_to_compare
-    std::vector<bool>   win_conditions  = {false,false,false};    // 0=parity 1=energy 2=mean-payoff
+    int                 export_type     = 0;                    // 0=not DZN GM GMW DIM
+    std::string         solver          = "";                   // CP-NOC-EVEN / CP-NOC-ODD / SAT-zchaff / SAT-cadical / ZRA / FRA / SCC
+    std::string         cpengine        = "chuffed";            // chuffed / gecode
+    int                 proof           = 0;                    // 0=no 1=yes 2=eager
+    int                 flip            = 0;                    // 0=no 1=flip 2=flip_to_compare
+    int                 threshold       = 1;                    // threshold for flip_to_compare
+    std::vector<bool>   win_conditions  = {false,false,false};  // 0=parity 1=energy 2=mean-payoff
 } options;
 
 //--------------------------------------------------------------------------------------
@@ -501,6 +501,14 @@ int main(int argc, char *argv[])
             std::cout << "Encoding time      : " << encodetime.count() << std::endl;
             std::cout << "Dimacs time        : " << dimacstime.count() << std::endl;
         } 
+    }
+
+    // Ensure at least one winning condition is selected otherwise default to parity
+    if (options.win_conditions[0]==false && 
+        options.win_conditions[1]==false && 
+        options.win_conditions[2]==false) 
+    {
+        options.win_conditions[0] = true;
     }
 
     //----------------------------------------------------------------------------------

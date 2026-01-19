@@ -91,7 +91,7 @@ public:
                 for(int e : g.outs[v]) {
                     if (E[e].isFalse()) continue;
                     int w = g.targets[e];
-                    if (v==w && g.colors[v]%2 == opponent(playerSAT)) {
+                    if (v==w && g.priors[v]%2 == opponent(playerSAT)) {
                         return backtrack();
                     }
                 }
@@ -101,7 +101,7 @@ public:
             std::unordered_set<int> bestSet = bestColors(sc);
 
             int v0 = *bestSet.begin();
-            if (g.colors[v0]%2 == opponent(playerSAT)) {
+            if (g.priors[v0]%2 == opponent(playerSAT)) {
                 return backtrack();
             }
 

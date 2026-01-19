@@ -84,10 +84,10 @@ std::vector<std::vector<int>> SATEncoder::encode_strictlygreater(int a, int b, i
 
 void SATEncoder::calculate_oddcolors() {
     int sum = 0;
-    for (int v = 0; v < g.nvertices; v++) if (g.colors[v]%2 == ODD) {
-        if (!std::binary_search(oddcolors.begin(), oddcolors.end(), g.colors[v])) {
-            auto pos = std::lower_bound(oddcolors.begin(), oddcolors.end(), g.colors[v]);
-            oddcolors.insert(pos, g.colors[v]);
+    for (int v = 0; v < g.nvertices; v++) if (g.priors[v]%2 == ODD) {
+        if (!std::binary_search(oddcolors.begin(), oddcolors.end(), g.priors[v])) {
+            auto pos = std::lower_bound(oddcolors.begin(), oddcolors.end(), g.priors[v]);
+            oddcolors.insert(pos, g.priors[v]);
         }
     }
 }
@@ -96,7 +96,7 @@ void SATEncoder::calculate_oddcolors() {
 
 int SATEncoder::calculate_nbits(int n) {
     int sum = 0;
-    for (int v = 0; v < g.nvertices; v++) if (g.colors[v] == n) sum++;
+    for (int v = 0; v < g.nvertices; v++) if (g.priors[v] == n) sum++;
     return std::ceil(std::log2(sum + 1));
 }
 
@@ -175,7 +175,7 @@ std::vector<std::vector<int>> SATEncoder::getCNF() {
 
     // Progress measure constraints
     for (int e=0; e<g.nedges; e++) {
-        int q = g.colors[g.targets[e]];
+        int q = g.priors[g.targets[e]];
 
         std::vector<std::vector<int>> pm_cnf;
 

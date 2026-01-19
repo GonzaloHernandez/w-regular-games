@@ -29,10 +29,10 @@ class ParityCondition : public WinningCondition {
 public:
 
     bool satisfy(int index,vec<int>& pathV,vec<int>& pathE) override {
-        int m = g.colors[pathV[index]];
+        int m = g.priors[pathV[index]];
         for (int i=index+1; i<pathV.size(); i++) {
-            if (g.compareColors(g.colors[pathV[i]],m,BET)) {
-                m = g.colors[pathV[i]];
+            if (g.comparePriorities(g.priors[pathV[i]],m,BET)) {
+                m = g.priors[pathV[i]];
             }
         }
         return m%2==playerSAT;

@@ -161,7 +161,7 @@ void Game::parseline_gm(const std::string& line,
 Game::Game( std::vector<int> own,std::vector<long long> col,
             std::vector<int> sou,std::vector<int> tar, 
             int startv, reward_type rew) 
-:   owners(own), colors(col), sources(sou), targets(tar), 
+:   owners(own), priors(col), sources(sou), targets(tar), 
     start(startv), reward(rew) 
 {
     nvertices   = own.size();
@@ -174,7 +174,7 @@ Game::Game( std::vector<int> own,std::vector<long long> col,
 
     for(int i=0; i<nvertices; i++) {
         owners[i]=own[i];
-        colors[i]=col[i];
+        priors[i]=col[i];
     }
     for(int i=0; i<nedges; i++) {
         sources[i]=sou[i];
@@ -187,7 +187,7 @@ Game::Game( std::vector<int> own,std::vector<long long> col,
 Game::Game( std::vector<int> own,std::vector<long long> col,
             std::vector<int> sou,std::vector<int> tar,std::vector<int> wei,
             int startv, reward_type rew) 
-:   owners(own), colors(col), sources(sou), targets(tar), weights(wei),
+:   owners(own), priors(col), sources(sou), targets(tar), weights(wei),
     start(startv), reward(rew) 
 {
     nvertices   = own.size();
@@ -200,7 +200,7 @@ Game::Game( std::vector<int> own,std::vector<long long> col,
 
     for(int i=0; i<nvertices; i++) {
         owners[i]=own[i];
-        colors[i]=col[i];
+        priors[i]=col[i];
     }
     for(int i=0; i<nedges; i++) {
         sources[i]=sou[i];
@@ -244,8 +244,8 @@ Game::Game(int type, std::string filename,  std::vector<int> rweights,
                     nedges = stoi(line.substr(line.find("=") + 1));
                 } else if (line.find("owners") != std::string::npos) {
                     parseline_dzn(line,owners);
-                } else if (line.find("colors") != std::string::npos) {
-                    parseline_dzn(line,colors);
+                } else if (line.find("priors") != std::string::npos) {
+                    parseline_dzn(line,priors);
                 } else if (line.find("sources") != std::string::npos) {
                     parseline_dzn(line,sources);
                 } else if (line.find("targets") != std::string::npos) {
@@ -323,7 +323,7 @@ Game::Game(int type, std::string filename,  std::vector<int> rweights,
                     tweights.push_back(weights);
                     
                     owners.push_back(vinfo[2]);
-                    colors.push_back(vinfo[1]);
+                    priors.push_back(vinfo[1]);
                     counter++;
                 }
             }
@@ -381,9 +381,9 @@ Game::Game(int type, std::vector<int> vals, std::vector<int> rweights,
                 owners.push_back(1);
                 owners.push_back(0);
                 owners.push_back(0);
-                colors.push_back((levels-l)*2);
-                colors.push_back((levels-l)*2+1);
-                colors.push_back((levels-l)*2);
+                priors.push_back((levels-l)*2);
+                priors.push_back((levels-l)*2+1);
+                priors.push_back((levels-l)*2);
 
                 sources.push_back(es);   targets.push_back(es+1);   weights.push_back(rndweight(g));
                 sources.push_back(es);   targets.push_back(es+2);   weights.push_back(rndweight(g));
@@ -400,7 +400,7 @@ Game::Game(int type, std::vector<int> vals, std::vector<int> rweights,
                 os += 2;
             }
             owners.push_back(1);
-            colors.push_back((levels-l)*2);
+            priors.push_back((levels-l)*2);
             es += 1;
         }
         int l = levels;
@@ -408,8 +408,8 @@ Game::Game(int type, std::vector<int> vals, std::vector<int> rweights,
             owners.push_back(0);
             owners.push_back(1);
 
-            colors.push_back((levels-l)*2);
-            colors.push_back((levels-l)*2+1);
+            priors.push_back((levels-l)*2);
+            priors.push_back((levels-l)*2+1);
 
             sources.push_back(es);   targets.push_back(es+1);   weights.push_back(rndweight(g));
             sources.push_back(es+1); targets.push_back(es);     weights.push_back(rndweight(g));
@@ -419,7 +419,7 @@ Game::Game(int type, std::vector<int> vals, std::vector<int> rweights,
             es += 2;
         }
         owners.push_back(0);
-        colors.push_back((levels-l)*2);
+        priors.push_back((levels-l)*2);
 
         fixStartingZero();
         outs.resize(nvertices);
@@ -445,7 +445,7 @@ Game::Game(int type, std::vector<int> vals, std::vector<int> rweights,
         std::uniform_int_distribution<> rndweight(rweights[0], rweights[1]);
 
         for(int i=0; i<nvertices; i++) {
-            colors.push_back(rndcolors(g));
+            priors.push_back(rndcolors(g));
         }
     
         outs.resize(nvertices);
@@ -487,7 +487,7 @@ Game::Game(int type, std::vector<int> vals, std::vector<int> rweights,
 
         std::uniform_int_distribution<> rndweight(rweights[0], rweights[1]);
 
-        colors  .resize(nvertices);
+        priors  .resize(nvertices);
         sources .resize(nedges);
         targets .resize(nedges);
         weights .resize(nedges);
@@ -495,11 +495,11 @@ Game::Game(int type, std::vector<int> vals, std::vector<int> rweights,
         ins     .resize(nvertices);
 
         int consecutive = bl*2;
-        colors[0] = consecutive--;
+        priors[0] = consecutive--;
         for (int i=0; i<bl; i++) {
-            colors[i*3+1] = 0;
-            colors[i*3+2] = consecutive--;
-            colors[i*3+3] = consecutive--;
+            priors[i*3+1] = 0;
+            priors[i*3+2] = consecutive--;
+            priors[i*3+3] = consecutive--;
         }
 
         int e = 0;
@@ -557,12 +557,12 @@ void Game::setReward(reward_type rew) {
 //----------------------------------------------------------------------------------
 
 bool Game::compareVertices(int v1,int v2,parity_comp rel) {
-    return compareColors(colors[v1],colors[v2]);
+    return comparePriorities(priors[v1],priors[v2]);
 }
 
 //----------------------------------------------------------------------------------
 
-bool Game::compareColors(int c1,int c2,parity_comp rel) {
+bool Game::comparePriorities(int c1,int c2,parity_comp rel) {
     switch (rel) {
     case BET:
         if (reward==MIN && c1 < c2) return true; 
@@ -594,8 +594,8 @@ void Game::exportFile(int type, std::string filename) {
         file << "nvertices = " << nvertices << ";" << std::endl;
         file << "owners    = ["; 
         for(int i=0; i<owners.size(); i++)  file<<(i?",":"")<<owners[i];  file<<"];"<<std::endl;
-        file << "colors    = ["; 
-        for(int i=0; i<colors.size(); i++)  file<<(i?",":"")<<colors[i];  file<<"];"<<std::endl;
+        file << "priors    = ["; 
+        for(int i=0; i<priors.size(); i++)  file<<(i?",":"")<<priors[i];  file<<"];"<<std::endl;
 
         file << "nedges    = " << nedges << ";" << std::endl;
         file << "sources   = ["; 
@@ -609,7 +609,7 @@ void Game::exportFile(int type, std::string filename) {
     case GM: case GMW:
         file << "parity " << (nvertices-1) << ";" << std::endl;
         for (int v=0; v<nvertices; v++) {
-            file << v << " " << colors[v] << " " << owners[v] << " ";
+            file << v << " " << priors[v] << " " << owners[v] << " ";
             for (int e=0; e<outs[v].size(); e++) {
                 file << (e?",":"") << targets[outs[v][e]];
             }
@@ -634,9 +634,9 @@ void Game::printGame() {
     for(int v=0; v<nvertices; v++) 
         std::cout<<owners[v]<<(v<owners.size()-1?",":"");
     std::cout << "}" << std::endl;
-    std::cout << "colors:    {";
+    std::cout << "priors:    {";
     for(int v=0; v<nvertices; v++) 
-        std::cout<<colors[v]<<(v<colors.size()-1?",":"");
+        std::cout<<priors[v]<<(v<priors.size()-1?",":"");
     std::cout << "}" << std::endl;
 
     std::cout << "nedges:    " << sources.size() << std::endl;
@@ -658,7 +658,7 @@ void Game::printGame() {
 void Game::flipGame() {
     for(int v=0; v<nvertices; v++) {
         owners[v] = 1-owners[v];
-        colors[v]++;
+        priors[v]++;
     }
 }
 

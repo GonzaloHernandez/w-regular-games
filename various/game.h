@@ -30,7 +30,7 @@ public:
     friend int main(int, char*[]);
 public:
     std::vector<int>        owners;
-    std::vector<long long>  colors;
+    std::vector<long long>  priors;
     std::vector<int>        sources;
     std::vector<int>        targets;
     std::vector<int>        weights;
@@ -69,7 +69,7 @@ public:
     void setStart(int startv);
     void setReward(reward_type rew);
     bool compareVertices(int v1,int v2,parity_comp rel=BET);
-    bool compareColors(int c1,int c2,parity_comp rel=BET);
+    bool comparePriorities(int c1,int c2,parity_comp rel=BET);
     void exportFile(int type, std::string filename);
     void printGame();
     void flipGame();

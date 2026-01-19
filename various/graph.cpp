@@ -223,7 +223,7 @@ Graph::Graph(Game& g)
     nodes_ = std::make_unique<Node[]>(n_nodes_);
     for (size_t i = 0ull; i < n_nodes_; i++)
     {
-        nodes_[i] = { i, (size_t)g.colors[i],(uint8_t)g.owners[i], std::vector<size_t>(), std::vector<size_t>() };
+        nodes_[i] = { i, (size_t)g.priors[i],(uint8_t)g.owners[i], std::vector<size_t>(), std::vector<size_t>() };
     }
 
     for (size_t i = 0ull; i < g.nedges; i++)

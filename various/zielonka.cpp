@@ -14,22 +14,22 @@ std::vector<int> Zielonka::getBestVertices(bool* removed) {
         if (removed[i]) continue;
 
         if (!found) {
-            bestColor = g.colors[i];
+            bestColor = g.priors[i];
             bestVertices.push_back(i);
             found = true;
             continue;
         }
         
-        if (g.colors[i] == bestColor) {
+        if (g.priors[i] == bestColor) {
             bestVertices.push_back(i);
         }
-        else if (g.reward==MIN && g.colors[i] < bestColor) {
-            bestColor = g.colors[i];
+        else if (g.reward==MIN && g.priors[i] < bestColor) {
+            bestColor = g.priors[i];
             bestVertices.clear();
             bestVertices.push_back(i);
         }
-        else if (g.reward==MAX && g.colors[i] > bestColor) {
-            bestColor = g.colors[i];
+        else if (g.reward==MAX && g.priors[i] > bestColor) {
+            bestColor = g.priors[i];
             bestVertices.clear();
             bestVertices.push_back(i);
         }
@@ -82,7 +82,7 @@ std::array<std::vector<int>,2> Zielonka::search(bool* removed, int level) {
     if (A.size() == 0) {
         return { std::vector<int>(), std::vector<int>() };
     }
-    int player = g.colors[A[0]] % 2;
+    int player = g.priors[A[0]] % 2;
     std::unique_ptr<bool[]> removed1 = std::make_unique<bool[]>(g.nvertices);
     std::copy_n(removed, g.nvertices, removed1.get());
 

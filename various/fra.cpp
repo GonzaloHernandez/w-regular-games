@@ -57,10 +57,10 @@ bool isBetter(Game& g,int v1,int v2) {
 //-----------------------------------------------------------------------------------------------------
 
 long long bestcolor(Game& g, int index,const std::vector<int>& path){
-    long long m = g.colors[path[index]];
+    long long m = g.priors[path[index]];
     for (int i=index+1; i<path.size(); i++) {
-        if ((g.reward==MIN && g.colors[path[i]] < m) || (g.reward==MAX && g.colors[path[i]] > m)) {
-            m = g.colors[path[i]];
+        if ((g.reward==MIN && g.priors[path[i]] < m) || (g.reward==MAX && g.priors[path[i]] > m)) {
+            m = g.priors[path[i]];
         }
     }
     return m;
