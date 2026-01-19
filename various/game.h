@@ -14,7 +14,7 @@
 
 enum parity_type    {EVEN,ODD};                         // 0,1
 enum reward_type    {MIN,MAX};                          // 0,1
-enum game_type      {DEF,JURD,RAND,MLADDER,DZN,GM,DIM}; // 0,1,2,3,4,5,6
+enum game_type      {DEF,JURD,RAND,MLADDER,DZN,GM,GMW,DIM}; // 0,1,2,3,4,5,6
 enum parity_comp    {BET,EQU,BEQ};
 
 //--------------------------------------------------------------------------------------
@@ -61,8 +61,10 @@ public:
     Game(   std::vector<int> own,std::vector<long long> col,
             std::vector<int> sou,std::vector<int> tar,std::vector<int> wei,
             int startv, reward_type rew=MAX);
-    Game(int type, std::string filename, int start, reward_type rew=MAX);
-    Game(int type, std::vector<int> vals, int start, reward_type rew=MAX);
+    Game(   int type, std::string filename, std::vector<int> weights, 
+            int start, reward_type rew=MAX);
+    Game(   int type, std::vector<int> vals, std::vector<int> weights, 
+            int start, reward_type rew=MAX);
 
     void setStart(int startv);
     void setReward(reward_type rew);

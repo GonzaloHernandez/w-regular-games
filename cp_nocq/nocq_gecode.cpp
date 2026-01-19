@@ -87,7 +87,7 @@ public:
     bool satisfiedConditions(int index,vec<int>& pathV,vec<int>& pathE) {
         if (playerSAT==EVEN) {
             for (int i=0; i<conditions.size(); i++) {
-                if (not conditions[i]->satisfy(0,pathV,pathE)) {
+                if (not conditions[i]->satisfy(index,pathV,pathE)) {
                     return false;
                 }
             }
@@ -95,7 +95,7 @@ public:
         }
         else {
             for (int i=0; i<conditions.size(); i++) {
-                if (conditions[i]->satisfy(0,pathV,pathE)) {
+                if (conditions[i]->satisfy(index,pathV,pathE)) {
                     return true;
                 }
             }

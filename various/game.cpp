@@ -214,7 +214,8 @@ Game::Game( std::vector<int> own,std::vector<long long> col,
 //----------------------------------------------------------------------------------
 // Imported game from DZN or GM
 
-Game::Game(int type, std::string filename, int start, reward_type rew) 
+Game::Game(int type, std::string filename,  std::vector<int> rweights,
+    int start, reward_type rew) 
 :   nvertices(0), nedges(0), start(start), reward(rew) 
 {
     std::ios_base::sync_with_stdio(false);
@@ -271,13 +272,16 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
             int lastvertex = 0;
             std::vector<int> verts;
             std::vector<std::vector<int>> tedges;
-            std::vector<std::vector<long long>> tweights; // New: temporary weights storage
+            std::vector<std::vector<long long>> tweights;
             int counter = 0;
+
+            std::random_device rd;
+            std::mt19937 g(rd());
+            std::uniform_int_distribution<> rndweight(rweights[0], rweights[1]);
 
             while (getline(file, line)) {
                 if (line.empty()) continue;
                 if (line.find("parity") != std::string::npos) {
-                    // Extracts the max vertex ID to size the mapping vector
                     lastvertex = stoi(line.substr(line.find(" ")));
                     verts.resize(lastvertex + 1);
                 } else if (line.find("start") != std::string::npos) {
@@ -289,12 +293,34 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
                     std::string comment;
                     
                     parseline_gm(line, vinfo, outs, weights, comment);
-                    
-                    if (vinfo.empty()) continue; // Skip empty/malformed lines
+                  
+                    if ((weights.size() < outs.size()) || rweights[2] == 1) {
+                        size_t missing;
+                        if (rweights[2] == 1) {
+                            weights.clear();
+                            missing = outs.size() - weights.size();
+                        } else {
+                            missing = outs.size() - weights.size();
+                        }
+                        
+                        if (rweights[0] == rweights[1]) {
+                            weights.insert(weights.end(), missing, (long long)rweights[0]);
+                        } else {
+                            weights.reserve(outs.size());
+                            for (size_t i = 0; i < missing; ++i) {
+                                weights.push_back(rndweight(g));
+                            }
+                        }
+                    }
+                    else if (weights.size() > outs.size()) {
+                        weights.resize(outs.size());
+                    }
 
-                    verts[vinfo[0]] = counter; // Map file ID to internal 0..N ID
+                    if (vinfo.empty()) continue;
+
+                    verts[vinfo[0]] = counter;
                     tedges.push_back(outs);
-                    tweights.push_back(weights); // Store weights temporarily
+                    tweights.push_back(weights);
                     
                     owners.push_back(vinfo[2]);
                     colors.push_back(vinfo[1]);
@@ -306,18 +332,16 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
             nvertices = counter;
             outs.resize(nvertices);
             ins.resize(nvertices);
-            weights.clear(); // Ensure this is a member of your Game class
+            weights.clear();
 
             nedges = 0;
             for(int s = 0; s < nvertices; s++) {
                 for(int t = 0; t < tedges[s].size(); t++) {
-                    // Map the file's target ID to internal ID using 'verts'
                     int internal_target = verts[tedges[s][t]];
                     
                     sources.push_back(s); 
                     targets.push_back(internal_target);
                     
-                    // Store the weight for this specific edge
                     weights.push_back(tweights[s][t]);
                     
                     outs[s].push_back(nedges);
@@ -333,7 +357,8 @@ Game::Game(int type, std::string filename, int start, reward_type rew)
 //----------------------------------------------------------------------------------
 // Jurdzinski/Random/Mladder game
 
-Game::Game(int type, std::vector<int> vals, int start, reward_type rew) 
+Game::Game(int type, std::vector<int> vals, std::vector<int> rweights,
+    int start, reward_type rew) 
 :   start(start), reward(rew)  
 {
     if (type == JURD) {
@@ -344,6 +369,9 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
 
         assert(start >= 0 && start < nvertices && "Starting vertex must be within the valid range");
 
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::uniform_int_distribution<> rndweight(rweights[0], rweights[1]);
         int es = 1;
         int os = 0;
         
@@ -357,16 +385,16 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
                 colors.push_back((levels-l)*2+1);
                 colors.push_back((levels-l)*2);
 
-                sources.push_back(es);   targets.push_back(es+1);   weights.push_back(0);
-                sources.push_back(es);   targets.push_back(es+2);   weights.push_back(0);
-                sources.push_back(es+1); targets.push_back(es+2);   weights.push_back(0);
-                sources.push_back(es+2); targets.push_back(es);     weights.push_back(0);
+                sources.push_back(es);   targets.push_back(es+1);   weights.push_back(rndweight(g));
+                sources.push_back(es);   targets.push_back(es+2);   weights.push_back(rndweight(g));
+                sources.push_back(es+1); targets.push_back(es+2);   weights.push_back(rndweight(g));
+                sources.push_back(es+2); targets.push_back(es);     weights.push_back(rndweight(g));
 
-                sources.push_back(es+2); targets.push_back(es+3);   weights.push_back(0);
-                sources.push_back(es+3); targets.push_back(es+2);   weights.push_back(0);
+                sources.push_back(es+2); targets.push_back(es+3);   weights.push_back(rndweight(g));
+                sources.push_back(es+3); targets.push_back(es+2);   weights.push_back(rndweight(g));
 
-                sources.push_back(es+2); targets.push_back(os+1);   weights.push_back(0);
-                sources.push_back(os+1); targets.push_back(es+2);   weights.push_back(0);
+                sources.push_back(es+2); targets.push_back(os+1);   weights.push_back(rndweight(g));
+                sources.push_back(os+1); targets.push_back(es+2);   weights.push_back(rndweight(g));
 
                 es += 3;
                 os += 2;
@@ -383,10 +411,10 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
             colors.push_back((levels-l)*2);
             colors.push_back((levels-l)*2+1);
 
-            sources.push_back(es);   targets.push_back(es+1);   weights.push_back(0);
-            sources.push_back(es+1); targets.push_back(es);     weights.push_back(0);
-            sources.push_back(es+1); targets.push_back(es+2);   weights.push_back(0);
-            sources.push_back(es+2); targets.push_back(es+1);   weights.push_back(0);
+            sources.push_back(es);   targets.push_back(es+1);   weights.push_back(rndweight(g));
+            sources.push_back(es+1); targets.push_back(es);     weights.push_back(rndweight(g));
+            sources.push_back(es+1); targets.push_back(es+2);   weights.push_back(rndweight(g));
+            sources.push_back(es+2); targets.push_back(es+1);   weights.push_back(rndweight(g));
 
             es += 2;
         }
@@ -414,7 +442,8 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
         owners.resize(nvertices,1);
         std::shuffle(owners.begin(), owners.end(), g);  
         std::uniform_int_distribution<> rndcolors(0, vals[1]);
-    
+        std::uniform_int_distribution<> rndweight(rweights[0], rweights[1]);
+
         for(int i=0; i<nvertices; i++) {
             colors.push_back(rndcolors(g));
         }
@@ -426,12 +455,13 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
             for (int i=0; i < nvertices; i++) { ws.push_back(i); }
             std::shuffle(ws.begin(), ws.end(), g);
     
+            
             std::uniform_int_distribution<> rndnedges(vals[2], vals[3]);
             int es = rndnedges(g);
             for (int i=0; i<es; i++) {
                 sources.push_back(v);
                 targets.push_back(ws[i]);
-                weights.push_back(std::rand() % 11);
+                weights.push_back(rndweight(g));
                 outs[v].push_back(nedges);
                 ins[ws[i]].push_back(nedges);
                 nedges++;
@@ -455,6 +485,8 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
 
         // owners  .resize(nvertices,ODD);
 
+        std::uniform_int_distribution<> rndweight(rweights[0], rweights[1]);
+
         colors  .resize(nvertices);
         sources .resize(nedges);
         targets .resize(nedges);
@@ -474,28 +506,28 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
         for (int i=0; i<bl; i++) {
             sources[e] = i*3+0;
             targets[e] = i*3+1;
-            weights[e] = 0;
+            weights[e] = rndweight(g);
             outs[i*3+0].push_back(e);
             ins [i*3+1].push_back(e);
             e++;
 
             sources[e] = i*3+1;
             targets[e] = i*3+2;
-            weights[e] = 0;
+            weights[e] = rndweight(g);
             outs[i*3+1].push_back(e);
             ins [i*3+2].push_back(e);
             e++;
 
             sources[e] = i*3+1;
             targets[e] = i*3+3;
-            weights[e] = 0;
+            weights[e] = rndweight(g);
             outs[i*3+1].push_back(e);
             ins [i*3+3].push_back(e);
             e++;
 
             sources[e] = i*3+2;
             targets[e] = i*3+3;
-            weights[e] = 0;
+            weights[e] = rndweight(g);
             outs[i*3+2].push_back(e);
             ins [i*3+3].push_back(e);
             e++;
@@ -503,7 +535,7 @@ Game::Game(int type, std::vector<int> vals, int start, reward_type rew)
 
         sources[e] = bl*3;
         targets[e] = 0;
-        weights[e] = 0;
+        weights[e] = rndweight(g);
         outs[bl*3].push_back(e);
         ins [0].push_back(e);
     }
@@ -574,16 +606,18 @@ void Game::exportFile(int type, std::string filename) {
         for(int i=0; i<weights.size(); i++) file<<(i?",":"")<<weights[i]; file<<"];"<<std::endl;
         break;
 
-    case GM:
-        file << "parity " << nvertices << ";" << std::endl;
+    case GM: case GMW:
+        file << "parity " << (nvertices-1) << ";" << std::endl;
         for (int v=0; v<nvertices; v++) {
             file << v << " " << colors[v] << " " << owners[v] << " ";
             for (int e=0; e<outs[v].size(); e++) {
                 file << (e?",":"") << targets[outs[v][e]];
             }
-            file << " ";
-            for (int e=0; e<outs[v].size(); e++) {
-                file << (e?",":"") << weights[outs[v][e]];
+            if (type == GMW) {
+                file << " ";
+                for (int e=0; e<outs[v].size(); e++) {
+                    file << (e?",":"") << weights[outs[v][e]];
+                }
             }
             file << ";" << std::endl;
         }

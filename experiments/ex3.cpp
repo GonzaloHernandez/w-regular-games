@@ -5,7 +5,7 @@
 #include "../various/satencoder.h"
 
 #include "../cp_noc/model_noc.cpp"
-#include "../cp_fra/model_fra.cpp"
+// #include "../cp_fra/model_fra.cpp"
 
 #include "../resources/debugchuffed.h"
 #include "../resources/debugstd.h"
@@ -504,54 +504,54 @@ int main(int argc, char *argv[])
     //----------------------------------------------------------------------------------
     // CP-FRA
 
-    else if (game && options.proof==0 && options.solver==2) {
+    // else if (game && options.proof==0 && options.solver==2) {
 
-        std::cout << "Warning: This method is not finished" << std::endl;
+    //     std::cout << "Warning: This method is not finished" << std::endl;
 
-        start = std::chrono::high_resolution_clock::now();
-        FRAModel* model;
-        model = new FRAModel(*game);
-        so.nof_solutions = 1;
-        so.print_sol = (options.print_solution || options.print_verbose)?true:false;
-        end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> preptime = end - start;            
+    //     start = std::chrono::high_resolution_clock::now();
+    //     FRAModel* model;
+    //     model = new FRAModel(*game);
+    //     so.nof_solutions = 1;
+    //     so.print_sol = (options.print_solution || options.print_verbose)?true:false;
+    //     end = std::chrono::high_resolution_clock::now();
+    //     std::chrono::duration<double> preptime = end - start;            
 
-        start = std::chrono::high_resolution_clock::now();
+    //     start = std::chrono::high_resolution_clock::now();
 
-        if (options.print_solution || options.print_verbose) {
-            engine.solve(model);
-        }
-        else {
-            std::streambuf* old_buf = std::cout.rdbuf();
-            std::ofstream null_stream("/dev/null");
-            std::cout.rdbuf(null_stream.rdbuf());
-            engine.solve(model);
-            std::cout.rdbuf(old_buf);
-        }
+    //     if (options.print_solution || options.print_verbose) {
+    //         engine.solve(model);
+    //     }
+    //     else {
+    //         std::streambuf* old_buf = std::cout.rdbuf();
+    //         std::ofstream null_stream("/dev/null");
+    //         std::cout.rdbuf(null_stream.rdbuf());
+    //         engine.solve(model);
+    //         std::cout.rdbuf(old_buf);
+    //     }
 
-        end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double> totaltime = end - start;
+    //     end = std::chrono::high_resolution_clock::now();
+    //     std::chrono::duration<double> totaltime = end - start;
         
-        if (options.print_time>1 || options.print_verbose) {
-            std::cout << "Init time          : " << preptime.count() << std::endl;
-            std::cout << "Solving time       : " << totaltime.count() << std::endl;
-            std::cout << "Mem used           : " << memUsed() << std::endl;
-        }   
-        if (options.print_time>=0 || options.print_verbose)
-            std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
+    //     if (options.print_time>1 || options.print_verbose) {
+    //         std::cout << "Init time          : " << preptime.count() << std::endl;
+    //         std::cout << "Solving time       : " << totaltime.count() << std::endl;
+    //         std::cout << "Mem used           : " << memUsed() << std::endl;
+    //     }   
+    //     if (options.print_time>=0 || options.print_verbose)
+    //         std::cout << game->start << ": " << (engine.solutions>0?"EVEN ":"ODD ");
 
-        if (options.print_time<=-2 || options.print_verbose) {
-            std::cout   << preptime.count() << "\t";
-        }
+    //     if (options.print_time<=-2 || options.print_verbose) {
+    //         std::cout   << preptime.count() << "\t";
+    //     }
 
-        if (options.print_time!=0 || options.print_verbose) {
-            std::cout   << totaltime.count();
-        }        
+    //     if (options.print_time!=0 || options.print_verbose) {
+    //         std::cout   << totaltime.count();
+    //     }        
 
-        std::cout << std::endl;
+    //     std::cout << std::endl;
         
-        delete model;
-    }
+    //     delete model;
+    // }
     
     //----------------------------------------------------------------------------------
     // SAT-zchaff

@@ -18,9 +18,10 @@ struct options {
     bool print_statistics   = false; 
     bool print_verbose      = false; 
     int  print_time         = 0;   // 0=Default 1=Solving Time 2=All times
-    int  game_type          = 0;    // enum game_type {DEF,JURD,RAND,MLADDER,DZN,GM,DIM}
+    int  game_type          = 0;    // enum game_type {DEF,JURD,RAND,MLADDER,DZN,GM,GMW,DIM}
     reward_type         reward          = MAX;
     std::vector<int>    vals            = {};
+    std::vector<int>    weights         = {0,0,0};  // lbound ubound force
     std::vector<int>    starts          = {0};
     std::string         game_filename   = "";
     std::string         export_filename = "";
@@ -42,7 +43,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             options.game_type = JURD;
             i++;
             
-            if (i>=argc || argv[i][0] == '-') {
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
                 std::cerr << "ERROR: Number of levels missing\n";
                 return false;                    
             }
@@ -59,7 +60,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             options.vals.push_back(levels);
 
             i++;
-            if (i>=argc || argv[i][0] == '-') {
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
                 std::cerr << "ERROR: Number of blocks missing\n";
                 return false;                    
             }
@@ -78,7 +79,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             options.game_type = RAND;
             i++;
             
-            if (i>=argc || argv[i][0] == '-') {
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
                 std::cerr << "ERROR: Number of vertices missing\n";
                 return false;                    
             }
@@ -95,7 +96,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             options.vals.push_back(ns);
 
             i++;
-            if (i>=argc || argv[i][0] == '-') {
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
                 std::cerr << "ERROR: Number of priorities missing\n";
                 return false;                    
             }
@@ -111,7 +112,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             options.vals.push_back(ps);
 
             i++;
-            if (i>=argc || argv[i][0] == '-') {
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
                 std::cerr << "ERROR: Min amount of edges missing\n";
                 return false;                    
             }
@@ -127,7 +128,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             options.vals.push_back(d1);
 
             i++;
-            if (i>=argc || argv[i][0] == '-') {
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
                 std::cerr << "ERROR: Max amount of edges missing\n";
                 return false;                    
             }
@@ -146,7 +147,7 @@ bool parseMyOptions(int argc, char *argv[]) {
             options.game_type = MLADDER;
             i++;
             
-            if (i>=argc || argv[i][0] == '-') {
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
                 std::cerr << "ERROR: Number of blocks missing\n";
                 return false;                    
             }
@@ -162,10 +163,46 @@ bool parseMyOptions(int argc, char *argv[]) {
             }
             options.vals.push_back(blocks);
         }
+        else if (strncmp(argv[i],"--weights",9)==0) {
+            if (strcmp(argv[i],"--weights-force")==0) options.weights[2] = 1;
+            i++;
+            
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
+                std::cerr << "ERROR: Initial weight missing\n";
+                return false;                    
+            }
+            char* endptr;
+            int w1 = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || w1 < -1000000 || w1 > 1000000) {
+                std::cerr << "ERROR: Weights out of range\n";
+                return false;
+            }
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: Initial weight no numeric\n";
+                return false;
+            }
+            options.weights[0] = w1;
+
+            i++;
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
+                std::cerr << "ERROR: Final weight missing\n";
+                return false;                    
+            }
+            int w2 = std::strtol(argv[i],&endptr,10);
+            if (errno == ERANGE || w2 < w1 || w2 > 1000000) {
+                std::cerr << "ERROR: Weights out of range\n";
+                return false;
+            }            
+            if (*endptr != '\0') {
+                std::cerr << "ERROR: Final weight no numeric\n";
+                return false;
+            }
+            options.weights[1] = w2;
+        }
         else if (strcmp(argv[i],"--dzn")==0) {
             options.game_type = DZN;
             i++;
-            if (i>=argc || argv[i][0] == '-') {
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
                 std::cerr << "ERROR: DZN file name missing\n";
                 return false;                    
             }
@@ -174,16 +211,16 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--gm")==0) {
             options.game_type = GM;
             i++;
-            if (i>=argc || argv[i][0] == '-') {
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
                 std::cerr << "ERROR: GM file name missing\n";
                 return false;                    
             }
             options.game_filename = argv[i];                
-        }
+        }        
         else if (strcmp(argv[i],"--dimacs")==0) {
             options.game_type = DIM;
             i++;
-            if (i>=argc || argv[i][0] == '-') {
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
                 std::cerr << "ERROR: Dimacs file name missing\n";
                 return false;                    
             }
@@ -191,7 +228,7 @@ bool parseMyOptions(int argc, char *argv[]) {
         }
         else if (strcmp(argv[i],"--start")==0) {
             i++;
-            if (i>=argc || argv[i][0] == '-') {
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
                 std::cerr << "ERROR: Starting vertex missing\n";
                 return false;                    
             }
@@ -214,7 +251,7 @@ bool parseMyOptions(int argc, char *argv[]) {
         }
         else if (strcmp(argv[i],"--export-dzn")==0) {
             i++;
-            if (i>=argc || argv[i][0] == '-') {
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
                 std::cerr << "ERROR: Target DZN file name missing\n";
                 return false;                    
             }
@@ -223,16 +260,25 @@ bool parseMyOptions(int argc, char *argv[]) {
         }
         else if (strcmp(argv[i],"--export-gm")==0) {
             i++;
-            if (i>=argc || argv[i][0] == '-') {
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
                 std::cerr << "ERROR: Target GM file name missing\n";
                 return false;                    
             }
             options.export_type = GM;
             options.export_filename = argv[i];                
         }
+        else if (strcmp(argv[i],"--export-gmw")==0) {
+            i++;
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
+                std::cerr << "ERROR: Target GMW file name missing\n";
+                return false;                    
+            }
+            options.export_type = GMW;
+            options.export_filename = argv[i];                
+        }
         else if (strcmp(argv[i],"--export-dimacs")==0) {
             i++;
-            if (i>=argc || argv[i][0] == '-') {
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
                 std::cerr << "ERROR: Target DIMAS file name missing\n";
                 return false;                    
             }
@@ -242,7 +288,7 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--nsolutions")==0) {
             i++;
             
-            if (i>=argc || argv[i][0] == '-') {
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
                 std::cerr << "ERROR: Number of solutions missing\n";
                 return false;                    
             }
@@ -261,7 +307,7 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--threshold")==0) {
             i++;
             
-            if (i>=argc || argv[i][0] == '-') {
+            if (i>=argc || (strlen(argv[i]) > 1 && strncmp(argv[i], "--", 2) == 0)) {
                 std::cerr << "ERROR: Threshold value missing\n";
                 return false;                    
             }
@@ -319,6 +365,8 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --jurd <levels> <blocks>   : Jurdzinski game\n";
             std::cout << "  --rand <ns> <ps> <d1> <d2> : Random game\n";
             std::cout << "  --mladder <bl>             : ModelcheckerLadder game\n";
+            std::cout << "  --weights <w1> <w2>        : Weights range\n";
+            std::cout << "  --weights-force <w1> <w2>  : Force to use weights range\n";
             std::cout << "  --start <vertex>           : Starting vertex\n";
             std::cout << "  --print-only-time          : Print only solving time\n";
             std::cout << "  --print-only-times         : Print only preptime + solving time\n";
@@ -328,10 +376,11 @@ bool parseMyOptions(int argc, char *argv[]) {
             std::cout << "  --print-solution           : Print solution (All vertices)\n";
             std::cout << "  --print-statistics         : Print statistics after solving\n";
             std::cout << "  --verbose                  : Print everything\n";
-            std::cout << "  --max                      : Seek to maximize the color\n";
-            std::cout << "  --min                      : Seek to minimize the color\n";
+            std::cout << "  --max                      : Seek to maximize the priority\n";
+            std::cout << "  --min                      : Seek to minimize the priority\n";
             std::cout << "  --export-dzn <filename>    : Export game to DZN format (not solve)\n";
             std::cout << "  --export-gm <filename>     : Export game to GM format (not solve)\n"; 
+            std::cout << "  --export-gmw <filename>    : Export game to GM+Weights format (not solve)\n"; 
             std::cout << "  --export-dimacs <filename> : Export game to DIMACS format (not solve)\n"; 
             std::cout << "  --noc-even                 : CP-NOC satisfying player EVEN (No-Odd-Cycles)\n";
             std::cout << "  --noc-odd                  : CP-NOC satisfying player ODD (No-Even-Cycles)\n";
@@ -392,15 +441,17 @@ int main(int argc, char *argv[])
     auto start = std::chrono::high_resolution_clock::now();
 
     switch (options.game_type) {
-        case JURD: case RAND: case MLADDER:
-            game = new Game(options.game_type, 
-                            options.vals,
-                            options.starts[0],
-                            options.reward);
-            break;
         case DZN: case GM:
             game = new Game(options.game_type, 
                             options.game_filename, 
+                            options.weights,
+                            options.starts[0],
+                            options.reward);
+            break;
+        case JURD: case RAND: case MLADDER:
+            game = new Game(options.game_type, 
+                            options.vals,
+                            options.weights,
                             options.starts[0],
                             options.reward);
             break;
@@ -429,6 +480,9 @@ int main(int argc, char *argv[])
     }
     else if (game && options.export_type == GM && options.proof<2) {
         game->exportFile(GM, options.export_filename);
+    }
+    else if (game && options.export_type == GMW && options.proof<2) {
+        game->exportFile(GMW, options.export_filename);
     }
     else if (game && options.export_type == DIM && options.proof<2) {
         SATEncoder encoder(*game);
