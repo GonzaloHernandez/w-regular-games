@@ -2,7 +2,7 @@
 #define WINNING_CONDITIONS_H
 
 #ifndef GAME_H
-#include "game.h"
+#include "../various/game.h"
 #endif
 
 #include "chuffed/support/vec.h"
@@ -19,7 +19,7 @@ public:
     }
     virtual ~WinningCondition() = default;
     //-----------------------------------------------------------------------
-    virtual bool satisfy(int index,vec<int>& pathV,vec<int>& pathE) = 0;
+    virtual bool satisfy(vec<int>& pathV,vec<int>& pathE,int cycleIndex) = 0;
 };
 
 //===========================================================================
@@ -28,10 +28,10 @@ class ParityCondition : public WinningCondition {
     using WinningCondition::WinningCondition;
 public:
 
-    bool satisfy(int index,vec<int>& pathV,vec<int>& pathE) override {
-        int m = g.priors[pathV[index]];
-        for (int i=index+1; i<pathV.size(); i++) {
-            if (g.comparePriorities(g.priors[pathV[i]],m,BET)) {
+    bool satisfy(vec<int>& pathV,vec<int>& pathE,int cycleIndex) override {
+        int m = g.priors[pathV[cycleIndex]];
+        for (int i=cycleIndex+1; i<pathV.size(); i++) {
+            if (g.comparePriorities(g.priors[pathV[i]],m)) {
                 m = g.priors[pathV[i]];
             }
         }
@@ -45,9 +45,9 @@ class EnergyCondition : public WinningCondition {
     using WinningCondition::WinningCondition;
 public:
 
-    bool satisfy(int index,vec<int>& pathV,vec<int>& pathE) override {
+    bool satisfy(vec<int>& pathV,vec<int>& pathE,int cycleIndex) override {
         int sum = 0;
-        for (int i=index; i<pathE.size(); i++) {
+        for (int i=cycleIndex; i<pathE.size(); i++) {
             sum += g.weights[pathE[i]];
         }
         
@@ -68,12 +68,12 @@ public:
 
     void setThreshold(int t) { threshold = t; }
 
-    bool satisfy(int index,vec<int>& pathV,vec<int>& pathE) override {
+    bool satisfy(vec<int>& pathV,vec<int>& pathE,int cycleIndex) override {
         int sum = 0;
-        for (int i=index; i<pathE.size(); i++) {
+        for (int i=cycleIndex; i<pathE.size(); i++) {
             sum += g.weights[pathE[i]];
         }
-        double avg = (double)sum / (double)(pathE.size() - index);
+        double avg = (double)sum / (double)(pathE.size() - cycleIndex);
 
         if (playerSAT == EVEN) {
             return avg >= threshold;

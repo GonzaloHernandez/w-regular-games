@@ -5,7 +5,7 @@
 #include <cmath>
 #include <chrono>
 
-//======================================================================================
+//=============================================================================
 
 class Pool {
 private:
@@ -16,7 +16,7 @@ public:
     int top()   { return id; }
 };
 
-//======================================================================================
+//=============================================================================
 
 class SATEncoder {
 private:
@@ -26,7 +26,7 @@ private:
     std::vector<std::vector<std::vector<int>>>    P;
     std::vector<int>    oddcolors;
     Pool                pool;
-    //----------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------
 
     std::vector<std::vector<int>> encode_greaterequal(int a, int b, int p);
     std::vector<std::vector<int>> encode_strictlygreater(int a, int b, int p);
@@ -38,7 +38,4 @@ public:
     std::vector<std::vector<int>> getCNF();
     void dimacs(std::vector<std::vector<int>>& cnf, std::string filename);
 };
-
-//======================================================================================
-
 

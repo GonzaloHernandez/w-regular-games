@@ -30,7 +30,7 @@
         // -------------------------------------------------------------------
         {
             "type": "cppbuild",
-            "label": "C/C++: build experiment 4",
+            "label": "C/C++: build experiment 5",
             "command": "/usr/bin/g++",
             "args": [
                 "-std=c++17",
@@ -42,7 +42,7 @@
                 "${workspaceFolder}/various/tarjan.cpp",
                 "${workspaceFolder}/various/game.cpp",
                 "${workspaceFolder}/various/fra.cpp",
-                "${workspaceFolder}/experiments/ex4.cpp",
+                "${workspaceFolder}/experiments/ex5.cpp",
                 "-o",
                 "${workspaceFolder}/build/nocq",
                 "-I${env:HOME}/.local/include",

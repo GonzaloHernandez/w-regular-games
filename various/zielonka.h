@@ -11,7 +11,6 @@ class Zielonka {
 private:
     Game& g;
 public:
-    //-----------------------------------------------------------------------
     Zielonka(Game& g);
 
     std::vector<int> getBestVertices(bool* removed);

@@ -25,8 +25,6 @@ public:
 
     std::vector<std::vector<int>> solve();
     void search(int v);
-
-    //----------------------------------------------------------------------------------
 };
 
 #endif // TARJAN_H
