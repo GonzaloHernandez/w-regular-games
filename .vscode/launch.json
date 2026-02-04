@@ -54,7 +54,8 @@
                 // "--print-statistics",
                 // "--print-game",
                 // "--matrix-based",
-                "--noc",
+                // "--noc",
+                "--cross",
                 // "--scc",
                 // "--zra",
                 // "--zchaff"

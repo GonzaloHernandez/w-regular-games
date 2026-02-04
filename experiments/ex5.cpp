@@ -1,10 +1,13 @@
-#include "../various/fra.h"
-#include "../various/game.h"
-#include "../various/tarjan.h"
-#include "../various/zielonka.h"
-#include "../various/satencoder.h"
+#include "../utils/fra.h"
+#include "../utils/game.h"
+#include "../utils/tarjan.h"
+#include "../utils/zielonka.h"
+#include "../utils/satencoder.h"
+#include "../cp_cross/cross_chuffed.cpp"
 #include "../cp_nocq/nocq_chuffed.cpp"
 #include "../resources/debugchuffed.h"
+
+// #include <execution>
 
 #ifdef HAS_GECODE
 #include "cp_nocq/nocq_gecode.cpp"
@@ -27,7 +30,7 @@ struct options {
     std::string         export_filename = "";
     int                 export_type     = 0;            // 0=not DZN,GM,GMW,DIM
     std::string         solver          = "";           // NOC-EVEN,NOC-ODD,SAT
-                                                        // ZRA,FRA,SCC
+                                                        // ZRA,FRA,SCC,CROSS
     std::string         cpengine        = "chuffed";    // chuffed,gecode
     bool                flip            = false;        // 0=no 1=flip
 
@@ -176,6 +179,10 @@ bool parseMyOptions(int argc, char *argv[]) {
                                 { options.solver            = "fra"; }
         else if (strcmp(argv[i],"--scc")==0)
                                 { options.solver            = "scc"; }
+        else if (strcmp(argv[i],"--cross")==0)
+                                { options.solver            = "cross"; }
+        else if (strcmp(argv[i],"--proof")==0)
+                                { options.solver            = "proof"; }
         else if (strcmp(argv[i],"--chuffed")==0)
                                 { options.cpengine          = "chuffed"; }
         else if (strcmp(argv[i],"--gecode")==0)
@@ -335,9 +342,9 @@ int main(int argc, char *argv[])
 
     else if (options.solver.substr(0,3)=="noc"&&options.cpengine=="chuffed") {
         startClock(); //.............................................
-        Chuffed::NOCModel* model = new Chuffed::NOCModel(
-                            *game, options.win_conditions, options.threshold, 
-                            (options.print_solution || options.print_verbose));
+        Chuffed::NOCModel* model = new Chuffed::NOCModel( *game, 
+                options.win_conditions, options.threshold, 
+                (options.print_solution || options.print_verbose));
 
         so.print_sol = options.print_solution || options.print_verbose;
         double preptime = stopClock(); //............................
@@ -572,6 +579,101 @@ int main(int argc, char *argv[])
         std::cout << "Total SCCs: " << counter << std::endl;
     }
 
+    //-------------------------------------------------------------------------
+    // CP-Cross-NOC-Chuffed
+
+    else if (options.solver=="cross"&&options.cpengine=="chuffed"){
+        vec<vec<int>> sol;
+        sol.growTo(2);
+
+        startClock(); //.............................................
+        Chuffed::CrossNOCModel* model = new Chuffed::CrossNOCModel( *game, sol, 
+                options.win_conditions, options.threshold, 
+                (options.print_solution || options.print_verbose));
+
+        so.print_sol = true;
+        double preptime = stopClock(); //............................
+
+        if (options.print_time>1) {
+            std::cout << "Init time          : " << preptime << std::endl;
+        }
+
+        startClock(); //.............................................
+        if (options.print_solution || options.print_verbose) {
+            engine.solve(model);
+        }
+        else {
+            std::streambuf* old_buf = std::cout.rdbuf();
+            std::ofstream null_stream("/dev/null");
+            std::cout.rdbuf(null_stream.rdbuf());
+            engine.solve(model);
+            std::cout.rdbuf(old_buf);
+        }
+        double totaltime = stopClock(); //...........................
+
+        if (options.print_time>1 || options.print_verbose) {
+            std::cout << "Solving time       : " << totaltime << std::endl;
+            std::cout << "Mem used           : " << memUsed() << std::endl;
+        }
+        
+        if (options.print_time<=-2 || options.print_verbose) {
+            std::cout   << preptime << "\t";
+        }
+
+        if (options.print_time!=0 || options.print_verbose) {
+            std::cout   << totaltime;
+        }        
+
+        std::cout << std::endl;
+
+        if (options.print_statistics || options.print_verbose) {
+            engine.printStats();
+        }
+        
+        delete model;
+    }
+    
+    //-------------------------------------------------------------------------
+    // Proof 
+
+    else if (options.solver=="proof") {
+
+        Zielonka zlk(*game);
+        auto win = zlk.solve();
+
+        vec<vec<int>> sol;
+        sol.growTo(2);
+        Chuffed::CrossNOCModel* model = new Chuffed::CrossNOCModel(*game, sol, 
+                            options.win_conditions, options.threshold, 
+                            false);
+
+        so.print_sol = true;
+        engine.solve(model);
+        
+        int evens=0;
+        for (int i=0; i<sol[EVEN].size(); i++) {
+            auto it = std::find(win[EVEN].begin(), 
+                                win[EVEN].end(), 
+                                sol[EVEN][i]);
+            evens ++;
+            if (it != win[EVEN].end()) continue;
+            std::cerr   << "Counter example found in vertex " << i
+                        << "NOC=EVEN / ZRA=ODD" << std::endl;
+        }
+
+        int odds = 0;
+        for (int i=0; i<sol[ODD].size(); i++) {
+            auto it = std::find(win[ODD].begin(), 
+                                win[ODD].end(), 
+                                sol[ODD][i]);
+            odds ++;
+            if (it != win[ODD].end()) continue;
+            std::cerr   << "Counter example found in vertex " << i
+                        << "NOC=ODD / ZRA=EVEN" << std::endl;
+        }
+        std::cout<< evens << "evens, " << odds << " odds." << std::endl;
+    }
+    
     //-------------------------------------------------------------------------
 
     delete game;

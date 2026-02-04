@@ -1,21 +1,3 @@
-/*
- * Main authors:
- *    Gonzalo Hernandez <gonzalo.hernandez@monash>
- *    <gonzalo.hernandez@udenar.edu.co>
- *
- * Contributing authors:
- *    Guido Tack <guido.tack@monash.edu>
- *    Julian Gutierrez <J.Gutierrez@sussex.ac.uk>
- *
- * This file is part of NOCQ (a CP Toolchain for parity games with quantitative
- * conditions).
- *
- * This Source Code Form is subject to the terms of the Mozilla Public License,
- * v. 2.0. If a copy of the MPL was not distributed with this file, You can get
- * one at https://mozilla.org/MPL/2.0/.
- * 
- *-----------------------------------------------------------------------------
- */
 #include "iostream"
 #include "chuffed/vars/modelling.h"
 #include "chuffed/core/propagator.h"
@@ -29,12 +11,12 @@ namespace Chuffed {
 
 //=============================================================================
 
-class NoOpponentCycle : public Propagator {
+class CrossNoOpponentCycle : public Propagator {
 private:
     Game& g;
     vec<BoolView> V;
     vec<BoolView> E;
-    parity_type playerSAT;
+    parity_type p;
     vec<WinningCondition*> conditions;
 
     const int   CF_DONE     = 1;
@@ -43,9 +25,9 @@ private:
 
 public:
     //-------------------------------------------------------------------------
-    NoOpponentCycle(Game& g, vec<BoolView>& V, vec<BoolView>& E, 
-        parity_type playerSAT, vec<WinningCondition*> conditions)
-    : g(g), V(V), E(E), playerSAT(playerSAT), conditions(conditions)
+    CrossNoOpponentCycle(Game& g, vec<BoolView>& V, vec<BoolView>& E, 
+        parity_type p, vec<WinningCondition*> conditions)
+    : g(g), V(V), E(E), p(p), conditions(conditions)
     {
         for (int i=0; i<g.nvertices;i++) V[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.nedges;   i++) E[i].attach(this, 1 , EVENT_F );
@@ -65,7 +47,7 @@ public:
     }
     //-------------------------------------------------------------------------
     bool satisfiedConditions(vec<int>& pathV,vec<int>& pathE,int index) {
-        if (playerSAT==EVEN) {
+        if (p==EVEN) {
             for (int i=0; i<conditions.size(); i++) {
                 if (!conditions[i]->satisfy(pathV,pathE,index)) {
                     return false;
@@ -94,7 +76,7 @@ public:
                 lits.push();
                 clausify(pathE,E,lits,0);
                 Clause* reason = Reason_new(lits);
-                if (! E[lastEdge].setVal(false,reason)) {
+                if (! E[lastEdge].setVal(p==EVEN?false:true,reason)) {
                     return CF_CONFLICT;
                 }
             }
@@ -102,11 +84,12 @@ public:
         else if (definedEdge) {
             pathV.push(v);
             for (int e : g.outs[v]) {
-                if (E[e].isFalse()) continue;
+                if (p==EVEN) if (E[e].isFalse()) continue;
+                if (p==ODD) if (E[e].isTrue()) continue;
 
                 int w = g.targets[e];
                 pathE.push(e);
-                int status = filterEager(pathV, pathE, w, e, E[e].isTrue());
+                int status = filterEager(pathV, pathE, w, e, p==EVEN?E[e].isTrue():E[e].isFalse());
                 pathE.pop();
                 if (status == CF_CONFLICT) {
                     return status;
@@ -121,9 +104,9 @@ public:
         vec<int> pathV;
         vec<int> pathE;
 
+
         if (filterEager(pathV,pathE,g.init,-1,true) == CF_CONFLICT)
             return false;
-
         return true;
     }
     //-------------------------------------------------------------------------
@@ -139,40 +122,58 @@ public:
 
 //=============================================================================
 
-class NOCModel : public Problem {
+class CrossNOCModel : public Problem {
 private:
     Game& g;
-    vec<BoolView> V;  
-    vec<BoolView> E;
-    std::vector<bool> conditions;
+    vec<BoolView>       V;
+    vec<vec<BoolView>>  E;
+    std::vector<bool>   conditions;
     int threshold;
     int printtype;
-    parity_type playerSAT;
+    vec<vec<int>>&      sol;
 public:
 
-    NOCModel(Game& g, std::vector<bool> conditions, int threshold=1, 
-        int printtype=0, parity_type playerSAT=EVEN) 
-    :g(g), conditions(conditions), threshold(threshold), printtype(printtype), 
-        playerSAT(playerSAT)
+    CrossNOCModel(Game& g, vec<vec<int>>& sol,std::vector<bool> conditions, 
+        int threshold=1, int printtype=0) 
+    :g(g), sol(sol), conditions(conditions), threshold(threshold), 
+        printtype(printtype)
     {
         V.growTo(g.nvertices);
-        E.growTo(g.nedges);
-        setupConstraints();
+        E.growTo(2);
+        E[EVEN].growTo(g.nedges);
+        E[ODD ].growTo(g.nedges);
+        for (int i=0; i<g.nvertices;  i++) 
+            V[i] = newBoolVar();
+        for (int i=0; i<g.nedges; i++) {
+            E[EVEN][i] = newBoolVar();
+            E[ODD ][i] = newBoolVar();
+        }
+        setupConstraints(EVEN);
+        setupConstraints(ODD);
+        //---------------------------------------------------------------------
+
+        vec<Branching*> bv(static_cast<unsigned int>(g.nvertices));
+        vec<Branching*> be0(static_cast<unsigned int>(g.nedges));
+        vec<Branching*> be1(static_cast<unsigned int>(g.nedges));
+        for (int i = g.nvertices; (i--) != 0;) bv[i] = &V[i];
+        for (int i = g.nedges; (i--) != 0;) be0[i] = &E[EVEN][i];
+        for (int i = g.nedges; (i--) != 0;) be1[i] = &E[ODD][i];
+        
+        branch(bv, VAR_INORDER, VAL_MIN);
+        branch(be0, VAR_INORDER, VAL_MIN);
+        branch(be1, VAR_INORDER, VAL_MIN);
+        output_vars(bv);
+        output_vars(be0);
+        output_vars(be1);
     }
 
     //-------------------------------------------------------------------------
 
-    void setupConstraints() {
-
-        for (int i=0; i<g.nvertices;  i++) V[i] = newBoolVar();
-        for (int i=0; i<g.nedges;     i++) E[i] = newBoolVar();
-
-        // Initial vertex
-        fixVertices({g.init},{});
+    void setupConstraints(parity_type p) {
 
         // --------------------------------------------------------------------
         // For every active PLAYER vertex, one outgoing edge must be activated
-        for (int v=0; v<g.nvertices; v++) if (g.owners[v] == playerSAT) {
+        for (int v=0; v<g.nvertices; v++) if (g.owners[v] == p) {
 
             int n = g.outs[v].size();
 
@@ -181,9 +182,9 @@ public:
 
             {
                 vec<Lit> clause;
-                clause.push( V[v].getLit(false) );
+                clause.push( V[v].getLit(p==EVEN?false:true) );
                 for (int e : g.outs[v]) {
-                    clause.push(E[e].getLit(true));
+                    clause.push(E[p][e].getLit(p==EVEN?true:false));
                 }
                 sat.addClause(clause); // E_0 \/ E_1 \/ ... \/ E_n
             }
@@ -199,7 +200,7 @@ public:
                 int e = g.outs[v][0];
                 // -E_0 \/ s_0
                 vec<Lit> clause;
-                clause.push(E[e].getLit(false));
+                clause.push(E[p][e].getLit(p==EVEN?false:true));
                 clause.push(s[0].getLit(true));
                 sat.addClause(clause);
             }
@@ -219,7 +220,7 @@ public:
                 // -E_i \/ -s_{i-1}
                 {
                     vec<Lit> clause;
-                    clause.push(E[e].getLit(false));
+                    clause.push(E[p][e].getLit(p==EVEN?false:true));
                     clause.push(s[i - 1].getLit(false));
                     sat.addClause(clause);
                 }
@@ -227,7 +228,7 @@ public:
                 // -E_i \/ s_i
                 {
                     vec<Lit> clause;
-                    clause.push(E[e].getLit(false));
+                    clause.push(E[p][e].getLit(p==EVEN?false:true));
                     clause.push(s[i].getLit(true));
                     sat.addClause(clause);
                 }
@@ -238,32 +239,33 @@ public:
                 int e_last = g.outs[v][n - 1];
                 // -E_{n-1} \/ -s_{n-2}
                 vec<Lit> clause;
-                clause.push(E[e_last].getLit(false));
+                clause.push(E[p][e_last].getLit(p==EVEN?false:true));
                 clause.push(s[n - 2].getLit(false));
                 sat.addClause(clause);
             }
         }
 
         // --------------------------------------------------------------------
-        // For every active OPPONENT vertice, each outgoing edge must be activated
-        for (int v=0; v<g.nvertices; v++) if (g.owners[v]==opponent(playerSAT)) {
+        // For every active/inactive OPPONENT vertice, each outgoing edge must 
+        // be activated/deactivated
+        for (int v=0; v<g.nvertices; v++) if (g.owners[v]==opponent(p)) {
             for (int e : g.outs[v]) {
                 vec<Lit> clause;
-                clause.push( V[v].getLit(false) );        
-                clause.push( E[e].getLit(true) );
+                clause.push( V[v].getLit(p==EVEN?false:true) );        
+                clause.push( E[p][e].getLit(p==EVEN?true:false) );
                 sat.addClause(clause);
             }
         }
 
         // --------------------------------------------------------------------
-        // For every active edge, the target vertex must be activated
-        for (int w=0; w<g.nvertices; w++) if (w != g.init) {
-            for (int e : g.ins[w]) {
-                vec<Lit> clause;
-                clause.push( E[e].getLit(false) );
-                clause.push( V[w].getLit(true) );
-                sat.addClause(clause);
-            }
+        // For every active/inactive edge, the target vertex must be activated/
+        // deactivated
+        for (int e=0; e<g.nedges; e++) {
+            int w = g.targets[e];
+            vec<Lit> clause;
+            clause.push( E[p][e].getLit(p==EVEN?false:true) );
+            clause.push( V[w].getLit(p==EVEN?true:false) );
+            sat.addClause(clause);
         }
 
         // --------------------------------------------------------------------
@@ -273,34 +275,22 @@ public:
         vec<WinningCondition*> conds;
 
         if (conditions[0]) {
-            ParityCondition* c = new ParityCondition(g,playerSAT);
+            ParityCondition* c = new ParityCondition(g,p);
             conds.push(c);
         }
             
         if (conditions[1]) {
-            EnergyCondition* c = new EnergyCondition(g,playerSAT);
+            EnergyCondition* c = new EnergyCondition(g,p);
             conds.push(c);
         }
             
         if (conditions[2]) {
-            MeanPayoffCondition* c = new MeanPayoffCondition(g,playerSAT);
+            MeanPayoffCondition* c = new MeanPayoffCondition(g,p);
             c->setThreshold(threshold);
             conds.push(c);
         }
 
-        new NoOpponentCycle(g,V,E,playerSAT,conds);
-
-        //---------------------------------------------------------------------
-
-        vec<Branching*> bv(static_cast<unsigned int>(g.nvertices));
-        vec<Branching*> be(static_cast<unsigned int>(g.nedges));
-        for (int i = g.nvertices; (i--) != 0;) bv[i] = &V[i];
-        for (int i = g.nedges;    (i--) != 0;) be[i] = &E[i];
-        
-        branch(bv, VAR_INORDER, VAL_MIN);
-        branch(be, VAR_INORDER, VAL_MIN);
-        output_vars(bv);
-        output_vars(be);
+        new CrossNoOpponentCycle(g,V,E[p],p,conds);
     }
 
     //-------------------------------------------------------------------------
@@ -320,28 +310,43 @@ public:
         }
     }
 
-    //-------------------------------------------------------------------------
+    // //-------------------------------------------------------------------------
 
-    void fixEdges(  std::initializer_list<int> es,
-                    std::initializer_list<int> nes={}) 
-    {
-        for (int e : es) {
-            vec<Lit> clause;
-            clause.push(E[e].getLit(true));
-            sat.addClause(clause);
-        }
-        for (int e : nes) {
-            vec<Lit> clause;
-            clause.push(E[e].getLit(false));
-            sat.addClause(clause);
-        }
-    }
+    // void fixEdges(  std::initializer_list<int> es,
+    //                 std::initializer_list<int> nes={}) 
+    // {
+    //     for (int e : es) {
+    //         vec<Lit> clause;
+    //         clause.push(E[e].getLit(true));
+    //         sat.addClause(clause);
+    //     }
+    //     for (int e : nes) {
+    //         vec<Lit> clause;
+    //         clause.push(E[e].getLit(false));
+    //         sat.addClause(clause);
+    //     }
+    // }
 
     //-------------------------------------------------------------------------
 
     void print(std::ostream& out) override {
-        if (printtype) {
-            out << "V=[";
+        for (int i=0; i<g.nvertices; i++) {
+            if (V[i].isTrue()) {
+                sol[EVEN].push(i);
+            } else {
+                sol[ODD].push(i);
+            }
+        }
+
+        if (printtype==1) {
+            if (V[g.init].isTrue()) {
+                out << "EVEN";
+            } else {
+                out << "ODD";
+            }
+        }
+        else if (printtype==2) {
+            out << "EVEN =[";
             bool first = true;
             for (int i=0; i<V.size(); i++) {
                 if (V[i].isTrue()) {
@@ -349,14 +354,22 @@ public:
                     out << i;
                 }
             }
-            out << "]\nE=[";
+            out << "]\nODD  =[";
             first = true;
-            for (int i=0; i<E.size(); i++) {
-                if (E[i].isTrue()) {
+            for (int i=0; i<V.size(); i++) {
+                if (V[i].isFalse()) {
                     if (first) first=false; else out << ",";
                     out << i;
                 }
             }
+            // out << "]\nEeven=[";
+            // for (int i=0; i<E[EVEN].size(); i++) {
+            //     out << (i>0?",":"") << E[EVEN][i].getVal();
+            // }
+            // out << "]\nEodd =[";
+            // for (int i=0; i<E[ODD].size(); i++) {
+            //     out << (i>0?",":"") << E[ODD][i].getVal();
+            // }
             out << "]";
         }
     }
