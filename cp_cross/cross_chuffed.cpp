@@ -18,16 +18,16 @@ private:
     vec<BoolView> E;
     parity_type p;
     vec<WinningCondition*> conditions;
+    bool    local;
 
     const int   CF_DONE     = 1;
     const int   CF_CONFLICT = 2;
     const int   CF_STAY     = 3;
-
 public:
     //-------------------------------------------------------------------------
-    CrossNoOpponentCycle(Game& g, vec<BoolView>& V, vec<BoolView>& E, 
+    CrossNoOpponentCycle(Game& g, bool local, vec<BoolView>& V, vec<BoolView>& E, 
         parity_type p, vec<WinningCondition*> conditions)
-    : g(g), V(V), E(E), p(p), conditions(conditions)
+    : g(g), local(local), V(V), E(E), p(p), conditions(conditions)
     {
         for (int i=0; i<g.nvertices;i++) V[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.nedges;   i++) E[i].attach(this, 1 , EVENT_F );
@@ -104,9 +104,15 @@ public:
         vec<int> pathV;
         vec<int> pathE;
 
-
-        if (filterEager(pathV,pathE,g.init,-1,true) == CF_CONFLICT)
-            return false;
+        if (local) {
+            if (filterEager(pathV,pathE,g.init,-1,true) == CF_CONFLICT)
+                return false;
+        } else {
+            for (int v=0; v<g.nvertices; v++) if (V[v].isFixed()) {
+                if (filterEager(pathV,pathE,v,-1,true) == CF_CONFLICT)
+                    return false;
+            }
+        }
         return true;
     }
     //-------------------------------------------------------------------------
@@ -131,11 +137,12 @@ private:
     int threshold;
     int printtype;
     vec<vec<int>>&      sol;
+    bool                local;
 public:
 
-    CrossNOCModel(Game& g, vec<vec<int>>& sol,std::vector<bool> conditions, 
+    CrossNOCModel(Game& g, bool local, vec<vec<int>>& sol,std::vector<bool> conditions, 
         int threshold=1, int printtype=0) 
-    :g(g), sol(sol), conditions(conditions), threshold(threshold), 
+    :g(g), local(local), sol(sol), conditions(conditions), threshold(threshold), 
         printtype(printtype)
     {
         V.growTo(g.nvertices);
@@ -290,7 +297,7 @@ public:
             conds.push(c);
         }
 
-        new CrossNoOpponentCycle(g,V,E[p],p,conds);
+        new CrossNoOpponentCycle(g,local,V,E[p],p,conds);
     }
 
     //-------------------------------------------------------------------------
@@ -338,15 +345,8 @@ public:
             }
         }
 
-        if (printtype==1) {
-            if (V[g.init].isTrue()) {
-                out << "EVEN";
-            } else {
-                out << "ODD";
-            }
-        }
-        else if (printtype==2) {
-            out << "EVEN =[";
+        if (printtype==2) {
+            out << "EVENs =[";
             bool first = true;
             for (int i=0; i<V.size(); i++) {
                 if (V[i].isTrue()) {
@@ -354,7 +354,7 @@ public:
                     out << i;
                 }
             }
-            out << "]\nODD  =[";
+            out << "]\nODDs  =[";
             first = true;
             for (int i=0; i<V.size(); i++) {
                 if (V[i].isFalse()) {
@@ -370,7 +370,14 @@ public:
             // for (int i=0; i<E[ODD].size(); i++) {
             //     out << (i>0?",":"") << E[ODD][i].getVal();
             // }
-            out << "]";
+            out << "]\n";
+        }
+        if (printtype>=1) {
+            if (V[g.init].isTrue()) {
+                out << g.init << ":EVEN";
+            } else {
+                out << g.init << ":ODD";
+            }
         }
     }
 };

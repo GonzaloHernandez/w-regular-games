@@ -31,6 +31,7 @@ struct options {
     int                 export_type     = 0;            // 0=not DZN,GM,GMW,DIM
     std::string         solver          = "";           // NOC-EVEN,NOC-ODD,SAT
                                                         // ZRA,FRA,SCC,CROSS
+    bool                local           = true;         // local model checking
     std::string         cpengine        = "chuffed";    // chuffed,gecode
     bool                flip            = false;        // 0=no 1=flip
 
@@ -181,6 +182,10 @@ bool parseMyOptions(int argc, char *argv[]) {
                                 { options.solver            = "scc"; }
         else if (strcmp(argv[i],"--cross")==0)
                                 { options.solver            = "cross"; }
+        else if (strcmp(argv[i],"--local")==0)
+                                { options.local             = true; }
+        else if (strcmp(argv[i],"--complete")==0)
+                                { options.local             = false; }
         else if (strcmp(argv[i],"--proof")==0)
                                 { options.solver            = "proof"; }
         else if (strcmp(argv[i],"--chuffed")==0)
@@ -238,6 +243,9 @@ bool parseMyOptions(int argc, char *argv[]) {
             << "  --export-gmw <filename>    : Export game to GM + Weights\n"
             << "  --noc-even                 : CP-NOC satisfying player EVEN\n"
             << "  --noc-odd                  : CP-NOC satisfying player ODD\n"
+            << "  --cross                    : CP-CROSS mixing serching\n"
+            << "  --local                    : CP-CROSS solving init vertex\n"
+            << "  --complete                 : CP-CROSS solving every vertex\n"
             << "  --chuffed                  : CP Solver (Chuffed)\n"
             << "  --gecode                   : CP Solver (Gecode)\n"
             << "  --sat-encoding <filename>  : Encode on DIMACS file\n"
@@ -507,12 +515,12 @@ int main(int argc, char *argv[])
         double totaltime = stopClock(); //...........................
 
         if (options.print_solution || options.print_verbose) {
-            std::cout << "EVEN {";
+            std::cout << "EVENs {";
             for (int i = 0; i < win[0].size(); i++) {
                 std::cout << win[0][i];
                 if (i<win[0].size()-1) std::cout << ",";
             }
-            std::cout << "}\nODD  {";
+            std::cout << "}\nODDs  {";
             for (int i = 0; i < win[1].size(); i++) {
                 std::cout << win[1][i];
                 if (i<win[1].size()-1) std::cout << ",";
@@ -587,9 +595,10 @@ int main(int argc, char *argv[])
         sol.growTo(2);
 
         startClock(); //.............................................
-        Chuffed::CrossNOCModel* model = new Chuffed::CrossNOCModel( *game, sol, 
+        Chuffed::CrossNOCModel* model = new Chuffed::CrossNOCModel( 
+                *game, options.local, sol,
                 options.win_conditions, options.threshold, 
-                (options.print_solution || options.print_verbose));
+                (options.print_solution || options.print_verbose)+1);
 
         so.print_sol = true;
         double preptime = stopClock(); //............................
@@ -599,7 +608,7 @@ int main(int argc, char *argv[])
         }
 
         startClock(); //.............................................
-        if (options.print_solution || options.print_verbose) {
+        if (options.print_time>=0) {
             engine.solve(model);
         }
         else {
@@ -643,7 +652,8 @@ int main(int argc, char *argv[])
 
         vec<vec<int>> sol;
         sol.growTo(2);
-        Chuffed::CrossNOCModel* model = new Chuffed::CrossNOCModel(*game, sol, 
+        Chuffed::CrossNOCModel* model = new Chuffed::CrossNOCModel(
+                            *game,false,sol, 
                             options.win_conditions, options.threshold, 
                             false);
 
@@ -658,7 +668,7 @@ int main(int argc, char *argv[])
             evens ++;
             if (it != win[EVEN].end()) continue;
             std::cerr   << "Counter example found in vertex " << i
-                        << "NOC=EVEN / ZRA=ODD" << std::endl;
+                        << ":NOC=EVEN/ZRA=ODD" << std::endl;
         }
 
         int odds = 0;
@@ -669,7 +679,7 @@ int main(int argc, char *argv[])
             odds ++;
             if (it != win[ODD].end()) continue;
             std::cerr   << "Counter example found in vertex " << i
-                        << "NOC=ODD / ZRA=EVEN" << std::endl;
+                        << ":NOC=ODD/ZRA=EVEN" << std::endl;
         }
         std::cout<< evens << "evens, " << odds << " odds." << std::endl;
     }
