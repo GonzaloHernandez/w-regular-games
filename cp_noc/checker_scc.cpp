@@ -1,9 +1,9 @@
 #ifndef GAME_H
-#include "../various/game.h"
+#include "../utils/game.h"
 #endif
 
 #ifndef TARJAN_H
-#include "../various/tarjan.h"
+#include "../utils/tarjan.h"
 #endif
 
 #include "iostream"

@@ -2,7 +2,7 @@
 #define WINNING_CONDITIONS_H
 
 #ifndef GAME_H
-#include "../various/game.h"
+#include "../utils/game.h"
 #endif
 
 #include "chuffed/support/vec.h"
