@@ -352,7 +352,8 @@ int main(int argc, char *argv[])
         startClock(); //.............................................
         Chuffed::NOCModel* model = new Chuffed::NOCModel( *game, 
                 options.win_conditions, options.threshold, 
-                (options.print_solution || options.print_verbose));
+                (options.print_solution || options.print_verbose),
+                options.solver=="noc-even"?EVEN:ODD);
 
         so.print_sol = options.print_solution || options.print_verbose;
         double preptime = stopClock(); //............................

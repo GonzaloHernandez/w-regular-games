@@ -19,6 +19,8 @@ private:
     parity_type p;
     vec<WinningCondition*> conditions;
     bool    local;
+    int assignment;  //-1,0,1 Unassigned, False, True
+    bool    done;
 
     const int   CF_DONE     = 1;
     const int   CF_CONFLICT = 2;
@@ -27,7 +29,8 @@ public:
     //-------------------------------------------------------------------------
     CrossNoOpponentCycle(Game& g, bool local, vec<BoolView>& V, vec<BoolView>& E, 
         parity_type p, vec<WinningCondition*> conditions)
-    : g(g), local(local), V(V), E(E), p(p), conditions(conditions)
+    : g(g), local(local), V(V), E(E), p(p), conditions(conditions),
+        assignment(-1), done(false)
     {
         for (int i=0; i<g.nvertices;i++) V[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.nedges;   i++) E[i].attach(this, 1 , EVENT_F );
@@ -105,6 +108,14 @@ public:
         vec<int> pathE;
 
         if (local) {
+            if (assignment == -1) {
+                assignment = V[g.init].getVal();
+            } 
+            else if (V[g.init].getVal() != assignment) {
+                done = true;
+                std::cout << "Done" << std::endl;
+                return true;
+            }
             if (filterEager(pathV,pathE,g.init,-1,true) == CF_CONFLICT)
                 return false;
         } else {
@@ -117,6 +128,7 @@ public:
     }
     //-------------------------------------------------------------------------
     void wakeup(int i, int) override {
+        if (done) return;
         pushInQueue();
     }
     //-------------------------------------------------------------------------

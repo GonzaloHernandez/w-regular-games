@@ -54,7 +54,7 @@
                 // "--print-statistics",
                 // "--print-game",
                 // "--matrix-based",
-                // "--noc",
+                // "--noc-odd",
                 "--cross",
                 "--local",
                 // "--scc",
