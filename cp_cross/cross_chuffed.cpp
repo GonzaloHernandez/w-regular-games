@@ -19,7 +19,7 @@ private:
     parity_type p;
     vec<WinningCondition*> conditions;
     bool    local;
-    vec<vec<int>>& assignment;
+    vec<int> assignment;
 
     const int   CF_DONE     = 1;
     const int   CF_CONFLICT = 2;
@@ -27,9 +27,9 @@ private:
 public:
     //-------------------------------------------------------------------------
     CrossNoOpponentCycle(Game& g, bool local, vec<BoolView>& V, vec<BoolView>& E, 
-        parity_type p, vec<WinningCondition*> conditions, vec<vec<int>>& assignment)
+        parity_type p, vec<WinningCondition*> conditions)
     : g(g), local(local), V(V), E(E), p(p), conditions(conditions),
-        assignment(assignment)
+        assignment(g.nvertices,-1)
     {
         for (int i=0; i<g.nvertices;i++) V[i].attach(this, 1 , EVENT_F );
         for (int i=0; i<g.nedges;   i++) E[i].attach(this, 1 , EVENT_F );
@@ -108,13 +108,16 @@ public:
 
         for (int v=0; v<g.nvertices; v++) 
             if (V[v].isFixed()) {
-                if (V[v].getVal() != assignment[v][assignment[v].size()-1]) {
-                    assignment[v].push(V[v].getVal());
+                if (assignment[v] < 1) {
+                    assignment[v] = V[v].getVal();
+                    if (V[v].isTrue()) {
+                        vec<Lit> lits;
+                        lits.push(V[v].getValLit());
+                        sat.addClause(lits, true);
+                    }
                 }
                 if (filterEager(pathV,pathE,v,-1,true) == CF_CONFLICT)
                     return false;
-            } else {
-                assignment[v].push(-1);
             }
         return true;
     }
@@ -142,7 +145,6 @@ private:
     int printtype;
     vec<vec<int>>&      sol;
     bool                local;
-    vec<vec<int>>       assignment;
 public:
 
     CrossNOCModel(Game& g, bool local, vec<vec<int>>& sol,std::vector<bool> conditions, 
@@ -150,8 +152,6 @@ public:
     :g(g), local(local), sol(sol), conditions(conditions), threshold(threshold), 
         printtype(printtype)
     {
-        assignment.growTo(g.nvertices);
-        for (int i=0; i<g.nvertices;i++) assignment[i].push(-1);
         V.growTo(g.nvertices);
         E.growTo(2);
         E[EVEN].growTo(g.nedges);
@@ -304,7 +304,7 @@ public:
             conds.push(c);
         }
 
-        new CrossNoOpponentCycle(g,local,V,E[p],p,conds,assignment);
+        new CrossNoOpponentCycle(g,local,V,E[p],p,conds);
     }
 
     //-------------------------------------------------------------------------
@@ -369,15 +369,15 @@ public:
                     out << i;
                 }
             }
-            out << "]\n-------------\n";
-            for (int v=0; v<g.nvertices; v++) {
-                out << v << ":\t";
-                for (int a=0; a<assignment[v].size(); a++) {
-                    if (a>0) out << " ";
-                    out << (assignment[v][a]==-1?"\033[0;31m?\033[0m":(assignment[v][a]==0?"-":"+"));
-                }
-                out << "\n";
-            }
+            // out << "]\n-------------\n";
+            // for (int v=0; v<g.nvertices; v++) {
+            //     out << v << ":\t";
+            //     for (int a=0; a<assignment[v].size(); a++) {
+            //         if (a>0) out << " ";
+            //         out << (assignment[v][a]==-1?"\033[0;31m?\033[0m":(assignment[v][a]==0?"-":"+"));
+            //     }
+            //     out << "\n";
+            // }
             // out << "]\nEodd =[";
             // for (int i=0; i<E[ODD].size(); i++) {
             //     out << (i>0?",":"") << E[ODD][i].getVal();

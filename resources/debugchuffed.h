@@ -11,14 +11,14 @@
 
 // --------------------------------------------------------------------------------
 
-inline std::ostream& operator<<(std::ostream& os, const BoolView& obj) {
-    // os << "B" << (!sign(obj)?"~":"");
-    if (!obj.isFixed())      os << "?";
-    else if (obj.isTrue())   os << "+";
-    else                     os << "-";
+// inline std::ostream& operator<<(std::ostream& os, const BoolView& obj) {
+//     // os << "B" << (!sign(obj)?"~":"");
+//     if (!obj.isFixed())      os << "?";
+//     else if (obj.isTrue())   os << "+";
+//     else                     os << "-";
 
-    return os;
-}
+//     return os;
+// }
 
 inline std::ostream& operator<<(std::ostream& os, const Lit& obj) {
     os << "L" << (!sign(obj)?"~":"") << var(obj);
