@@ -6,9 +6,6 @@
 #include "../cp_cross/cross_chuffed.cpp"
 #include "../cp_nocq/nocq_chuffed.cpp"
 #include "../cp_nocq/nocq_cadical.cpp"
-// #include "../resources/debugchuffed.h"
-
-// #include <execution>
 
 #ifdef HAS_GECODE
 #include "cp_nocq/nocq_gecode.cpp"
@@ -32,9 +29,9 @@ struct options {
     int                 export_type     = 0;            // 0=not DZN,GM,GMW,DIM
     std::string         solver          = "";           // NOC-EVEN,NOC-ODD,SAT
                                                         // ZRA,FRA,SCC,CROSS,
-                                                        // CADICAL,PROOF
+                                                        // PROOF
     bool                local           = true;         // local model checking
-    std::string         cpengine        = "chuffed";    // chuffed,gecode
+    std::string         cpengine        = "chuffed";    // chuffed,gecode,cadical
     bool                flip            = false;        // 0=no 1=flip
 
     std::vector<bool>   win_conditions  = {false,false,false};  // 0=parity 
@@ -185,7 +182,7 @@ bool parseMyOptions(int argc, char *argv[]) {
         else if (strcmp(argv[i],"--cross")==0)
                                 { options.solver            = "cross"; }
         else if (strcmp(argv[i],"--cadical")==0)
-                                { options.solver            = "cadical"; }
+                                { options.cpengine          = "cadical"; }
         else if (strcmp(argv[i],"--local")==0)
                                 { options.local             = true; }
         else if (strcmp(argv[i],"--complete")==0)
@@ -248,11 +245,11 @@ bool parseMyOptions(int argc, char *argv[]) {
             << "  --noc-even                 : CP-NOC satisfying player EVEN\n"
             << "  --noc-odd                  : CP-NOC satisfying player ODD\n"
             << "  --cross                    : CP-CROSS mixing serching\n"
-            << "  --cadical                  : CaDiCaL solving\n"
             << "  --local                    : CP-CROSS solving init vertex\n"
             << "  --complete                 : CP-CROSS solving every vertex\n"
             << "  --chuffed                  : CP Solver (Chuffed)\n"
             << "  --gecode                   : CP Solver (Gecode)\n"
+            << "  --cadical                  : CP Solver (CaDiCaL)\n"
             << "  --sat-encoding <filename>  : Encode on DIMACS file\n"
             << "  --fra                      : Solve using FRA\n"
             << "  --flip                     : Complement the game\n"
@@ -272,9 +269,25 @@ bool parseMyOptions(int argc, char *argv[]) {
 
 //=============================================================================
 
+// #include "../resources/debugchuffed.h"
+
+inline std::string dbg(const vec<int>& data) {
+    std::stringstream ss;
+
+    ss << "{";
+    for (int i = 0; i < data.size(); i++) {
+        if (i > 0) ss << ",";
+        ss << data[i];
+    }
+    ss << "}";
+    return ss.str();
+}
+
 int main(int argc, char *argv[])
 {
     // launchdebugchuffed();
+    vec<int> _v(1);
+    dbg(_v);
 
     parseMyOptions(argc, argv);
     Game* game = nullptr;
@@ -348,6 +361,15 @@ int main(int argc, char *argv[])
     // For testing purposes
 
     if (options.solver=="testing") {
+        int n = options.threshold>2?options.threshold:2;
+        CaDiCaL::CadModel* model = new CaDiCaL::CadModel(n);
+        if (model->solve()) {
+            std::cout << "SATISFIABLE\n";
+            model->print();
+        }
+        else {
+            std::cout << "UNSATISFIABLE\n";
+        }
     }
 
     //-------------------------------------------------------------------------
@@ -483,6 +505,56 @@ int main(int argc, char *argv[])
 
     }
 
+    //-------------------------------------------------------------------------
+    // CP-NOC-Cadical
+
+    else if (options.solver.substr(0,3)=="noc"&&options.cpengine=="cadical"){
+        startClock(); //.............................................
+        CaDiCaL::NOCQModel model(*game,
+                options.win_conditions, options.threshold,
+                options.solver=="noc-even"?EVEN:ODD);
+        double preptime = stopClock(); //..........................
+
+        if (options.print_time>=0 || options.print_verbose) {
+            std::cout << "Preprocessing time : " << preptime << std::endl;
+        }
+
+        startClock(); //.............................................
+        bool solution = model.solve();
+        double solvingtime = stopClock(); //..........................
+
+        if (options.print_solution || options.print_verbose) {
+            if (solution) model.print();
+            else std::cout << "UNSATISFIABLE" << std::endl;
+        }
+
+        if (options.print_time>=0 || options.print_verbose) {
+            std::cout << "Solving time       : " << solvingtime << std::endl;
+        }
+
+        if (options.print_solution || options.print_verbose) {
+        }
+
+
+        if (options.solver=="noc-even") {
+            if (options.print_time>=0 || options.print_verbose) {
+                std::cout   << game->init << ": " 
+                            << (solution?"EVEN ":"ODD ");
+            }
+        }
+        else {
+            if (options.print_time>=0 || options.print_verbose)
+                std::cout   << game->init << ": " 
+                            << (solution?"ODD ":"EVEN ");
+        }
+
+        if (options.print_time<=-2 || options.print_verbose) {
+            std::cout   << preptime << "\t";
+        }
+
+        std::cout << std::endl;
+    }
+    
     //-------------------------------------------------------------------------
     // SAT Encoding
 
@@ -646,91 +718,6 @@ int main(int argc, char *argv[])
         }
         
         delete model;
-    }
-    
-    //-------------------------------------------------------------------------
-    // CP-Cross-NOC-Chuffed
-
-    else if (options.solver=="cadical"){
-        startClock(); //.............................................
-        CaDiCaL::NOCQModel model(*game,
-                options.win_conditions, options.threshold,EVEN);
-        double preptime = stopClock(); //..........................
-
-        startClock(); //.............................................
-        bool solution = model.solve();
-        double solvingtime = stopClock(); //..........................
-
-        if (options.print_time>=0 || options.print_verbose) {
-            std::cout << "Preprocessing time : " << preptime << std::endl;
-            std::cout << "Solving time       : " << solvingtime << std::endl;
-        }
-
-        if (options.print_solution || options.print_verbose) {
-            if (solution) model.print();
-            else std::cout << "UNSATISFIABLE" << std::endl;
-        }
-        double totaltime = stopClock(); //...........................
-
-        if (options.print_time>1 || options.print_verbose) {
-            std::cout << "Solving time       : " << totaltime << std::endl;
-            std::cout << "Mem used           : " << "???" << std::endl;
-        }
-
-        if (options.print_time>=0 || options.print_verbose) {
-            std::cout << game->init << ": " << (solution?"EVEN ":"ODD ");
-        }
-
-        if (options.print_time<=-2 || options.print_verbose) {
-            std::cout   << preptime << "\t";
-        }
-
-        if (options.print_time!=0 || options.print_verbose) {
-            std::cout   << totaltime;
-        }
-
-        std::cout << std::endl;
-
-        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-        startClock(); //.............................................
-        CaDiCaL::NOCQModel model2(*game,
-                options.win_conditions, options.threshold,ODD);
-        preptime = stopClock(); //..........................
-
-        startClock(); //.............................................
-        bool solution2 = model2.solve();
-        solvingtime = stopClock(); //..........................
-
-        if (options.print_time>=0 || options.print_verbose) {
-            std::cout << "Preprocessing time : " << preptime << std::endl;
-            std::cout << "Solving time       : " << solvingtime << std::endl;
-        }
-
-        if (options.print_solution || options.print_verbose) {
-            if (solution2) model2.print();
-            else std::cout << "UNSATISFIABLE" << std::endl;
-        }
-        totaltime = stopClock(); //...........................
-
-        if (options.print_time>1 || options.print_verbose) {
-            std::cout << "Solving time       : " << totaltime << std::endl;
-            std::cout << "Mem used           : " << "???" << std::endl;
-        }
-
-        if (options.print_time>=0 || options.print_verbose) {
-            std::cout << game->init << ": " << (!solution2?"ODD ":"EVEN ");
-        }
-
-        if (options.print_time<=-2 || options.print_verbose) {
-            std::cout   << preptime << "\t";
-        }
-
-        if (options.print_time!=0 || options.print_verbose) {
-            std::cout   << totaltime;
-        }        
-
-        std::cout << std::endl;
     }
     
     //-------------------------------------------------------------------------
