@@ -225,6 +225,14 @@ public:
         }
     }
     //-------------------------------------------------------------------------
+    bool cb_check_found_model (const std::vector<int> &model) override {
+        return true;
+    }
+    //-------------------------------------------------------------------------
+    int cb_decide() override {
+        return 0;
+    }
+    //-------------------------------------------------------------------------
     int cb_propagate() override {
         vec<int> pathV;
         vec<int> pathE;
@@ -241,19 +249,13 @@ public:
         return 0;
     }
     //-------------------------------------------------------------------------
-    int cb_add_external_clause_lit() override {
-        return 0;
-    }
-    //-------------------------------------------------------------------------
     bool cb_has_external_clause(bool &is_forgettable) override {
-        is_forgettable = false;
         return false;
     }
     //-------------------------------------------------------------------------
-    bool cb_check_found_model (const std::vector<int> &model) override {
-        return true;
+    int cb_add_external_clause_lit() override {
+        return 0;
     }
-
 
     //-------------------------------------------------------------------------
     int findVertex(int vertex,vec<int>& path) {
@@ -370,11 +372,12 @@ public:
             // --- At least one -----------------------------------------------
             if (n == 0) continue;
 
-            {   // V -> E_0 \/ E_1 \/ ... \/ E_n
+            {                           // V -> E_0 \/ E_1 \/ ... \/ E_n
                 solver->add( -V[v] );
                 for (int e : g.outs[v]) solver->add( E[e] );
                 solver->add(0); 
             }
+            
             // --- At most one ------------------------------------------------
             if (n == 1) continue;
 

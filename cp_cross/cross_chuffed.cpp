@@ -108,14 +108,6 @@ public:
 
         for (int v=0; v<g.nvertices; v++) 
             if (V[v].isFixed()) {
-                if (assignment[v] < 1) {
-                    assignment[v] = V[v].getVal();
-                    if (V[v].isTrue()) {
-                        vec<Lit> lits;
-                        lits.push(V[v].getValLit());
-                        sat.addClause(lits, true);
-                    }
-                }
                 if (filterEager(pathV,pathE,v,-1,true) == CF_CONFLICT)
                     return false;
             }
