@@ -49,7 +49,9 @@
                 // "-lgecodesearch",
                 // "-lgecodeint",
                 // "-lgecodekernel",
-                // "-lgecodesupport"
+                // "-lgecodesupport",
+
+                "-DHAS_CADICAL",
             ],
             "problemMatcher": [
                 "$gcc"

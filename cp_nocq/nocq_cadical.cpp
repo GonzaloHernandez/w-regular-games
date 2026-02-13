@@ -1,5 +1,7 @@
 #include "iostream"
 #include "cadical.hpp"
+#include <queue>
+#include <unordered_map>
 
 #ifndef WINNING_CONDITIONS_H
 #include "winning_conditions.h"
@@ -183,8 +185,10 @@ private:
     parity_type playerSAT;
     vec<WinningCondition*> conditions;
 
-    vec<Lit> reason;
     size_t reasonLit;
+
+    std::queue<int> propQueue;
+    std::unordered_map<int, vec<int>> propReasons;
 
     vec<vec<int>> trail;
 
@@ -201,6 +205,8 @@ public:
     {
         trail.push();
     }
+    //-------------------------------------------------------------------------
+    ~NoOpponentCycle() override = default;
     //-------------------------------------------------------------------------
     void notify_assignment(const std::vector<int> &lits) override {
         for (int lit : lits) {
@@ -234,18 +240,33 @@ public:
     }
     //-------------------------------------------------------------------------
     int cb_propagate() override {
+        if (!propQueue.empty()) {
+            int lit = propQueue.front();
+            propQueue.pop();
+            return lit;
+        }
+
         vec<int> pathV;
         vec<int> pathE;
-        reason.clear(); reasonLit = 0;
 
-        return filterEager(pathV,pathE,g.init,-1,true);
+        filterEager(pathV,pathE,g.init,-1,true);
+
+        if (!propQueue.empty()) {
+            int lit = propQueue.front();
+            propQueue.pop();
+            return lit;
+        }
+
+        return 0;
     }
     //-------------------------------------------------------------------------
     int cb_add_reason_clause_lit(int propagated_lit) override {
+        const vec<int>& reason = propReasons[propagated_lit];
         if (reasonLit < reason.size()) {
             int lit = reason[reasonLit++];
             return lit;
         }
+        reasonLit = 0;
         return 0;
     }
     //-------------------------------------------------------------------------
@@ -256,19 +277,12 @@ public:
     int cb_add_external_clause_lit() override {
         return 0;
     }
-
     //-------------------------------------------------------------------------
     int findVertex(int vertex,vec<int>& path) {
         for (int i=0; i<path.size(); i++) {
             if (path[i] == vertex) return i;
         }
         return -1;
-    }
-    //-------------------------------------------------------------------------
-    void clausify(vec<int>& path, vec<BoolView> &B, vec<Lit>& lits,int from) {
-        for (int i=from; i<path.size(); i++) {
-            lits.push( -B[path[i]] );
-        }
     }
     //-------------------------------------------------------------------------
     bool satisfiedConditions(vec<int>& pathV,vec<int>& pathE,int index) {
@@ -290,16 +304,23 @@ public:
         }
     }
     //-------------------------------------------------------------------------
-    int filterEager(vec<int>& pathV, vec<int>& pathE, int v, 
+    bool filterEager(vec<int>& pathV, vec<int>& pathE, int v, 
         int lastEdge, bool definedEdge) 
     {
         int index = findVertex(v,pathV);
         if (index >= 0) {
             if (!satisfiedConditions(pathV,pathE,index)) {
-                reason.clear();
-                clausify(pathE,E,reason,0);
+                propReasons[-E[lastEdge]].clear();
+                for (int i=0; i<pathV.size(); i++) {
+                    propReasons[-E[lastEdge]].push( -E[pathE[i]] );
+                }
                 reasonLit = 0;
-                return -E[lastEdge];
+                
+                propQueue.push(-E[lastEdge]);
+                if (isTrue(E[lastEdge])) {
+                    return true;
+                }
+                return false;
             }
         }
         else if (definedEdge) {
@@ -309,15 +330,15 @@ public:
 
                 int w = g.targets[e];
                 pathE.push(e);
-                int status = filterEager(pathV, pathE, w, e, isTrue(E[e]));
+                bool confl = filterEager(pathV, pathE, w, e, isTrue(E[e]));
                 pathE.pop();
-                if (status != 0) {
-                    return status;
+                if (confl) {
+                    return true;
                 }
             }
             pathV.pop();
         }
-        return 0;
+        return false;
     }
 };
 

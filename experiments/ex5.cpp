@@ -5,11 +5,15 @@
 #include "../utils/satencoder.h"
 #include "../cp_cross/cross_chuffed.cpp"
 #include "../cp_nocq/nocq_chuffed.cpp"
+
+#ifdef HAS_CADICAL
 #include "../cp_nocq/nocq_cadical.cpp"
+#endif
 
 #ifdef HAS_GECODE
 #include "cp_nocq/nocq_gecode.cpp"
 #endif
+
 //-----------------------------------------------------------------------------
 
 struct options {
@@ -283,6 +287,19 @@ inline std::string dbg(const vec<int>& data) {
     return ss.str();
 }
 
+// inline std::string dbg_v1_boolview(vec<BoolView>& data) {
+//     std::stringstream ss;
+//     ss << "{";
+//     for (int i = 0; i < data.size(); i++) {
+//         if (i > 0) ss << ",";
+//         if (!data[i].isFixed())      ss << "?";
+//         else if (data[i].isTrue())   ss << "+";
+//         else                     ss << "-";
+//     }
+//     ss << "}";    
+//     return ss.str();
+// }
+
 int main(int argc, char *argv[])
 {
     // launchdebugchuffed();
@@ -361,6 +378,8 @@ int main(int argc, char *argv[])
     // For testing purposes
 
     if (options.solver=="testing") {
+    
+    #ifdef HAS_CADICAL
         int n = options.threshold>2?options.threshold:2;
         CaDiCaL::CadModel* model = new CaDiCaL::CadModel(n);
         if (model->solve()) {
@@ -370,6 +389,9 @@ int main(int argc, char *argv[])
         else {
             std::cout << "UNSATISFIABLE\n";
         }
+        delete model;
+    #endif //HAS_CADICAL
+
     }
 
     //-------------------------------------------------------------------------
@@ -499,8 +521,6 @@ int main(int argc, char *argv[])
     #else
         std::cout << "Error: Gecode support is disabled.\n" 
                   << "Please rebuild NOCQ using -DENABLE_GECODE=ON\n";
-                  
-
     #endif //HAS_GECODE
 
     }
@@ -509,6 +529,9 @@ int main(int argc, char *argv[])
     // CP-NOC-Cadical
 
     else if (options.solver.substr(0,3)=="noc"&&options.cpengine=="cadical"){
+
+    #ifdef HAS_CADICAL
+
         startClock(); //.............................................
         CaDiCaL::NOCQModel model(*game,
                 options.win_conditions, options.threshold,
@@ -553,6 +576,11 @@ int main(int argc, char *argv[])
         }
 
         std::cout << std::endl;
+    #else
+        std::cout << "Error: CaDiCaL support is disabled.\n" 
+                  << "Please rebuild NOCQ using -DENABLE_CADICAL=ON\n";
+    #endif //HAS_CADICAL
+
     }
     
     //-------------------------------------------------------------------------

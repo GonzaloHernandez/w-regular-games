@@ -72,7 +72,6 @@ public:
     {
         int index = findVertex(v,pathV);
         if (index >= 0) {
-
             if (!satisfiedConditions(pathV,pathE,index)) {
                 vec<Lit> lits;
                 lits.push();
@@ -86,8 +85,8 @@ public:
         else if (definedEdge) {
             pathV.push(v);
             for (int e : g.outs[v]) {
-                if (p==EVEN) if (E[e].isFalse()) continue;
-                if (p==ODD) if (E[e].isTrue()) continue;
+                if (p==EVEN && E[e].isFalse())  continue;
+                if (p==ODD && E[e].isTrue())    continue;
 
                 int w = g.targets[e];
                 pathE.push(e);
@@ -106,11 +105,17 @@ public:
         vec<int> pathV;
         vec<int> pathE;
 
-        for (int v=0; v<g.nvertices; v++) 
-            if (V[v].isFixed()) {
-                if (filterEager(pathV,pathE,v,-1,true) == CF_CONFLICT)
-                    return false;
+        if (local) {
+            if (filterEager(pathV,pathE,g.init,-1,true) == CF_CONFLICT)
+                return false;
+        } else {
+            for (int v=0; v<g.nvertices; v++) {
+                if (V[v].isFixed()) {
+                    if (filterEager(pathV,pathE,v,-1,true) == CF_CONFLICT)
+                        return false;
+                }
             }
+        }
         return true;
     }
     //-------------------------------------------------------------------------
@@ -124,6 +129,36 @@ public:
     }
 };
 
+
+//=============================================================================
+
+class NOCBrancher : public Branching {
+private:
+    Game& g;
+    vec<BoolView> V;
+public:
+    NOCBrancher(Game& g, vec<BoolView>& V) : g(g), V(V) {}
+    bool finished() override {
+        for (int i=0; i<V.size(); i++) {
+            if (!V[i].isFixed()) return false;
+        }
+        return true;
+    }
+    double getScore(VarBranch vb) override {
+        return 0;
+    }
+    DecInfo* branch() override {
+        if (!V[g.init].isFixed()) {
+            return V[g.init].branch();
+        }
+        for (int i=0; i<V.size(); i++) {
+            if (!V[i].isFixed()) {
+                return V[i].branch();
+            }
+        }
+        return nullptr;
+    }
+};
 
 //=============================================================================
 
@@ -165,7 +200,8 @@ public:
         for (int i = g.nedges; (i--) != 0;) be0[i] = &E[EVEN][i];
         for (int i = g.nedges; (i--) != 0;) be1[i] = &E[ODD][i];
         
-        branch(bv, VAR_INORDER, VAL_MIN);
+        // branch(bv, VAR_INORDER, VAL_MIN);
+        engine.branching->add(new NOCBrancher(g,V));
         branch(be0, VAR_INORDER, VAL_MIN);
         branch(be1, VAR_INORDER, VAL_MIN);
         output_vars(bv);
