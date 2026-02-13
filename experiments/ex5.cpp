@@ -11,7 +11,7 @@
 #endif
 
 #ifdef HAS_GECODE
-#include "cp_nocq/nocq_gecode.cpp"
+#include "../cp_nocq/nocq_gecode.cpp"
 #endif
 
 //-----------------------------------------------------------------------------
@@ -378,19 +378,6 @@ int main(int argc, char *argv[])
     // For testing purposes
 
     if (options.solver=="testing") {
-    
-    #ifdef HAS_CADICAL
-        int n = options.threshold>2?options.threshold:2;
-        CaDiCaL::CadModel* model = new CaDiCaL::CadModel(n);
-        if (model->solve()) {
-            std::cout << "SATISFIABLE\n";
-            model->print();
-        }
-        else {
-            std::cout << "UNSATISFIABLE\n";
-        }
-        delete model;
-    #endif //HAS_CADICAL
 
     }
 

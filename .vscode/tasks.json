@@ -45,6 +45,8 @@
                 "${env:HOME}/.local/lib/libchuffed_fzn.a",
                 "${env:HOME}/.local/lib/libchuffed.a",
                 "${env:HOME}/.local/lib/libchuffed.a",
+
+                // "-DHAS_GECODE",
                 // "-lpthread",
                 // "-lgecodesearch",
                 // "-lgecodeint",

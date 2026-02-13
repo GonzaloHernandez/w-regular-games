@@ -9,178 +9,16 @@
 
 namespace CaDiCaL {
 
-#define BoolView int
+#define BoolSAT int
 #define Lit int
-
-//=============================================================================
-
-class Different : public ExternalPropagator {
-private:
-    vec<BoolView>&  vars;
-    vec<int>        assigns;
-
-    vec<int>        reason;
-    size_t          index;
-
-    int getValLit(int v){ return assigns[v]*v; }
-    bool isFixed(int v) { return assigns[v] != 0; }
-    bool isFalse(int v) { return assigns[v] == -1; }
-    bool isTrue(int v)  { return assigns[v] == 1; }
-public:
-    Different(vec<BoolView>& vars) 
-    : vars(vars), assigns(vars.size()+1, 0), index(0) 
-    {}
-    //-------------------------------------------------------------------------
-    void notify_assignment(const std::vector<int> &lits) override {
-        for (int lit : lits) {
-            int v = abs(lit);
-            assigns[v] = (lit > 0) ? 1 : -1;
-        }
-    }
-    //-------------------------------------------------------------------------
-    void notify_backtrack(size_t new_level) override {
-        if (new_level == 0) {
-            for(int v=1; v<assigns.size(); v++) {
-                assigns[v] = 0;
-            }
-        }
-    }
-    //-------------------------------------------------------------------------
-    int checker() {
-        for (int i=0; i<vars.size(); i++) if (!isFixed(vars[i])) return 0;
-
-        for (int i=0; i<vars.size()-1; i++) {
-            if (isTrue(vars[i]) == isTrue(vars[i+1])) {
-                reason.clear();
-                reason.push(-getValLit(vars[i]));
-                reason.push(-getValLit(vars[i+1]));
-                reason.push(0);
-                index = 0; 
-                return -getValLit(vars[i]);
-            }
-        }
-
-        return 0;
-    }
-    //-------------------------------------------------------------------------
-    int filter() {
-        for (int i=0; i<vars.size()-1; i++) { int k=i+1;
-            if (!isFixed(vars[i]) && !isFixed(vars[k])) continue;
-
-            if (isFixed(vars[i]) && isFixed(vars[k]) && 
-                isTrue(vars[i]) != isTrue(vars[k])) continue;
-
-            if (isFixed(vars[i])) {                
-                reason.clear();
-                reason.push(isTrue(vars[i]) ? -vars[i] : vars[i]);
-                reason.push(isTrue(vars[i]) ? -vars[k] : vars[k]);
-                reason.push(0);
-                index = 0;
-                return isTrue(vars[i]) ? -vars[k] : vars[k];
-            } else {
-                reason.push(isTrue(vars[k]) ? -vars[i] : vars[i]);
-                reason.push(isTrue(vars[k]) ? -vars[k] : vars[k]);
-                reason.push(0);
-                index = 0;
-                return isTrue(vars[k]) ? -vars[i] : vars[i];
-            }
-        }
-        return 0;
-    }
-    //-------------------------------------------------------------------------
-    int cb_propagate() override {
-        // return checker();
-        return filter();
-    }
-    //-------------------------------------------------------------------------
-    int cb_add_reason_clause_lit(int propagated_lit) override {
-        if (index < reason.size()) {
-            int lit = reason[index++];
-            return lit;
-        }
-        return 0;
-    }
-    //-------------------------------------------------------------------------
-    int cb_add_external_clause_lit() override {
-        return 0;
-    }
-    //-------------------------------------------------------------------------
-    bool cb_has_external_clause(bool &is_forgettable) override {
-        is_forgettable = false;
-        return false;
-    }
-    //-------------------------------------------------------------------------
-    void notify_new_decision_level () override {
-    }
-    //-------------------------------------------------------------------------
-    bool cb_check_found_model (const std::vector<int> &model) override {
-        if (index < reason.size()) {
-            return true;
-        }
-        return false;
-    }
-
-};
-
-//=============================================================================
-
-class CadModel {
-private:
-    int n;
-    vec<BoolView> vars;
-    int pool=0;
-    Solver* solver;
-
-    int newBoolVar ()           { pool += 1;    return pool; }
-    int newBoolVars(int size)   { pool += size; return pool-size+1; }
-public:
-    //-------------------------------------------------------------------------
-    CadModel(int n) : n(n) {
-        solver = new Solver();
-        solver->set("factor",0);
-
-        vars.growTo(n,0);
-        for (int i=0; i<n; i++) vars[i] = newBoolVar();
-        for (int i=0; i<n; i++) solver->add(vars[i]); solver->add(0);
-
-        // solver->clause(-vars[0]);
-        // solver->clause(-vars[1]);
-        // solver->clause(-vars[2]);
-        solver->connect_external_propagator(new Different(vars));
-        for (int i=0; i<n; i++) solver->add_observed_var(vars[i]);
-    }
-    //-------------------------------------------------------------------------
-    ~CadModel() {
-        delete solver;
-    }
-    //-------------------------------------------------------------------------
-    bool solve() {
-        int res = solver->solve();
-
-        if (res == 10) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    //-------------------------------------------------------------------------
-    void print() {
-        std::cout << "vars=[";
-        for (int i=0; i<n; i++) {
-            if (i>0) std::cout << ",";
-            std::cout << solver->val(vars[i]);
-        }
-        std::cout << "]" << std::endl;
-    }
-};
 
 //=============================================================================
 
 class NoOpponentCycle : public ExternalPropagator {
 private:
     Game& g;
-    vec<BoolView>& V;
-    vec<BoolView>& E;
+    vec<BoolSAT>& V;
+    vec<BoolSAT>& E;
     vec<int>    assigns;
     parity_type playerSAT;
     vec<WinningCondition*> conditions;
@@ -198,7 +36,7 @@ private:
     bool isTrue(int v)  { return assigns[v] == 1; }
 
 public:
-    NoOpponentCycle(Game& game, vec<BoolView>& V, vec<BoolView>& E, 
+    NoOpponentCycle(Game& game, vec<BoolSAT>& V, vec<BoolSAT>& E, 
         parity_type playerSAT, vec<WinningCondition*> conditions)
     : g(game), V(V), E(E), playerSAT(playerSAT), conditions(conditions), 
         reasonLit(0), assigns(g.nvertices+g.nedges+1,0)
@@ -347,8 +185,8 @@ public:
 class NOCQModel {
 private:
     Game& g;
-    vec<BoolView> V;
-    vec<BoolView> E;
+    vec<BoolSAT> V;
+    vec<BoolSAT> E;
     std::vector<bool> conditions;
     int threshold;
     parity_type playerSAT;
@@ -402,7 +240,7 @@ public:
             // --- At most one ------------------------------------------------
             if (n == 1) continue;
 
-            vec<BoolView> s(n-1);
+            vec<BoolSAT> s(n-1);
             for (int j = 0; j < n-1; j++) s[j] = newBoolVar();
 
             // First literal
@@ -499,6 +337,7 @@ public:
             }
         }
         std::cout << "]"<<std::endl;
+        solver->statistics();
     }
 };
 
