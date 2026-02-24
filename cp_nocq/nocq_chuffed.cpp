@@ -127,12 +127,12 @@ private:
     vec<BoolView> V;  
     vec<BoolView> E;
     std::vector<bool> conditions;
-    int threshold;
+    float threshold;
     int printtype;
     parity_type playerSAT;
 public:
 
-    NOCModel(Game& g, std::vector<bool> conditions, int threshold=1, 
+    NOCModel(Game& g, std::vector<bool> conditions, float threshold=1.0f, 
         int printtype=0, parity_type playerSAT=EVEN) 
     :g(g), conditions(conditions), threshold(threshold), printtype(printtype), 
         playerSAT(playerSAT)

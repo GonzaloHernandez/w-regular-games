@@ -168,14 +168,14 @@ private:
     vec<BoolView>       V;
     vec<vec<BoolView>>  E;
     std::vector<bool>   conditions;
-    int threshold;
+    float threshold;
     int printtype;
     vec<vec<int>>&      sol;
     bool                local;
 public:
 
     CrossNOCModel(Game& g, bool local, vec<vec<int>>& sol,std::vector<bool> conditions, 
-        int threshold=1, int printtype=0) 
+        float threshold=1.0f, int printtype=0) 
     :g(g), local(local), sol(sol), conditions(conditions), threshold(threshold), 
         printtype(printtype)
     {

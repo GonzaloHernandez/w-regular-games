@@ -59,6 +59,23 @@ void Game::parseline_dzn(const std::string& line,std::vector<long long>& myvec) 
     }
 }
 
+//--------------------------------------------------------------------------
+
+void Game::parseline_dzn(const std::string& line,std::vector<float>& myvec) {
+    std::regex pattern(R"(\[(.*?)\])");
+    std::smatch match;
+
+    if (regex_search(line, match, pattern)) {
+        std::string values = match[1];
+        std::stringstream ss(values);
+        std::string value;
+
+        while (getline(ss, value, ',')) {
+            myvec.push_back(stod(value));
+        }
+    }
+}
+
 //---------------------------------------------------------------------------
 
 
@@ -160,7 +177,7 @@ void Game::parseline_gm(const std::string& line,
 
 Game::Game( std::vector<int> owners,std::vector<long long> priors,
             std::vector<int> sources,std::vector<int> targets,
-            std::vector<int> weights,int init, reward_type rew) 
+            std::vector<float> weights,int init, reward_type rew) 
 :   owners(owners), priors(priors), sources(sources), targets(targets), 
     weights(weights), init(init), reward(rew) 
 {
@@ -168,12 +185,12 @@ Game::Game( std::vector<int> owners,std::vector<long long> priors,
     nedges      = sources.size();
 
     if (init < 0) {
-        init = 0;
+        this->init = 0;
         std::cerr << "Warning: Initial vertex set to 0." << std::endl;
     }
     else if (init >= nvertices) {
-        init = nvertices - 1;
-        std::cerr   << "Warning: Initial vertex set to " << init << "." 
+        this->init = nvertices - 1;
+        std::cerr   << "Warning: Initial vertex set to " << this->init << "." 
                     << std::endl;
     }
 
@@ -196,7 +213,7 @@ Game::Game( std::vector<int> owners,std::vector<long long> priors,
 //-----------------------------------------------------------------------------
 // Imported game from DZN or GM
 
-Game::Game( int type, std::string filename,  std::vector<int> rweights,
+Game::Game( int type, std::string filename,  std::vector<float> rweights,
             int init, reward_type rew) 
 :   nvertices(0), nedges(0), init(init), reward(rew) 
 {
@@ -288,7 +305,7 @@ Game::Game( int type, std::string filename,  std::vector<int> rweights,
                     } else {
                         weights.reserve(outs.size());
                         for (size_t i = 0; i < missing; ++i) {
-                            weights.push_back(rndweight(g));
+                            weights.push_back(rndweight(g)/100.0f);
                         }
                     }
                 }
@@ -332,12 +349,12 @@ Game::Game( int type, std::string filename,  std::vector<int> rweights,
     }
 
     if (init < 0) {
-        init = 0;
+        this->init = 0;
         std::cerr << "Warning: Initial vertex set to 0." << std::endl;
     }
     else if (init >= nvertices) {
-        init = nvertices - 1;
-        std::cerr   << "Warning: Initial vertex set to " << init << "." 
+        this->init = nvertices - 1;
+        std::cerr   << "Warning: Initial vertex set to " << this->init << "." 
                     << std::endl;
     }
 }
@@ -345,7 +362,7 @@ Game::Game( int type, std::string filename,  std::vector<int> rweights,
 //-----------------------------------------------------------------------------
 // Jurdzinski/Random/Mladder game
 
-Game::Game( int type, std::vector<int> vals, std::vector<int> rweights,
+Game::Game( int type, std::vector<int> vals, std::vector<float> rweights,
             int init, reward_type rew) 
 :   init(init), reward(rew)  
 {
@@ -357,7 +374,9 @@ Game::Game( int type, std::vector<int> vals, std::vector<int> rweights,
 
         std::random_device rd;
         std::mt19937 g(rd());
-        std::uniform_int_distribution<> rndweight(rweights[0], rweights[1]);
+        std::uniform_int_distribution<> rndweight(
+            static_cast<int>(rweights[0]*100), 
+            static_cast<int>(rweights[1]*100));
         int es = 1;
         int os = 0;
         
@@ -372,23 +391,23 @@ Game::Game( int type, std::vector<int> vals, std::vector<int> rweights,
                 priors.push_back((levels-l)*2);
 
                 sources.push_back(es);   targets.push_back(es+1);
-                weights.push_back(rndweight(g));
+                weights.push_back(rndweight(g)/100.0f);
                 sources.push_back(es);   targets.push_back(es+2);
-                weights.push_back(rndweight(g));
+                weights.push_back(rndweight(g)/100.0f);
                 sources.push_back(es+1); targets.push_back(es+2);
-                weights.push_back(rndweight(g));
+                weights.push_back(rndweight(g)/100.0f);
                 sources.push_back(es+2); targets.push_back(es);
-                weights.push_back(rndweight(g));
+                weights.push_back(rndweight(g)/100.0f);
 
                 sources.push_back(es+2); targets.push_back(es+3);
-                weights.push_back(rndweight(g));
+                weights.push_back(rndweight(g)/100.0f);
                 sources.push_back(es+3); targets.push_back(es+2);
-                weights.push_back(rndweight(g));
+                weights.push_back(rndweight(g)/100.0f);
 
                 sources.push_back(es+2); targets.push_back(os+1);
-                weights.push_back(rndweight(g));
+                weights.push_back(rndweight(g)/100.0f);
                 sources.push_back(os+1); targets.push_back(es+2);
-                weights.push_back(rndweight(g));
+                weights.push_back(rndweight(g)/100.0f);
 
                 es += 3;
                 os += 2;
@@ -406,13 +425,13 @@ Game::Game( int type, std::vector<int> vals, std::vector<int> rweights,
             priors.push_back((levels-l)*2+1);
 
             sources.push_back(es);   targets.push_back(es+1);
-            weights.push_back(rndweight(g));
+            weights.push_back(rndweight(g)/100.0f);
             sources.push_back(es+1); targets.push_back(es);
-            weights.push_back(rndweight(g));
+            weights.push_back(rndweight(g)/100.0f);
             sources.push_back(es+1); targets.push_back(es+2);
-            weights.push_back(rndweight(g));
+            weights.push_back(rndweight(g)/100.0f);
             sources.push_back(es+2); targets.push_back(es+1);
-            weights.push_back(rndweight(g));
+            weights.push_back(rndweight(g)/100.0f);
 
             es += 2;
         }
@@ -438,7 +457,9 @@ Game::Game( int type, std::vector<int> vals, std::vector<int> rweights,
         owners.resize(nvertices,1);
         std::shuffle(owners.begin(), owners.end(), g);  
         std::uniform_int_distribution<> rndcolors(0, vals[1]);
-        std::uniform_int_distribution<> rndweight(rweights[0], rweights[1]);
+        std::uniform_int_distribution<> rndweight(
+            static_cast<int>(rweights[0]*100), 
+            static_cast<int>(rweights[1]*100));
 
         for(int i=0; i<nvertices; i++) {
             priors.push_back(rndcolors(g));
@@ -457,7 +478,7 @@ Game::Game( int type, std::vector<int> vals, std::vector<int> rweights,
             for (int i=0; i<es; i++) {
                 sources.push_back(v);
                 targets.push_back(ws[i]);
-                weights.push_back(rndweight(g));
+                weights.push_back(rndweight(g)/100.0f);
                 outs[v].push_back(nedges);
                 ins[ws[i]].push_back(nedges);
                 nedges++;
@@ -475,7 +496,9 @@ Game::Game( int type, std::vector<int> vals, std::vector<int> rweights,
         owners.resize(nvertices,1);
         std::shuffle(owners.begin(), owners.end(), g); 
 
-        std::uniform_int_distribution<> rndweight(rweights[0], rweights[1]);
+        std::uniform_int_distribution<> rndweight(
+            static_cast<int>(rweights[0]*100), 
+            static_cast<int>(rweights[1]*100));
 
         priors  .resize(nvertices);
         sources .resize(nedges);
@@ -496,28 +519,28 @@ Game::Game( int type, std::vector<int> vals, std::vector<int> rweights,
         for (int i=0; i<bl; i++) {
             sources[e] = i*3+0;
             targets[e] = i*3+1;
-            weights[e] = rndweight(g);
+            weights[e] = rndweight(g)/100.0f;
             outs[i*3+0].push_back(e);
             ins [i*3+1].push_back(e);
             e++;
 
             sources[e] = i*3+1;
             targets[e] = i*3+2;
-            weights[e] = rndweight(g);
+            weights[e] = rndweight(g)/100.0f;
             outs[i*3+1].push_back(e);
             ins [i*3+2].push_back(e);
             e++;
 
             sources[e] = i*3+1;
             targets[e] = i*3+3;
-            weights[e] = rndweight(g);
+            weights[e] = rndweight(g)/100.0f;
             outs[i*3+1].push_back(e);
             ins [i*3+3].push_back(e);
             e++;
 
             sources[e] = i*3+2;
             targets[e] = i*3+3;
-            weights[e] = rndweight(g);
+            weights[e] = rndweight(g)/100.0f;
             outs[i*3+2].push_back(e);
             ins [i*3+3].push_back(e);
             e++;
@@ -525,18 +548,18 @@ Game::Game( int type, std::vector<int> vals, std::vector<int> rweights,
 
         sources[e] = bl*3;
         targets[e] = 0;
-        weights[e] = rndweight(g);
+        weights[e] = rndweight(g)/100.0f;
         outs[bl*3].push_back(e);
         ins [0].push_back(e);
     }
 
     if (init < 0) {
-        init = 0;
+        this->init = 0;
         std::cerr << "Warning: Initial vertex set to 0." << std::endl;
     }
     else if (init >= nvertices) {
-        init = nvertices - 1;
-        std::cerr   << "Warning: Initial vertex set to " << init << "." 
+        this->init = nvertices - 1;
+        std::cerr   << "Warning: Initial vertex set to " << this->init << "." 
                     << std::endl;
     }
 
@@ -546,11 +569,11 @@ Game::Game( int type, std::vector<int> vals, std::vector<int> rweights,
 
 void Game::setInit(int init) {
     if (init < 0) {
-        init = 0;
+        this->init = 0;
         std::cerr << "Warning: Initial vertex set to 0." << std::endl;
     }
     else if (init >= nvertices) {
-        init = nvertices - 1;
+        this->init = nvertices - 1;
         std::cerr   << "Warning: Initial vertex set to " << init << "." 
                     << std::endl;
     }
@@ -597,26 +620,26 @@ void Game::exportFile(int type, std::string filename) {
     case DZN:
         file << "nvertices = " << nvertices << ";" << std::endl;
         file << "owners    = ["; 
-        for(int i=0; i<owners.size(); i++) {
-            file<<(i?",":"")<<owners[i];  file<<"];"<<std::endl;
-        }
+        for(int i=0; i<owners.size(); i++) file<<(i?",":"")<<owners[i];  
+        file<<"];"<<std::endl;
+
         file << "priors    = ["; 
-        for(int i=0; i<priors.size(); i++) {
-            file<<(i?",":"")<<priors[i];  file<<"];"<<std::endl;
-        }
+        for(int i=0; i<priors.size(); i++) file<<(i?",":"")<<priors[i];
+        file<<"];"<<std::endl;
+        
         file << "nedges    = " << nedges << ";" << std::endl;
         file << "sources   = ["; 
-        for(int i=0; i<sources.size(); i++) {
-            file<<(i?",":"")<<sources[i]+1; file<<"];"<<std::endl;
-        }
+        for(int i=0; i<sources.size(); i++) file<<(i?",":"")<<sources[i]+1;
+        file<<"];"<<std::endl;
+        
         file << "targets   = ["; 
-        for(int i=0; i<targets.size(); i++) {
-            file<<(i?",":"")<<targets[i]+1; file<<"];"<<std::endl;
-        }
+        for(int i=0; i<targets.size(); i++) file<<(i?",":"")<<targets[i]+1;
+        file<<"];"<<std::endl;
+        
         file << "weights   = ["; 
-        for(int i=0; i<weights.size(); i++) {
-            file<<(i?",":"")<<weights[i]; file<<"];"<<std::endl;
-        }
+        for(int i=0; i<weights.size(); i++) file<<(i?",":"")<<weights[i];
+        file<<"];"<<std::endl;
+        
         break;
 
     case GM: case GMW:
@@ -627,7 +650,7 @@ void Game::exportFile(int type, std::string filename) {
                 file << (e?",":"") << targets[outs[v][e]];
             }
             if (type == GMW) {
-                file << " ";
+                file << " \"\" ";
                 for (int e=0; e<outs[v].size(); e++) {
                     file << (e?",":"") << weights[outs[v][e]];
                 }

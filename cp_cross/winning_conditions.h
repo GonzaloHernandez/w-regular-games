@@ -46,15 +46,15 @@ class EnergyCondition : public WinningCondition {
 public:
 
     bool satisfy(vec<int>& pathV,vec<int>& pathE,int cycleIndex) override {
-        int sum = 0;
+        float sum = 0.0f;
         for (int i=cycleIndex; i<pathE.size(); i++) {
             sum += g.weights[pathE[i]];
         }
         
         if (playerSAT == EVEN) {
-            return sum >= 0;
+            return sum >= 0.0f;
         }
-        return sum < 0;
+        return sum < 0.0f;
     };
 };
 
@@ -63,17 +63,17 @@ public:
 class MeanPayoffCondition : public WinningCondition {
     using WinningCondition::WinningCondition;
 private:
-    int threshold;
+    float threshold;
 public:
 
-    void setThreshold(int t) { threshold = t; }
+    void setThreshold(float t) { threshold = t; }
 
     bool satisfy(vec<int>& pathV,vec<int>& pathE,int cycleIndex) override {
-        int sum = 0;
+        float sum = 0.0f;
         for (int i=cycleIndex; i<pathE.size(); i++) {
             sum += g.weights[pathE[i]];
         }
-        double avg = (double)sum / (double)(pathE.size() - cycleIndex);
+        float avg = (float)sum / (float)(pathE.size() - cycleIndex);
 
         if (playerSAT == EVEN) {
             return avg >= threshold;

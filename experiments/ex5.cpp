@@ -26,7 +26,7 @@ struct options {
 
     reward_type         reward          = MAX;          // MAXimize,MINimize
     std::vector<int>    vals            = {};
-    std::vector<int>    weights         = {0,0,0};      // lBound,uBound,Force
+    std::vector<float>  weights         = {0,0,0};      // lBound,uBound,Force
     std::vector<int>    init            = {0};
     std::string         game_filename   = "";
     std::string         export_filename = "";
@@ -41,8 +41,7 @@ struct options {
     std::vector<bool>   win_conditions  = {false,false,false};  // 0=parity 
                                                                 // 1=energy 
                                                                 // 2=meanPayoff
-    int                 threshold       = 0;                    // threshold
-
+    float               threshold       = 0;                    // threshold
 } options;
 
 //-----------------------------------------------------------------------------
@@ -74,6 +73,25 @@ bool parseMyOptions(int argc, char *argv[]) {
             exit(1);
         }
         return (int)val;
+    };
+    //-------------------------------------------------------------------------
+    auto parseFloat = [&](const char* str, float min, float max) -> float {
+        char* endptr;
+        errno = 0;
+        float val = std::strtof(str, &endptr);
+
+        if (errno == ERANGE || val < min || val > max) {
+            std::cerr   << "ERROR: Value [" << str << "] out of range (" 
+                        << min << "-" << max << ")\n";
+            exit(1);
+        }
+        if (endptr == str || *endptr != '\0') {
+            std::cerr   << "ERROR: Value [" << str << "] is not a valid "
+                        << "floating-point number\n";
+            exit(1);
+        }
+
+        return val;
     };
     //-------------------------------------------------------------------------
     so.nof_solutions = 1;
@@ -160,9 +178,18 @@ bool parseMyOptions(int argc, char *argv[]) {
             validateArg("--nsolutions <number>");
             so.nof_solutions = parseInteger(argv[i], 0, 10);
         }
+        else if (strcmp(argv[i],"--mean-payoff")==0) {
+            options.win_conditions[2] = true;
+            i++;
+            if (i<argc && strlen(argv[i])>1 && strncmp(argv[i],"--",2) != 0) {
+                options.threshold = parseFloat(argv[i], -1000000, 1000000);
+            } else {
+                i--;
+            }
+        }
         else if (strcmp(argv[i],"--threshold")==0) {
             validateArg("--threshold <value>");
-            options.threshold = parseInteger(argv[i], -1000000, 1000000);
+            options.threshold = parseFloat(argv[i], -1000000, 1000000);
         }
 
         else if (strcmp(argv[i],"--max")==0)
@@ -219,8 +246,8 @@ bool parseMyOptions(int argc, char *argv[]) {
                                 { options.win_conditions[0] = true; }
         else if (strcmp(argv[i],"--energy")==0)
                                 { options.win_conditions[1] = true; }
-        else if (strcmp(argv[i],"--mean-payoff")==0)
-                                { options.win_conditions[2] = true; }
+        // else if (strcmp(argv[i],"--mean-payoff")==0)
+        //                         { options.win_conditions[2] = true; }
 
         else if (strcmp(argv[i],"--help")==0) {
             std::cout << "Usage: " << argv[0] << " [options] <args>\n"
@@ -621,11 +648,20 @@ int main(int argc, char *argv[])
             std::cout << "}" <<std::endl;
         }
 
-        for(auto& v0 : options.init) {
-            auto it = std::find(win[0].begin(), win[0].end(), v0);
+        for(auto& v : options.init) {
+            if (v < 0) {
+                v = 0;
+                std::cerr << "Warning: Initial vertex set to 0." << std::endl;
+            }
+            else if (v >= game->nvertices) {
+                v = game->nvertices - 1;
+                std::cerr   << "Warning: Initial vertex set to " << v << "." 
+                            << std::endl;
+            }  
+            auto it = std::find(win[0].begin(), win[0].end(), v);
 
             if (options.print_time>=0 || options.print_verbose)
-                std::cout << v0 << ": " << (it != win[0].end()?"EVEN ":"ODD ");
+                std::cout << v << ": " << (it != win[0].end()?"EVEN ":"ODD ");
             
             
             if (options.print_time!=0 || options.print_verbose) {
@@ -645,12 +681,21 @@ int main(int argc, char *argv[])
             std::iota(options.init.begin(), options.init.end(), 0);
         }
         for(auto& v : options.init) {
+            if (v < 0) {
+                v = 0;
+                std::cerr << "Warning: Initial vertex set to 0." << std::endl;
+            }
+            else if (v >= game->nvertices) {
+                v = game->nvertices - 1;
+                std::cerr   << "Warning: Initial vertex set to " << v << "." 
+                            << std::endl;
+            }    
             startClock(); //.............................................
             auto play = getPlay(*game, v, true);
             double totaltime = stopClock(); //...........................
 
             if (options.print_time>=0 || options.print_verbose)
-                std::cout << v << ": " << (play==EVEN?"EVEN ":"ODD "); 
+                std::cout << v << ": " << (play==EVEN?"EVEN ":"ODD ");
 
             if (options.print_time!=0 || options.print_verbose) {
                 std::cout   << totaltime;

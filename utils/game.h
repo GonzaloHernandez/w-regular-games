@@ -33,7 +33,7 @@ public:
     std::vector<long long>  priors;
     std::vector<int>        sources;
     std::vector<int>        targets;
-    std::vector<int>        weights;
+    std::vector<float>      weights;
 
     std::vector<std::vector<int>>   outs;
     std::vector<std::vector<int>>   ins;
@@ -47,6 +47,7 @@ public:
     void fixZeros();
     void parseline_dzn (const std::string& line,std::vector<int>& myvec);
     void parseline_dzn (const std::string& line,std::vector<long long>& myvec);
+    void parseline_dzn (const std::string& line,std::vector<float>& myvec);
     void parseline_gm  (const std::string& line,std::vector<long long>& vinfo, 
                        std::vector<int>& outs, std::vector<long long>& weights,
                        std::string& comment);
@@ -57,12 +58,12 @@ public:
     
     Game(   std::vector<int> owners,std::vector<long long> priors,
             std::vector<int> sources,std::vector<int> targets,
-            std::vector<int> wei={},int init=0, reward_type rew=MAX);
+            std::vector<float> weights={},int init=0, reward_type rew=MAX);
 
-    Game(   int type, std::string filename, std::vector<int> weights, 
+    Game(   int type, std::string filename, std::vector<float> weights, 
             int init=0, reward_type rew=MAX);
 
-    Game(   int type, std::vector<int> vals, std::vector<int> weights, 
+    Game(   int type, std::vector<int> vals, std::vector<float> weights, 
             int init=0, reward_type rew=MAX);
 
     void setInit(int init);
