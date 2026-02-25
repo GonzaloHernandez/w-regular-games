@@ -1,14 +1,17 @@
 {
     "openFiles": [
-        "mzn_model/cp-based-extended.mzn"
+        "mzn_model/cp-based-extended.mzn",
+        "mzn_model/paritygames.mzn",
+        "mzn_model/cp-based.mzn"
     ],
-    "openTab": 0,
+    "openTab": 2,
     "projectFiles": [
         "data/jurd-2-1.dzn",
         "mzn_model/cp-based-extended.mzn",
+        "mzn_model/cp-based.mzn",
         "mzn_model/paritygames.mzn"
     ],
-    "selectedBuiltinConfigId": "chuffed-noc",
-    "selectedBuiltinConfigVersion": "0.0.1",
+    "selectedBuiltinConfigId": "noc-chuffed",
+    "selectedBuiltinConfigVersion": "0.1",
     "version": 106
 }

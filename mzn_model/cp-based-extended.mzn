@@ -7,10 +7,10 @@ int						: nedges;
 set of int              : vertices  = 1..nvertices;
 set of int              : edges     = 1..nedges;
 array [vertices] of int	: owners;
-array [vertices] of int	: colors;
+array [vertices] of int	: priors;
 array [edges] of int	: sources;
 array [edges] of int	: targets;
-vertices                : start     = 1;
+vertices                : init     = 1;
 
 % -------------------------------------------------------------------
 
@@ -19,22 +19,22 @@ array [edges]		of var bool	: E;
 
 % -------------------------------------------------------------------
 
-constraint parity_conditions(owners,colors,sources,targets,V,E, 1,0,0);
+constraint parity_conditions(owners,priors,sources,targets,init,EVEN,MIN,V,E);
 
 % -------------------------------------------------------------------
 
-% Synthesis
-set of int: steps = 1..nvertices;
-array [steps] of var vertices union {0} : Vhistory;
-array [steps] of var vertices union {0} : Ehistory;
-array [steps] of var vertices union {0} : Vinfinity;
-array [steps] of var vertices union {0} : Einfinity;
-array [steps] of var vertices union {0} : Vpath;
-array [steps] of var vertices union {0} : Epath;
+% % Synthesis
+% set of int: steps = 1..nvertices;
+% array [steps] of var vertices union {0} : Vhistory;
+% array [steps] of var vertices union {0} : Ehistory;
+% array [steps] of var vertices union {0} : Vinfinity;
+% array [steps] of var vertices union {0} : Einfinity;
+% array [steps] of var vertices union {0} : Vpath;
+% array [steps] of var vertices union {0} : Epath;
 
-constraint 
-	even_play(	steps,sources,targets,E,start,
-				Vhistory,Ehistory, Vinfinity,Einfinity, Vpath, Epath );
+% constraint 
+% 	even_play(	steps,sources,targets,E,init,
+% 				Vhistory,Ehistory, Vinfinity,Einfinity, Vpath, Epath );
 
 % -------------------------------------------------------------------
 

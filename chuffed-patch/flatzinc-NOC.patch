@@ -1,42 +1,54 @@
+From 7ab3bf1df1f7d7696a3c49b354ab4aec52c4bae0 Mon Sep 17 00:00:00 2001
+From: Gonzalo Hernandez <gonzalohernandez@udenar.edu.co>
+Date: Wed, 25 Feb 2026 17:10:37 +1100
+Subject: [PATCH] Add noc.h support and update registry for w-regular games
+
+---
+ chuffed/flatzinc/registry.cpp |  39 +++++
+ chuffed/support/noc.h         | 271 ++++++++++++++++++++++++++++++++++
+ 2 files changed, 310 insertions(+)
+ create mode 100644 chuffed/support/noc.h
+
 diff --git a/chuffed/flatzinc/registry.cpp b/chuffed/flatzinc/registry.cpp
-index bf209f7..36c824f 100644
+index c17c274..99b9327 100644
 --- a/chuffed/flatzinc/registry.cpp
 +++ b/chuffed/flatzinc/registry.cpp
-@@ -29,6 +29,10 @@
+@@ -42,6 +42,8 @@
+ #include <ostream>
+ #include <string>
  
- #include <list>
- 
-+// w-regular games
-+#include "chuffed/support/game.h"
 +#include "chuffed/support/noc.h"
 +
  namespace FlatZinc {
  
  Registry& registry() {
-@@ -1805,6 +1809,37 @@ void p_bounded_path_new(const ConExpr& ce, AST::Node* ann) {
+@@ -1834,6 +1836,40 @@ void p_bounded_path_new(const ConExpr& ce, AST::Node* /*ann*/) {
  	bounded_path(s, t, vs, es, in, ou, en, ws, w);
  }
  
 +// w-regular games
 +void p_noc(const ConExpr& ce, AST::Node* ann) {
 +	vec<int> owners;	arg2intargs(owners,ce[0]);
-+	vec<int> colors;	arg2intargs(colors,ce[1]);
++	vec<int> priors;	arg2intargs(priors,ce[1]);
 +	vec<int> sources;	arg2intargs(sources,ce[2]);
 +	vec<int> targets;	arg2intargs(targets,ce[3]);
-+	vec<BoolView> E;	arg2BoolVarArgs(E,ce[4]);
-+	int start =			ce[5]->getInt();
-+	int player =		ce[6]->getInt();
-+	int reward =		ce[7]->getInt();
++	int init =			ce[4]->getInt();
++	int player =		ce[5]->getInt();
++	int reward =		ce[6]->getInt();
++
++	vec<BoolView> V;	arg2BoolVarArgs(V,ce[7]);
++	vec<BoolView> E;	arg2BoolVarArgs(E,ce[8]);
 +
 +	for (int i=0; i<sources.size(); i++) {
 +		sources[i]--;
 +		targets[i]--;
 +	}
++	init--;
 +
-+	std::vector<int> os,cs,ss,ts;
++	std::vector<int> os,ps,ss,ts;
 +	for(int i=0; i<owners.size(); i++) {
 +		os.push_back(owners[i]);
-+		cs.push_back(colors[i]);
++		ps.push_back(priors[i]);
 +	}
 +
 +	for(int i=0; i<sources.size(); i++) {
@@ -44,22 +56,300 @@ index bf209f7..36c824f 100644
 +		ts.push_back(targets[i]);
 +	}
 +
-+	Game* g = new Game(os,cs,ss,ts,start-1,(reward_type)reward);
-+	new NoOpponentCycle(*g,E,1,(parity_type)player);
++	Game* g = new Game(os,ps,ss,ts,init,(reward_type)reward);
++	new NoOpponentCycle(*g,V,E,(parity_type)player);
 +}
 +
  class IntPoster {
  public:
  	IntPoster() {
-@@ -1951,7 +1986,10 @@ public:
+@@ -1986,6 +2022,9 @@ public:
  		registry().add("chuffed_dpath", &p_path_new);
  		registry().add("chuffed_dag", &p_dag_new);
  		registry().add("chuffed_bounded_dpath", &p_bounded_path_new);
--	}
 +
-+		// w-regular games
++		// w-regular-games
 +		registry().add("noc", &p_noc);
-+}
+ 	}
  };
  IntPoster _int_poster;
- 
+diff --git a/chuffed/support/noc.h b/chuffed/support/noc.h
+new file mode 100644
+index 0000000..8926bec
+--- /dev/null
++++ b/chuffed/support/noc.h
+@@ -0,0 +1,271 @@
++#include <iostream>
++#include <vector>
++#include <algorithm>
++#include "chuffed/vars/modelling.h"
++#include "chuffed/core/propagator.h"
++#include <initializer_list>
++
++// #include <iostream>
++// #include <vector>
++// #include <fstream>
++// #include <regex>
++// #include <sstream>
++// #include <cassert>
++// #include <algorithm>
++// #include <random>
++// #include <chrono> 
++// #include <climits>
++
++enum parity_type    {EVEN,ODD};                             // 0,1
++enum reward_type    {MIN,MAX};                              // 0,1
++enum game_type      {DEF,JURD,RAND,MLADDER,DZN,GM,GMW,DIM}; // 0,1,2,3,4,5,6
++enum parity_comp    {BET,EQU,BEQ};
++
++//-----------------------------------------------------------------------------
++
++parity_type opponent(parity_type PARITY);
++
++//=============================================================================
++
++class Game {
++public:
++    std::vector<int>    owners;
++    std::vector<int>    priors;
++    std::vector<int>    sources;
++    std::vector<int>    targets;
++
++    std::vector<std::vector<int>>   outs;
++    std::vector<std::vector<int>>   ins;
++    int nvertices;
++    int nedges;
++    int init;
++    reward_type reward;
++
++    //-------------------------------------------------------------------------
++
++    void fixZeros();
++
++    //-------------------------------------------------------------------------
++
++public:
++    
++    Game(   std::vector<int> owners,std::vector<int> priors,
++            std::vector<int> sources,std::vector<int> targets,
++            int init=0, reward_type rew=MAX);
++
++    void setInit(int init);
++    void setReward(reward_type rew);
++    bool comparePriorities(int p1,int p2,parity_comp rel=BET);
++    void printGame();
++};
++
++// ============================================================================
++
++// #include <iostream>
++// #include <vector>
++// #include <fstream>
++// #include <regex>
++// #include <sstream>
++// #include <cassert>
++// #include <algorithm>
++// #include <random>
++// #include <chrono> 
++
++//-----------------------------------------------------------------------------
++
++parity_type opponent(parity_type PARITY) {
++    if (PARITY==EVEN) return ODD; return EVEN;
++}
++
++//-----------------------------------------------------------------------------
++
++void Game::fixZeros() {
++    for (int i=0; i<sources.size(); i++) {
++        sources[i]--;
++        targets[i]--;
++    }
++}
++
++//---------------------------------------------------------------------------
++
++// #include <cstdio>  
++// #include <cstring> 
++// #include <string>
++// #include <vector>
++// #include <algorithm>
++// #include <cctype>
++
++// #include <string>
++// #include <vector>
++// #include <algorithm>
++// #include <cctype>
++
++//---------------------------------------------------------------------------
++// Default game
++
++Game::Game( std::vector<int> owners,std::vector<int> priors,
++            std::vector<int> sources,std::vector<int> targets,
++            int init, reward_type rew) 
++:   owners(std::move(owners)),
++    priors(std::move(priors)), 
++    sources(std::move(sources)), 
++    targets(std::move(targets)), 
++    init(init), 
++    reward(rew)
++{
++    nvertices = this->owners.size();
++    nedges    = this->sources.size();
++
++    if (init < 0) {
++        this->init = 0;
++    } else if (init >= nvertices) {
++        this->init = nvertices - 1;
++    }
++
++    outs.resize(nvertices);
++    ins.resize(nvertices);
++
++    for(int i = 0; i < nedges; i++) {
++        int u = this->sources[i];
++        int v = this->targets[i];
++        outs[u].push_back(i);
++        ins[v].push_back(i);
++    }
++}
++
++//-----------------------------------------------------------------------------
++
++void Game::setInit(int init) {
++    if (init < 0) {
++        this->init = 0;
++    }
++    else if (init >= nvertices) {
++        this->init = nvertices - 1;
++    }
++
++    this->init = init;
++}
++
++//-----------------------------------------------------------------------------
++
++void Game::setReward(reward_type rew) {
++    reward = rew;
++}
++
++//-----------------------------------------------------------------------------
++
++bool Game::comparePriorities(int p1,int p2,parity_comp rel) {
++    switch (rel) {
++    case BET:   // better
++        if (reward==MIN && p1 < p2) return true; 
++        if (reward==MAX && p1 > p2) return true;
++        break;   
++    case EQU:   // equal
++        if (reward==MIN && p1 == p2) return true; 
++        if (reward==MAX && p1 == p2) return true;
++        break;   
++    case BEQ:   // better or equal
++        if (reward==MIN && p1 <= p2) return true; 
++        if (reward==MAX && p1 >= p2) return true;
++        break;   
++    }
++    return false;
++}
++
++//=============================================================================
++
++class NoOpponentCycle : public Propagator {
++private:
++    Game& g;
++    vec<BoolView> V;
++    vec<BoolView> E;
++    parity_type playerSAT;
++
++    const int   CF_DONE     = 1;
++    const int   CF_CONFLICT = 2;
++    const int   CF_STAY     = 3;
++
++public:
++    //-------------------------------------------------------------------------
++    NoOpponentCycle(Game& g, vec<BoolView>& V, vec<BoolView>& E, 
++        parity_type playerSAT)
++    : g(g), V(V), E(E), playerSAT(playerSAT)
++    {
++        for (int i=0; i<g.nvertices;i++) V[i].attach(this, 1 , EVENT_F );
++        for (int i=0; i<g.nedges;   i++) E[i].attach(this, 1 , EVENT_F );
++    }
++    //-------------------------------------------------------------------------
++    int findVertex(int vertex,vec<int>& path) {
++        for (int i=0; i<path.size(); i++) {
++            if (path[i] == vertex) return i;
++        }
++        return -1;
++    }
++    //-------------------------------------------------------------------------
++    void clausify(vec<int>& path, vec<BoolView> &B, vec<Lit>& lits,int from) {
++        for (int i=from; i<path.size()-1; i++) {
++            lits.push(B[path[i]].getValLit());
++        }
++    }
++    //-------------------------------------------------------------------------
++    bool satisfy(vec<int>& pathV,vec<int>& pathE,int cycleIndex) {
++        int m = g.priors[pathV[cycleIndex]];
++        for (int i=cycleIndex+1; i<pathV.size(); i++) {
++            if (g.comparePriorities(g.priors[pathV[i]],m)) {
++                m = g.priors[pathV[i]];
++            }
++        }
++        return m%2==playerSAT;
++    };
++    //-------------------------------------------------------------------------
++    int filterEager(vec<int>& pathV, vec<int>& pathE, int v, 
++        int lastEdge, bool definedEdge) 
++    {
++        int index = findVertex(v,pathV);
++        if (index >= 0) {
++            if (!satisfy(pathV,pathE,index)) {
++                vec<Lit> lits;
++                lits.push();
++                clausify(pathE,E,lits,0);
++                Clause* reason = Reason_new(lits);
++                if (! E[lastEdge].setVal(false,reason)) {
++                    return CF_CONFLICT;
++                }
++            }
++        }
++        else if (definedEdge) {
++            pathV.push(v);
++            for (int e : g.outs[v]) {
++                if (E[e].isFalse()) continue;
++
++                int w = g.targets[e];
++                pathE.push(e);
++                int status = filterEager(pathV, pathE, w, e, E[e].isTrue());
++                pathE.pop();
++                if (status == CF_CONFLICT) {
++                    return status;
++                }
++            }
++            pathV.pop();
++        }
++        return CF_DONE;
++    }
++    //-------------------------------------------------------------------------
++    bool propagate() override {
++        vec<int> pathV;
++        vec<int> pathE;
++
++        if (filterEager(pathV,pathE,g.init,-1,true) == CF_CONFLICT)
++            return false;
++
++        return true;
++    }
++    //-------------------------------------------------------------------------
++    void wakeup(int i, int) override {
++        pushInQueue();
++    }
++    //-------------------------------------------------------------------------
++    void clearPropState() override {
++        in_queue = false;
++    }
++};
+-- 
+2.53.0
+

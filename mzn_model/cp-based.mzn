@@ -4,13 +4,14 @@ include "paritygames.mzn";
 
 int : nvertices;
 int : nedges;
-set of int 					: vertices	= 1..nvertices;
-set of int 					: edges		= 1..nedges;
-array [vertices]	of int	: owners;
-array [vertices]	of int	: colors;
-array [edges]	 	of int	: sources;
-array [edges]		of int	: targets;
-vertices 					: start = 1 ;
+set of int 				: vertices	= 1..nvertices;
+set of int 				: edges		= 1..nedges;
+array [vertices] of int	: owners;
+array [vertices] of int	: priors;
+array [edges] of int	: sources;
+array [edges] of int	: targets;
+	
+vertices 				: init = 1 ;
 
 % -------------------------------------------------------------------
 
@@ -20,7 +21,10 @@ array [edges]		of var bool	: E;
 % -------------------------------------------------------------------
 
 constraint
-	parity_conditions(owners,colors,sources,targets,V,E, 1,0,0);
+	parity_conditions(	owners,priors,sources,targets,
+						init,enum2int(EVEN),enum2int(MIN),
+						V,E);
+						
 
 % -------------------------------------------------------------------
 
