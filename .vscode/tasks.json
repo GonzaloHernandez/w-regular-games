@@ -37,14 +37,23 @@
                 "${workspaceFolder}/experiments/ex5.cpp",
                 "-o",
                 "${workspaceFolder}/build/nocq",
+
                 "-I${env:HOME}/.local/include",
                 "-L${env:HOME}/.local/lib",
                 "-lchuffed_fzn",
                 "-lchuffed",
-                "-lcadical",
                 "${env:HOME}/.local/lib/libchuffed_fzn.a",
                 "${env:HOME}/.local/lib/libchuffed.a",
-                "${env:HOME}/.local/lib/libchuffed.a",
+
+                // "-I${workspaceFolder}/thirdparty/chuffed",
+                // "-L${workspaceFolder}/thirdparty/chuffed/build",
+                // "-lchuffed_fzn",
+                // "-lchuffed",
+                // "-I${workspaceFolder}/thirdparty/cadical/src",
+                // "-L${workspaceFolder}/thirdparty/cadical/build",
+                // "-lcadical",
+                // "${workspaceFolder}/thirdparty/chuffed/build/libchuffed_fzn.a",
+                // "${workspaceFolder}/thirdparty/chuffed/build/libchuffed.a",
 
                 // "-DHAS_GECODE",
                 // "-lpthread",
@@ -53,7 +62,8 @@
                 // "-lgecodekernel",
                 // "-lgecodesupport",
 
-                "-DHAS_CADICAL",
+                // "-DHAS_CADICAL",
+                // "-lcadical",
             ],
             "problemMatcher": [
                 "$gcc"
