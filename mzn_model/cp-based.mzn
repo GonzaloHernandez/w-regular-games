@@ -22,11 +22,10 @@ array [edges]		of var bool	: E;
 
 constraint
 	parity_conditions(	owners,priors,sources,targets,
-						init,enum2int(EVEN),enum2int(MIN),
-						V,E);
+						init,EVEN,MIN,V,E);
 						
 
 % -------------------------------------------------------------------
 
 output
-	["=====SAT===== \n"]
+	["=====SATISFIABLE===== \n"]

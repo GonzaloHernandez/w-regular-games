@@ -38,26 +38,26 @@ cmake --build build
 
 echo "Setup for $REPO_NAME complete."
 
-# ----------------------------------------
-# 2. Chuffed
-cd "$TARGET_DIR"
-REPO_URL="https://github.com/arminbiere/cadical.git"
-REPO_NAME="cadical"
+# # ----------------------------------------
+# # 2. Chuffed
+# cd "$TARGET_DIR"
+# REPO_URL="https://github.com/arminbiere/cadical.git"
+# REPO_NAME="cadical"
 
-# 2.1 Cloning repository
-if [ ! -d "$REPO_NAME" ]; then
-    echo "Cloning $REPO_NAME..."
-    git clone "$REPO_URL" "$REPO_NAME"
-else
-    echo "Repository $REPO_NAME already exists. Skipping clone."
-fi
+# # 2.1 Cloning repository
+# if [ ! -d "$REPO_NAME" ]; then
+#     echo "Cloning $REPO_NAME..."
+#     git clone "$REPO_URL" "$REPO_NAME"
+# else
+#     echo "Repository $REPO_NAME already exists. Skipping clone."
+# fi
 
-# 2.2. Enter the repository directory
-cd "$REPO_NAME" 
+# # 2.2. Enter the repository directory
+# cd "$REPO_NAME" 
 
-# 1.3. Compile
-echo "Starting compilation of $REPO_NAME"
-./configure
-make
+# # 1.3. Compile
+# echo "Starting compilation of $REPO_NAME"
+# ./configure
+# make
 
-echo "Setup for $REPO_NAME complete."
+# echo "Setup for $REPO_NAME complete."

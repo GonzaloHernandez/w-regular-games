@@ -368,7 +368,7 @@ int main(int argc, char *argv[])
                             options.reward);
             break;
         default:
-            game = new Game({0,1},{3,2},{0,1},{1,0},{0,0},0,MAX);
+            game = new Game({0,1},{3,2},{0,1},{1,0});
             break;
     }
     double launchinggame = stopClock(); //...........................

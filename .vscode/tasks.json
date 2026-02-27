@@ -44,16 +44,19 @@
                 "-lchuffed",
                 "${env:HOME}/.local/lib/libchuffed_fzn.a",
                 "${env:HOME}/.local/lib/libchuffed.a",
+                // "-DHAS_CADICAL",
+                // "-lcadical",
 
                 // "-I${workspaceFolder}/thirdparty/chuffed",
                 // "-L${workspaceFolder}/thirdparty/chuffed/build",
                 // "-lchuffed_fzn",
                 // "-lchuffed",
+                // "${workspaceFolder}/thirdparty/chuffed/build/libchuffed_fzn.a",
+                // "${workspaceFolder}/thirdparty/chuffed/build/libchuffed.a",
+                // "-DHAS_CADICAL",
                 // "-I${workspaceFolder}/thirdparty/cadical/src",
                 // "-L${workspaceFolder}/thirdparty/cadical/build",
                 // "-lcadical",
-                // "${workspaceFolder}/thirdparty/chuffed/build/libchuffed_fzn.a",
-                // "${workspaceFolder}/thirdparty/chuffed/build/libchuffed.a",
 
                 // "-DHAS_GECODE",
                 // "-lpthread",
@@ -62,8 +65,6 @@
                 // "-lgecodekernel",
                 // "-lgecodesupport",
 
-                // "-DHAS_CADICAL",
-                // "-lcadical",
             ],
             "problemMatcher": [
                 "$gcc"
