@@ -36,7 +36,7 @@
             "args": [   
                 // "--gm", "${workspaceFolder}/build/r4-even.gm",
                 // "--gm", "~/Cloud/games/mlsolver/FLCTLLimitClosuren\\=7.gm",
-                // "--dzn", "${workspaceFolder}/data/wiki-q.dzn",
+                "--dzn", "${workspaceFolder}/build/random.dzn",
                 // "--dzn", "${workspaceFolder}/data/jurd-2-1.dzn","--min",
                 // "--gm", "${env:HOME}/gm/randomgame-1000-10-1-20-0.gm",
                 // "--jurd","54","10",

@@ -4,7 +4,7 @@
 #include "../utils/zielonka.h"
 #include "../utils/satencoder.h"
 #include "../cp_cross/cross_chuffed.cpp"
-#include "../cp_nocq/nocq_chuffed.cpp"
+#include "../cp_snoc/snocq_chuffed.cpp"
 
 #ifdef HAS_CADICAL
 #include "../cp_nocq/nocq_cadical.cpp"

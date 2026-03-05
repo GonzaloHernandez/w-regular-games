@@ -115,8 +115,8 @@ size_t find_token_end(const std::string& line, size_t init, char delimiter) {
 void Game::parseline_gm(const std::string& line, 
                         std::vector<long long>& vinfo, 
                         std::vector<int>& outs_targets, 
-                        std::vector<long long>& weights,
-                        std::string& comment) 
+                        std::string& comment,
+                        std::vector<float>& weights) 
 {
     vinfo.clear();
     outs_targets.clear();
@@ -135,8 +135,8 @@ void Game::parseline_gm(const std::string& line,
         current = next;
     }
 
-    // --- Helper Lambda for Comma-Separated Lists ---
-    auto parse_csv_block = [&](std::vector<long long>& target_vec) {
+    // --- Helper Lambda for Comma-Separated Lists (long long)---
+    auto parse_csv_long_block = [&](std::vector<long long>& target_vec) {
         current = skip_whitespace(line, current);
         size_t end_of_block = line.find_first_of(" ;\"", current);
         if (end_of_block == std::string::npos) end_of_block = line.size();
@@ -153,13 +153,31 @@ void Game::parseline_gm(const std::string& line,
         current = end_of_block;
     };
 
+    // --- Helper Lambda for Comma-Separated Lists (floats) ---
+    auto parse_csv_float_block = [&](std::vector<float>& target_vec) {
+        current = skip_whitespace(line, current);
+        size_t end_of_block = line.find_first_of(" ;\"", current);
+        if (end_of_block == std::string::npos) end_of_block = line.size();
+
+        std::string block = line.substr(current, end_of_block - current);
+        std::stringstream ss(block);
+        std::string item;
+        
+        while (std::getline(ss, item, ',')) {
+            if (!item.empty()) {
+                target_vec.push_back(std::stof(item));
+            }
+        }
+        current = end_of_block;
+    };
+
     // --- Extract Target Edges (First CSV block) ---
     std::vector<long long> temp_targets;
-    parse_csv_block(temp_targets);
+    parse_csv_long_block(temp_targets);
     for(auto t : temp_targets) outs_targets.push_back(static_cast<int>(t));
 
     // --- Extract Weights (Second CSV block) ---
-    parse_csv_block(weights);
+    parse_csv_float_block(weights);
 
     // --- Extract Optional Comment ---
     current = skip_whitespace(line, current);
@@ -170,6 +188,9 @@ void Game::parseline_gm(const std::string& line,
             comment = line.substr(current, comment_end - current);
         }
     }
+
+    // --- Extract Weights (Second CSV block) ---
+    parse_csv_float_block(chances);
 }
 
 //---------------------------------------------------------------------------
@@ -177,9 +198,10 @@ void Game::parseline_gm(const std::string& line,
 
 Game::Game( std::vector<int> owners,std::vector<long long> priors,
             std::vector<int> sources,std::vector<int> targets,
-            std::vector<float> weights,int init, reward_type rew) 
+            std::vector<float> weights,std::vector<float> chances,
+            int init, reward_type rew) 
 :   owners(owners), priors(priors), sources(sources), targets(targets), 
-    weights(weights), init(init), reward(rew) 
+    weights(weights), chances(chances), init(init), reward(rew) 
 {
     nvertices   = owners.size();
     nedges      = sources.size();
@@ -205,6 +227,7 @@ Game::Game( std::vector<int> owners,std::vector<long long> priors,
         this->sources[i]=sources[i];
         this->targets[i]=targets[i];
         this->weights[i]=weights[i];
+        this->chances[i]=chances[i];
         outs[sources[i]].push_back(i);
         ins [targets[i]].push_back(i);
     }
@@ -250,6 +273,8 @@ Game::Game( int type, std::string filename,  std::vector<float> rweights,
                 parseline_dzn(line,targets);
             } else if (line.find("weights") != std::string::npos) {
                 parseline_dzn(line,weights);
+            } else if (line.find("chances") != std::string::npos) {
+                parseline_dzn(line,chances);
             }
         }
         file.close();
@@ -268,7 +293,7 @@ Game::Game( int type, std::string filename,  std::vector<float> rweights,
         int lastvertex = 0;
         std::vector<int> verts;
         std::vector<std::vector<int>> tedges;
-        std::vector<std::vector<long long>> tweights;
+        std::vector<std::vector<float>> tweights;
         int counter = 0;
 
         std::random_device rd;
@@ -285,10 +310,11 @@ Game::Game( int type, std::string filename,  std::vector<float> rweights,
             } else {
                 std::vector<long long> vinfo;
                 std::vector<int> outs;
-                std::vector<long long> weights;
                 std::string comment;
+                std::vector<float> weights;
+                std::vector<float> chances;
                 
-                parseline_gm(line, vinfo, outs, weights, comment);
+                parseline_gm(line, vinfo, outs, comment, weights);
                 
                 if ((weights.size() < outs.size()) || rweights[2] == 1) {
                     size_t missing;
@@ -589,21 +615,9 @@ void Game::setReward(reward_type rew) {
 
 //-----------------------------------------------------------------------------
 
-bool Game::comparePriorities(int p1,int p2,parity_comp rel) {
-    switch (rel) {
-    case BET:   // better
-        if (reward==MIN && p1 < p2) return true; 
-        if (reward==MAX && p1 > p2) return true;
-        break;   
-    case EQU:   // equal
-        if (reward==MIN && p1 == p2) return true; 
-        if (reward==MAX && p1 == p2) return true;
-        break;   
-    case BEQ:   // better or equal
-        if (reward==MIN && p1 <= p2) return true; 
-        if (reward==MAX && p1 >= p2) return true;
-        break;   
-    }
+bool Game::isBetterPriority(int p1,int p2) {
+    if (reward==MIN && p1 < p2) return true; 
+    if (reward==MAX && p1 > p2) return true;
     return false;
 }
 
@@ -690,6 +704,11 @@ void Game::printGame() {
     std::cout << "weights:   {";
     for(int e=0; e<nedges; e++) {
         std::cout<<weights[e]<<(e<weights.size()-1?",":"");
+    }
+    std::cout << "}" << std::endl;
+    std::cout << "chances:   {";
+    for(int e=0; e<nedges; e++) {
+        std::cout<<chances[e]<<(e<chances.size()-1?",":"");
     }
     std::cout << "}" << std::endl;
 }

@@ -44,7 +44,7 @@ public:
     int bestcolor(int index,vec<int>& path) {
         int m = g.priors[path[index]];
         for (int i=index+1; i<path.size(); i++) {
-            if (g.comparePriorities(g.priors[path[i]],m,BET)) {
+            if (g.isBetterPriority(g.priors[path[i]],m,BET)) {
                 m = g.priors[path[i]];
             }
         }
@@ -210,7 +210,7 @@ public:
                     for (i=0; i<pathV.size()-1; i++) {
                         if (pathV[i] == memo[e].loop) {
                             int m = bestcolor(i,pathV);
-                            if (g.comparePriorities(m,memo[e].best,BET)) {
+                            if (g.isBetterPriority(m,memo[e].best,BET)) {
 
                                 memo[e].best = m;
                                 int status = filterMemo(pathV, pathE, w, e, E[e].isTrue(),memo);

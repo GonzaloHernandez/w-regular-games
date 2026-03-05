@@ -45,7 +45,7 @@ public:
 
     //-------------------------------------------------------------------------
 
-    bool comparePriorities(int p1,int p2) {
+    bool isBetterPriority(int p1,int p2) {
         if (reward==MIN && p1 < p2) return true; 
         if (reward==MAX && p1 > p2) return true;
         return false;
@@ -91,7 +91,7 @@ public:
     bool satisfy(vec<int>& pathV,vec<int>& pathE,int cycleIndex) {
         int m = g.priors[pathV[cycleIndex]];
         for (int i=cycleIndex+1; i<pathV.size(); i++) {
-            if (g.comparePriorities(g.priors[pathV[i]],m)) {
+            if (g.isBetterPriority(g.priors[pathV[i]],m)) {
                 m = g.priors[pathV[i]];
             }
         }

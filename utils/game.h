@@ -12,10 +12,9 @@
 #include <chrono> 
 #include <climits>
 
-enum parity_type    {EVEN,ODD};                             // 0,1
+enum parity_type    {EVEN,ODD,NATURE};                      // 0,1,2
 enum reward_type    {MIN,MAX};                              // 0,1
 enum game_type      {DEF,JURD,RAND,MLADDER,DZN,GM,GMW,DIM}; // 0,1,2,3,4,5,6
-enum parity_comp    {BET,EQU,BEQ};
 
 //-----------------------------------------------------------------------------
 
@@ -34,6 +33,7 @@ public:
     std::vector<int>        sources;
     std::vector<int>        targets;
     std::vector<float>      weights;
+    std::vector<float>      chances;
 
     std::vector<std::vector<int>>   outs;
     std::vector<std::vector<int>>   ins;
@@ -49,8 +49,8 @@ public:
     void parseline_dzn (const std::string& line,std::vector<long long>& myvec);
     void parseline_dzn (const std::string& line,std::vector<float>& myvec);
     void parseline_gm  (const std::string& line,std::vector<long long>& vinfo, 
-                       std::vector<int>& outs, std::vector<long long>& weights,
-                       std::string& comment);
+                       std::vector<int>& outs, std::string& comment,
+                       std::vector<float>& weights);
 
     //-------------------------------------------------------------------------
 
@@ -58,7 +58,8 @@ public:
     
     Game(   std::vector<int> owners,std::vector<long long> priors,
             std::vector<int> sources,std::vector<int> targets,
-            std::vector<float> weights={},int init=0, reward_type rew=MAX);
+            std::vector<float> weights={},std::vector<float> chances={},
+            int init=0, reward_type rew=MAX);
 
     Game(   int type, std::string filename, std::vector<float> weights, 
             int init=0, reward_type rew=MAX);
@@ -68,7 +69,7 @@ public:
 
     void setInit(int init);
     void setReward(reward_type rew);
-    bool comparePriorities(int p1,int p2,parity_comp rel=BET);
+    bool isBetterPriority(int p1,int p2);
     void exportFile(int type, std::string filename);
     void printGame();
     void flipGame();
